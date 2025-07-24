@@ -49,7 +49,9 @@ An extension to the D&D 5E system for FoundryVTT v13+ that provides additional a
 
 Love using **More Activities**? Consider supporting continued development:
 
-[![Patreon](https://img.shields.io/badge/Patreon-Support%20Development-20B2AA?style=for-the-badge&logo=patreon)](https://www.patreon.com/TTimeGaming)
+[![Patreon](https://img.shields.io/badge/Patreon-Support-20B2AA?style=for-the-badge&logo=patreon)](https://www.patreon.com/TTimeGaming)
+&emsp;
+[![Kofi](https://img.shields.io/badge/Kofi-Support-20B2AA?style=for-the-badge&logo=kofi)](https://ko-fi.com/ttimegaming)
 
 Your support helps fund:
 - 🚀 **New Features:** Additional activities for the 5E System
