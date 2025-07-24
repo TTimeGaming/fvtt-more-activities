@@ -59,6 +59,11 @@ Your support helps fund:
 - 📚 **Documentation:** Comprehensive guides and tutorials for each and every activity
 - 🎯 **Community Requests:** Implementation of user-requested features
 
+## 📷 Screenshots
+
+### Macro Activity
+<img src="./assets/macro-activity.png" width="700" />
+
 ---
 
 **Ready to bring even more activity options to your D&D 5E table?** Install More Activities today and help shape its development through testing and feedback!
