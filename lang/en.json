@@ -1,5 +1,13 @@
 {
     "DND5E.ACTIVITY.Type.macro": "Macro",
     "DND5E.ACTIVITY.FIELDS.macro.macroCode.label": "Macro Code",
-    "DND5E.ACTIVITY.FIELDS.macro.macroCode.hint": "JavaScript code to execute when this activity is activated. Available variables: activity, item, actor"
+    "DND5E.ACTIVITY.FIELDS.macro.macroCode.hint": "JavaScript code to execute when this activity is activated. Available variables: activity, item, actor",
+
+    "DND5E.ACTIVITY.Type.hook": "Hook",
+    "DND5E.ACTIVITY.FIELDS.hook.manualTrigger.label": "Allow Manual Use",
+    "DND5E.ACTIVITY.FIELDS.hook.manualTrigger.hint": "Can this activity be manually triggered from the item?",
+    "DND5E.ACTIVITY.FIELDS.hook.activeHook.label": "Triggering Hook",
+    "DND5E.ACTIVITY.FIELDS.hook.activeHook.hint": "The hook that needs to be called to automatically trigger this activity",
+    "DND5E.ACTIVITY.FIELDS.hook.macroCode.label": "Macro Code",
+    "DND5E.ACTIVITY.FIELDS.hook.macroCode.hint": "JavaScript code to execute when this activity is activated. Available variables: activity, item, actor, hook, args"
 }

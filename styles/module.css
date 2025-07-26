@@ -1,25 +1,30 @@
-.dnd5e2.activity-macro .code-editor-wrapper {
+.dnd5e2.activity-macro .code-editor-wrapper,
+.dnd5e2.activity-hook .code-editor-wrapper {
     min-height: 150px;
 }
 
-.dnd5e2.activity-macro .window-content {
+.dnd5e2.activity-macro .window-content,
+.dnd5e2.activity-hook .window-content {
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
-.dnd5e2.activity-macro .sheet-tabs {
+.dnd5e2.activity-macro .sheet-tabs,
+.dnd5e2.activity-hook .sheet-tabs {
     flex-shrink: 0;
 }
 
-.dnd5e2.activity-macro .sheet-body {
+.dnd5e2.activity-macro .sheet-body,
+.dnd5e2.activity-hook .sheet-body {
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
-.dnd5e2.activity-macro .tab.active {
+.dnd5e2.activity-macro .tab.active,
+.dnd5e2.activity-hook .tab.active {
     height: 100%;
     display: flex !important;
     flex-direction: column;
