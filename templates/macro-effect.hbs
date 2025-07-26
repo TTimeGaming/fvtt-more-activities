@@ -1,9 +1,16 @@
 <section class="tab activity-{{ tab.id }} {{ tab.cssClass }}" data-tab="{{ tab.id }}" data-group="{{ tab.group }}">
-    <div class="form-group macro-editor-container">
-        <label for="macroCode">{{localize "DND5E.ACTIVITY.FIELDS.macro.macroCode.label"}}</label>
-        <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.macro.macroCode.hint"}}</p>
-        <div class="code-editor-wrapper">
-            <code-mirror name="macroCode" language="javascript" indent="2" aria-label="Macro Code">{{ macroCode }}</code-mirror>
+    <fieldset>
+        <legend><label> Macro </label></legend>
+
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.macro.macroCode.label"}}</label>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.macro.macroCode.hint"}}</p>
         </div>
-    </div>
+        
+        <div class="form-group macro-editor-container">
+            <div class="code-editor-wrapper">
+                <code-mirror name="macroCode" language="javascript" indent="2" aria-label="Macro Code">{{ macroCode }}</code-mirror>
+            </div>
+        </div>
+    </fieldset>
 </section>
