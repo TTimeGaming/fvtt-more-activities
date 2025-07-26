@@ -188,7 +188,7 @@ export class HookActivity extends dnd5e.documents.activity.ActivityMixin(HookAct
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
             type: `hook`,
-            img: `systems/dnd5e/icons/svg/activity/utility.svg`,
+            img: `modules/more-activities/icons/hook.svg`,
             title: `DND5E.ACTIVITY.Type.hook`,
             hint: `DND5E.ACTIVITY.Hint.hook`,
             sheetClass: HookActivitySheet

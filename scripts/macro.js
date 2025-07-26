@@ -81,7 +81,7 @@ export class MacroActivity extends dnd5e.documents.activity.ActivityMixin(MacroA
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
             type: `macro`,
-            img: `systems/dnd5e/icons/svg/activity/utility.svg`,
+            img: `modules/more-activities/icons/macro.svg`,
             title: `DND5E.ACTIVITY.Type.macro`,
             hint: `DND5E.ACTIVITY.Hint.macro`,
             sheetClass: MacroActivitySheet
