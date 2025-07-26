@@ -6,7 +6,8 @@ An extension to the D&D 5E system for FoundryVTT v13+ that provides additional a
 
 ### ✅ Available Now
 
-- **Macro Activity:** Adds inline Macro activities that execute automatically when the Activity is used.
+- **Macro Activity:** Adds inline macro activities that execute automatically when the Activity is used.
+- **Hook Activity:** Adds inline macro activities that execute on a specified hook, with support for manual usage.
 
 ### ⚠️ Current Limitations
 
@@ -15,7 +16,7 @@ An extension to the D&D 5E system for FoundryVTT v13+ that provides additional a
 ### 🚧 Coming Soon
 *There is no ETA for these features. This is a passion project and I cannot currently commit that much time to development.*
 
-- **Triggered Activity:** Intended to be utilise the in-built hooks system, to trigger activities automatically when a hook is fired.
+- There are currently no planned additional activities.
 
 ## 🚀 Quick Start
 
@@ -63,6 +64,9 @@ Your support helps fund:
 
 ### Macro Activity
 <img src="./assets/macro-activity.png" width="700" />
+
+### Hook Activity
+<img src="./assets/hook-activity.png" width="700" />
 
 ---
 
