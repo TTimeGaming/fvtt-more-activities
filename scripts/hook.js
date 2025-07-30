@@ -86,7 +86,14 @@ export class HookData {
         for (const activity of (item.system?.activities || [])) {
             if (activity.type != `hook`) continue;
             if (hookName != activity.activeHook) continue;
-
+            
+            switch (hookName) {
+                case `createItem`:
+                case `deleteItem`:
+                    if (item !== args[0]) continue;
+                    break;
+            }
+            
             activity.use(undefined, undefined, undefined, hookName, args);
         }
     }
