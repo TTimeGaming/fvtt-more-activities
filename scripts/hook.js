@@ -156,11 +156,11 @@ export class HookActivitySheet extends dnd5e.applications.activity.ActivitySheet
         const codeMirrorElement = this.element?.querySelector(`code-mirror[name="macroCode"]`);
         if (codeMirrorElement) {
             let saveTimeout;
-            codeMirrorElement.addEventListener('blur', () => {
+            codeMirrorElement.addEventListener(`blur`, () => {
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => this._saveMacroCode(), 100);
             });
-            codeMirrorElement.addEventListener('input', () => {
+            codeMirrorElement.addEventListener(`input`, () => {
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => this._saveMacroCode(), 1000);
             });
@@ -173,24 +173,24 @@ export class HookActivitySheet extends dnd5e.applications.activity.ActivitySheet
      */
     async _saveMacroCode() {
         try {
-            const codeMirrorElement = this.element?.querySelector('code-mirror[name="macroCode"]');
+            const codeMirrorElement = this.element?.querySelector(`code-mirror[name="macroCode"]`);
             if (!codeMirrorElement) return;
 
-            const newMacroCode = codeMirrorElement.value || "";
+            const newMacroCode = codeMirrorElement.value || ``;
             if (this.activity.macroCode !== newMacroCode) {
                 await this.activity.update({
-                    "macroCode": newMacroCode
+                    macroCode: newMacroCode
                 });
             }
         } catch (error) {
-            console.error("Error saving macro code:", error);
-            ui.notifications.error("Failed to save macro code: " + error.message);
+            console.error(`Error saving macro code:`, error);
+            ui.notifications.error(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.hook.macroCode.saveError`, { error: error }));
         }
     }
 }
 
 export class HookActivity extends dnd5e.documents.activity.ActivityMixin(HookActivityData) {
-    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, "DND5E.HOOK"];
+    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.HOOK`];
     
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
@@ -202,29 +202,8 @@ export class HookActivity extends dnd5e.documents.activity.ActivityMixin(HookAct
         }, { inplace: false })
     );
 
-    // Override the schema to add our macro code field
     static defineSchema() {
-        const fields = foundry.data.fields;
-        const schema = super.defineSchema();
-
-        schema.manualTrigger = new fields.BooleanField({
-            required: false,
-            initial: false,
-        });
-
-        schema.activeHook = new fields.StringField({
-            required: false,
-            blank: true,
-            initial: ``
-        });
-
-        schema.macroCode = new fields.StringField({
-            required: false,
-            blank: true,
-            initial: `// Write your macro code here\n// Available variables: activity, item, actor, hook, args\nconsole.log("Hook activity executed!", { activity, item, actor, hook, args });`
-        });
-
-        return schema;
+        return HookActivityData.defineSchema();
     }
 
     /**
@@ -248,7 +227,7 @@ export class HookActivity extends dnd5e.documents.activity.ActivityMixin(HookAct
     async _executeMacro(hookName, ...args) {
         const macroCode = this.macroCode;
         if (!macroCode || macroCode.trim() == ``) {
-            ui.notifications.warn(`No macro code defined for this activity.`);
+            ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.hook.macroCode.emptyError`));
             return;
         }
 
@@ -265,7 +244,7 @@ export class HookActivity extends dnd5e.documents.activity.ActivityMixin(HookAct
         }
         catch (error) {
             console.error(`Error executing macro activity:`, error);
-            ui.notifications.error(`Error executing macro: ${error.message}`);
+            ui.notifications.error(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.hook.macroCode.execError`, { error: error.message }));
         }
     }
 

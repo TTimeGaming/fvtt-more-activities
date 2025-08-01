@@ -43,11 +43,11 @@ export class MacroActivitySheet extends dnd5e.applications.activity.ActivityShee
         if (!codeMirrorElement) return;
 
         let saveTimeout;
-        codeMirrorElement.addEventListener('blur', () => {
+        codeMirrorElement.addEventListener(`blur`, () => {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => this._saveMacroCode(), 100);
         });
-        codeMirrorElement.addEventListener('input', () => {
+        codeMirrorElement.addEventListener(`input`, () => {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => this._saveMacroCode(), 1000);
         });
@@ -59,24 +59,24 @@ export class MacroActivitySheet extends dnd5e.applications.activity.ActivityShee
      */
     async _saveMacroCode() {
         try {
-            const codeMirrorElement = this.element?.querySelector('code-mirror[name="macroCode"]');
+            const codeMirrorElement = this.element?.querySelector(`code-mirror[name="macroCode"]`);
             if (!codeMirrorElement) return;
 
-            const newMacroCode = codeMirrorElement ? codeMirrorElement.value : "";
+            const newMacroCode = codeMirrorElement ? codeMirrorElement.value : ``;
             if (this.activity.macroCode !== newMacroCode) {
                 await this.activity.update({
-                    "macroCode": newMacroCode
+                    macroCode: newMacroCode
                 });
             }
         } catch (error) {
-            console.error("Error saving macro code:", error);
-            ui.notifications.error("Failed to save macro code: " + error.message);
+            console.error(`Error saving macro code:`, error);
+            ui.notifications.error(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.macro.macroCode.saveError`, { error: error.message }));
         }
     }
 }
 
 export class MacroActivity extends dnd5e.documents.activity.ActivityMixin(MacroActivityData) {
-    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, "DND5E.MACRO"];
+    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.MACRO`];
 
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
@@ -88,18 +88,8 @@ export class MacroActivity extends dnd5e.documents.activity.ActivityMixin(MacroA
         }, { inplace: false })
     );
 
-    // Override the schema to add our macro code field
     static defineSchema() {
-        const fields = foundry.data.fields;
-        const schema = super.defineSchema();
-
-        schema.macroCode = new fields.StringField({
-            required: false,
-            blank: true,
-            initial: `// Write your macro code here\n// Available variables: activity, item, actor\nconsole.log("Macro activity executed!", { activity, item, actor });`
-        });
-
-        return schema;
+        return MacroActivityData.defineSchema();
     }
 
     /**
@@ -123,7 +113,7 @@ export class MacroActivity extends dnd5e.documents.activity.ActivityMixin(MacroA
     async _executeMacro() {
         const macroCode = this.macroCode;
         if (!macroCode || macroCode.trim() == ``) {
-            ui.notifications.warn(`No macro code defined for this activity.`);
+            ui.notifications.error(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.macro.macroCode.emptyError`));
             return;
         }
 
@@ -140,7 +130,7 @@ export class MacroActivity extends dnd5e.documents.activity.ActivityMixin(MacroA
         }
         catch (error) {
             console.error(`Error executing macro activity:`, error);
-            ui.notifications.error(`Error executing macro: ${error.message}`);
+            ui.notifications.error(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.macro.macroCode.execError`, { error: error.message }));
         }
     }
 

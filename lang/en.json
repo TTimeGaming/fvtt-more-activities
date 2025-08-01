@@ -2,6 +2,9 @@
     "DND5E.ACTIVITY.Type.macro": "Macro",
     "DND5E.ACTIVITY.FIELDS.macro.macroCode.label": "Macro Code",
     "DND5E.ACTIVITY.FIELDS.macro.macroCode.hint": "JavaScript code to execute when this activity is activated. Available variables: activity, item, actor",
+    "DND5E.ACTIVITY.FIELDS.macro.macroCode.saveError": "Failed to save macro code: {error}",
+    "DND5E.ACTIVITY.FIELDS.macro.macroCode.emptyError": "No macro code defined for this activity.",
+    "DND5E.ACTIVITY.FIELDS.macro.macroCode.execError": "Error executing macro: {error}",
 
     "DND5E.ACTIVITY.Type.hook": "Hook",
     "DND5E.ACTIVITY.FIELDS.hook.manualTrigger.label": "Allow Manual Use",
@@ -9,5 +12,8 @@
     "DND5E.ACTIVITY.FIELDS.hook.activeHook.label": "Triggering Hook",
     "DND5E.ACTIVITY.FIELDS.hook.activeHook.hint": "The hook that needs to be called to automatically trigger this activity",
     "DND5E.ACTIVITY.FIELDS.hook.macroCode.label": "Macro Code",
-    "DND5E.ACTIVITY.FIELDS.hook.macroCode.hint": "JavaScript code to execute when this activity is activated. Available variables: activity, item, actor, hook, args"
+    "DND5E.ACTIVITY.FIELDS.hook.macroCode.hint": "JavaScript code to execute when this activity is activated. Available variables: activity, item, actor, hook, args",
+    "DND5E.ACTIVITY.FIELDS.hook.macroCode.saveError": "Failed to save macro code: {error}",
+    "DND5E.ACTIVITY.FIELDS.hook.macroCode.emptyError": "No macro code defined for this activity.",
+    "DND5E.ACTIVITY.FIELDS.hook.macroCode.execError": "Error executing macro: {error}"
 }
