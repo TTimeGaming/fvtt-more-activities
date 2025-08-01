@@ -83,6 +83,8 @@ export class HookData {
     }
 
     static _checkForHook(item, hookName, ...args) {
+        const localArgs = args.flat(Infinity);
+
         for (const activity of (item.system?.activities || [])) {
             if (activity.type != `hook`) continue;
             if (hookName != activity.activeHook) continue;
@@ -90,7 +92,7 @@ export class HookData {
             switch (hookName) {
                 case `createItem`:
                 case `deleteItem`:
-                    if (item !== args[0]) continue;
+                    if (item !== localArgs[0]) continue;
                     break;
             }
             
