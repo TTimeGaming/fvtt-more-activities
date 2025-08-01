@@ -1,0 +1,116 @@
+<section class="tab activity-{{ tab.id }} {{ tab.cssClass }}" data-tab="{{ tab.id }}" data-group="{{ tab.group }}">
+    <fieldset>
+        <legend><label> Configuration </label></legend>
+
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.tieCondition.label"}}</label>
+            <div class="form-fields">
+                <select name="tieCondition">
+                    {{#each tieConditionOptions as |option|}}
+                    <option value="{{ option.value }}" {{#if (eq ../tieCondition option.value)}}selected{{/if}}>
+                        {{ option.label }}
+                    </option>
+                    {{/each}}
+                </select>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.tieCondition.hint"}}</p>
+        </div>
+
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.allowPlayerTargeting.label"}}</label>
+            <div class="form-fields">
+                <dnd5e-checkbox name="allowPlayerTargeting" {{#if allowPlayerTargeting}}checked{{/if}}></dnd5e-checkbox>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.allowPlayerTargeting.hint"}}</p>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend><label> Attacker </label></legend>
+
+        <div class="form-group stacked">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.label.label"}}</label>
+            <div class="form-fields">
+                <input type="text" name="attackerLabel" value="{{ attackerLabel }}" placeholder="Attacker">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.rollType.label"}}</label>
+            <div class="form-fields">
+                <select name="attackerRollType">
+                    <option value="ability" {{#if (eq attackerRollType "ability")}}selected{{/if}}>Ability Check</option>
+                    <option value="skill" {{#if (eq attackerRollType "skill")}}selected{{/if}}>Skill Check</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group stacked">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.label"}}</label>
+            <div class="form-fields">
+                <multi-select name="attackerOptions">
+                {{#if (eq attackerRollType "ability")}}
+                    {{#each rollTypeOptions.ability as |option|}}
+                    <option value="{{ option.value }}" {{#if (includes ../attackerOptions option.value)}}selected{{/if}}>
+                        {{ option.label }}
+                    </option>
+                    {{/each}}
+                {{/if}}
+                {{#if (eq attackerRollType "skill")}}
+                    {{#each rollTypeOptions.skill as |option|}}
+                    <option value="{{ option.value }}" {{#if (includes ../attackerOptions option.value)}}selected{{/if}}>
+                        {{ option.label }}
+                    </option>
+                    {{/each}}
+                {{/if}}
+                </multi-select>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.hint"}}</p>
+        </div>
+    </fieldset>
+    </fieldset>
+
+    <fieldset>
+        <legend><label> Defender </label></legend>
+
+        <div class="form-group stacked">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.label.label"}}</label>
+            <div class="form-fields">
+                <input type="text" name="defenderLabel" value="{{ defenderLabel }}" placeholder="Defender">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.rollType.label"}}</label>
+            <div class="form-fields">
+                <select name="defenderRollType">
+                    <option value="ability" {{#if (eq defenderRollType "ability")}}selected{{/if}}>Ability Check</option>
+                    <option value="skill" {{#if (eq defenderRollType "skill")}}selected{{/if}}>Skill Check</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group stacked">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.label"}}</label>
+            <div class="form-fields">
+                <multi-select name="defenderOptions">
+                    {{#if (eq defenderRollType "ability")}}
+                    {{#each rollTypeOptions.ability as |option|}}
+                    <option value="{{ option.value }}" {{#if (includes ../defenderOptions option.value)}}selected{{/if}}>
+                        {{ option.label }}
+                    </option>
+                    {{/each}}
+                {{/if}}
+                {{#if (eq defenderRollType "skill")}}
+                    {{#each rollTypeOptions.skill as |option|}}
+                    <option value="{{ option.value }}" {{#if (includes ../defenderOptions option.value)}}selected{{/if}}>
+                        {{ option.label }}
+                    </option>
+                    {{/each}}
+                {{/if}}
+                </multi-select>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.hint"}}</p>
+        </div>
+    </fieldset>
+</section>

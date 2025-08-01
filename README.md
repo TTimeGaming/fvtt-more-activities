@@ -8,6 +8,7 @@ An extension to the D&D 5E system for FoundryVTT v13+ that provides additional a
 
 - **Macro Activity:** Adds inline macro activities that execute automatically when the Activity is used.
 - **Hook Activity:** Adds inline macro activities that execute on a specified hook, with support for manual usage.
+- **Contested Activity:** Adds chat cards that allow for configurable contested rolls
 
 ### ⚠️ Current Limitations
 
@@ -67,6 +68,10 @@ Your support helps fund:
 
 ### Hook Activity
 <img src="./assets/hook-activity.png" width="700" />
+
+### Contested Activity
+<img src="./assets/contested-activity.png" width="700" />
+<img src="./assets/contested-picker.png" width="700" />
 
 ---
 
