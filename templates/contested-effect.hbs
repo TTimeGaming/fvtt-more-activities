@@ -113,4 +113,36 @@
             <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.hint"}}</p>
         </div>
     </fieldset>
+
+    <fieldset>
+        <legend><label> Effects </label></legend>
+        
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.label"}}</label>
+            <div class="form-fields">
+                <select name="applyEffectsTo">
+                    {{#each applyEffectsToOptions as |option|}}
+                    <option value="{{ option.value }}" {{#if (eq ../applyEffectsTo option.value)}}selected{{/if}}>
+                        {{ option.label }}
+                    </option>
+                    {{/each}}
+                </select>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.hint"}}</p>
+        </div>
+
+        <div class="form-group stacked">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.label"}}</label>
+            <div class="form-fields">
+                <multi-select name="appliedEffects">
+                    {{#each availableEffects as |effect|}}
+                    <option value="{{ effect.id }}" {{#if (includes ../appliedEffects effect.id)}}selected{{/if}}>
+                        {{ effect.name }}
+                    </option>
+                    {{/each}}
+                </multi-select>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.hint"}}</p>
+        </div>
+    </fieldset>
 </section>

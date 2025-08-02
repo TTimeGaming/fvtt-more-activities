@@ -33,19 +33,74 @@
             <!-- Defender Section -->
             <div class="contest-side defender-side">
                 <h4>{{ defenderLabel }}</h4>
+
+                {{#if hasDefenderSelection}}
+                <div class="defender-selection">
+                    <label for="defender-select">Select Defender:</label>
+                    <select id="defender-select" name="selectedDefender">
+                        <option value="">-- Choose Defender --</option>
+
+                        {{#if defendersData.targets.length}}
+                        <optgroup label="Targeted Actors">
+                            {{#each defendersData.targets as |defender|}}
+                            <option value="{{ defender.id }}" {{#if (eq defender.id ../defendersData.selectedDefenderId)}}selected{{/if}}>
+                                {{ defender.name }}
+                            </option>
+                            {{/each}}
+                        </optgroup>
+                        {{/if}}
+
+                        {{#if (and isGM defendersData.allTokens.length)}}
+                        <optgroup label="Scene Tokens">
+                            {{#each defendersData.allTokens as |defender|}}
+                            <option value="{{ defender.id }}" {{#if (eq defender.id ../defendersData.selectedDefenderId)}}selected{{/if}}>
+                                {{ defender.name }}
+                            </option>
+                            {{/each}}
+                        </optgroup>
+                        {{/if}}
+
+                        {{#if (and (or allowPlayerTargeting isGM) defendersData.playerCharacters.length)}}
+                        <optgroup label="{{#if isGM}}Player{{else}}Your{{/if}} Characters">
+                            {{#each defendersData.playerCharacters as |defender|}}
+                            <option value="{{ defender.id }}" {{#if (eq defender.id ../defendersData.selectedDefenderId)}}selected{{/if}}>
+                                {{ defender.name }}
+                            </option>
+                            {{/each}}
+                        </optgroup>
+                        {{/if}}
+
+                        {{#if (and (or allowPlayerTargeting isGM) defendersData.nonPlayerCharacters.length)}}
+                        <optgroup label="{{#if isGM}}Player{{else}}Your{{/if}} NPCs">
+                            {{#each defendersData.nonPlayerCharacters as |defender|}}
+                            <option value="{{ defender.id }}" {{#if (eq defender.id ../defendersData.selectedDefenderId)}}selected{{/if}}>
+                                {{ defender.name }}
+                            </option>
+                            {{/each}}
+                        </optgroup>
+                        {{/if}}
+                    </select>
+                </div>
+                {{/if}}
                 
                 {{#if defenderRoll}}
                     <div class="roll-result">
                         <div class="dice-total">{{ defenderRoll.total }}</div>
                     </div>
                 {{else}}
+                    {{#if (or selectedDefender (not hasDefenderSelection))}}
                     <div class="roll-buttons">
                         {{#each defenderOptions as |option|}}
-                        <button class="contested-roll-button" data-side="defender" data-option="{{ option.key }}">
+                        <button class="contested-roll-button" data-side="defender" data-option="{{ option.key }}" {{#unless ../selectedDefender}}{{#if ../hasDefenderSelection}}disabled{{/if}}{{/unless}}>
                             {{ option.label }}
                         </button>
                         {{/each}}
                     </div>
+                    {{else}}
+                    <div class="roll-buttons">
+                        <p class="hint">{{localize "DND5E.ACTIVITY.MESSAGE.contested.defender"}}</p>
+                    </div>
+                    {{/if}}
                 {{/if}}
             </div>
         </div>
