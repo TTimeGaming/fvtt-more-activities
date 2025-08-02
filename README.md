@@ -1,5 +1,7 @@
 ## More Activities
 
+![Latest](https://img.shields.io/badge/Module%20Version:%201.2.1-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)  
+
 An extension to the D&D 5E system for FoundryVTT v13+ that provides additional activity types.
 
 ## 🌟 Features
@@ -40,8 +42,8 @@ An extension to the D&D 5E system for FoundryVTT v13+ that provides additional a
 
 ## 📋 Requirements
 
-- **Foundry VTT:** Version 13 or higher (verified 13.346)
-- **D&D 5E System:** Version 5.0.0 or higher (verified 5.0.4)
+![Foundry](https://img.shields.io/badge/Foundry%20Version%2013%20(Verified%2013.346)-ee9b3a?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
+![D&D](https://img.shields.io/badge/DND%20Version%205%20(Verified%205.0.4)-e50712?style=for-the-badge&logo=dungeonsanddragons&logoColor=white)
 
 ## 📄 License
 
@@ -71,7 +73,7 @@ Your support helps fund:
 
 ### Contested Activity
 <img src="./assets/contested-activity.png" width="700" />
-<img src="./assets/contested-picker.png" width="700" />
+<img src="./assets/contested-picker.png" height="400" />
 
 ---
 
