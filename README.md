@@ -1,6 +1,6 @@
 ## More Activities
 
-![Latest](https://img.shields.io/badge/Module%20Version:%201.2.1-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)  
+![Latest](https://img.shields.io/badge/Module%20Version:%201.3.0-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)  
 
 An extension to the D&D 5E system for FoundryVTT v13+ that provides additional activity types.
 
@@ -11,6 +11,7 @@ An extension to the D&D 5E system for FoundryVTT v13+ that provides additional a
 - **Macro Activity:** Adds inline macro activities that execute automatically when the Activity is used.
 - **Hook Activity:** Adds inline macro activities that execute on a specified hook, with support for manual usage.
 - **Contested Activity:** Adds chat cards that allow for configurable contested rolls
+- **Chain Activity:** Adds the ability to chain multiple activities together with a confirmation to proceed
 
 ### ⚠️ Current Limitations
 
@@ -74,6 +75,9 @@ Your support helps fund:
 ### Contested Activity
 <img src="./assets/contested-activity.png" width="700" />
 <img src="./assets/contested-picker.png" height="400" />
+
+### Chain Activity
+<img src="./assets/chain-activity.png" width="700" />
 
 ---
 
