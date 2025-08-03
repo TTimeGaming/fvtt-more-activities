@@ -1,12 +1,14 @@
 import { MacroActivityData, MacroActivitySheet, MacroActivity } from './macro.js';
 import { HookActivityData, HookActivitySheet, HookActivity, HookData } from './hook.js';
 import { ContestedActivityData, ContestedActivitySheet, ContestedActivity, ContestedData } from './contested.js';
+import { ChainActivityData, ChainActivitySheet, ChainActivity, ChainData } from './chain.js';
 
 Hooks.once(`init`, async() => {
     console.log(`More Activities | Initializing`);
 
     await HookData.init();
     await ContestedData.init();
+    await ChainData.init();
 
     CONFIG.DND5E.activityTypes.macro = {
         documentClass: MacroActivity,
@@ -29,13 +31,25 @@ Hooks.once(`init`, async() => {
         typeLabel: `DND5E.ACTIVITY.Type.contested`,
     };
 
-    console.log(`More Activities | Registered (3) Activity Types`);
+    CONFIG.DND5E.activityTypes.chain = {
+        documentClass: ChainActivity,
+        dataModel: ChainActivityData,
+        sheetClass: ChainActivitySheet,
+        typeLabel: `DND5E.ACTIVITY.Type.chain`,
+    };
+
+    console.log(`More Activities | Registered (4) Activity Types`);
 });
 
-Hooks.on(`renderActivityChoiceDialog`, (dialog, html, config, options) => {
+Hooks.on(`renderActivityChoiceDialog`, (dialog, html) => {
     HookData.removeActivities(dialog.item, html);
+    ChainData.removeActivities(dialog.item, html);
 });
 
 Hooks.on(`renderChatMessageHTML`, (message, html) => {
     ContestedData.applyListeners(message, html);
+});
+
+Hooks.on(`renderActivitySheet`, (sheet, html) => {
+    ChainData.disableChained(sheet, html);
 });

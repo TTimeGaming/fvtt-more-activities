@@ -1,0 +1,69 @@
+{{!-- templates/chain-effect.hbs --}}
+<section class="tab activity-{{ tab.id }} {{ tab.cssClass }}" data-tab="{{ tab.id }}" data-group="{{ tab.group }}">
+    <fieldset>
+        <legend><label> Activities </label></legend>
+
+        <div class="form-group">
+            <label>Available Activities</label>
+            <div class="form-fields add-activity-controls">
+                <select name="newActivity">
+                    <option value="">-- Select Activity --</option>
+                    {{#if availableActivities}}
+                    {{#each availableActivities as |activity|}}
+                    {{#unless activity.isChained}}
+                    <option value="{{ activity.id }}">{{ activity.name }} ({{ activity.type }})</option>
+                    {{/unless}}
+                    {{/each}}
+                    {{/if}}
+                </select>
+            </div>
+        </div>
+        
+        {{#if chainedActivities.length}}
+        <div class="chained-activities-list">
+            {{#each chainedActivities as |chainedActivity index|}}
+            <div class="chained-activity-item" data-index="{{ index }}">
+                <div class="activity-header">
+                    <div class="activity-info">
+                        <span class="activity-name">
+                            {{#if chainedActivity.exists}}
+                                {{ chainedActivity.resolvedName }}
+                            {{else}}
+                                <span class="missing-activity">{{ chainedActivity.resolvedName }} (Missing)</span>
+                            {{/if}}
+                        </span>
+                    </div>
+                    <div class="activity-meta-controls">
+                        <div class="activity-type-info">
+                            {{#if chainedActivity.icon}}
+                            <img src="{{ chainedActivity.icon }}" alt="{{ chainedActivity.activityType }}" class="activity-type-icon" />
+                            {{else}}
+                            <i class="activity-type-icon fas fa-cog"></i>
+                            {{/if}}
+                            <span class="activity-type">{{ chainedActivity.activityType }}</span>
+                        </div>
+                        <div class="activity-controls">
+                            {{#unless (eq index 0)}}
+                            <button type="button" class="move-up-btn" data-index="{{ index }}" title="Move Up">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
+                            {{/unless}}
+                            {{#unless (eq index (subtract ../chainedActivities.length 1))}}
+                            <button type="button" class="move-down-btn" data-index="{{ index }}" title="Move Down">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            {{/unless}}
+                            <button type="button" class="remove-activity-btn" data-index="{{ index }}" title="Remove">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+        {{else}}
+        <p class="hint">No activities in chain. Add activities above to build your chain.</p>
+        {{/if}}
+    </fieldset>
+</section>

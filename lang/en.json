@@ -35,5 +35,13 @@
     "DND5E.ACTIVITY.MESSAGE.contested.defender": "Select a defender above to see available options.",
     "DND5E.ACTIVITY.MESSAGE.contested.result.victory": "{side} Wins!",
     "DND5E.ACTIVITY.MESSAGE.contested.result.tie": "Tie - No Outcome",
-    "DND5E.ACTIVITY.MESSAGE.contested.result.reroll": "Tie - Reroll Required"
+    "DND5E.ACTIVITY.MESSAGE.contested.result.reroll": "Tie - Reroll Required",
+
+    "DND5E.ACTIVITY.Type.chain": "Chain",
+    "DND5E.ACTIVITY.FIELDS.chain.blockedActivity.label": "Activation settings are controlled by a Chain activity.",
+    "DND5E.ACTIVITY.FIELDS.chain.completed.label": "has been executed.",
+    "DND5E.ACTIVITY.FIELDS.chain.nextAction.label": "Complete any necessary rolls or interactions, then choose whether to continue the chain.",
+    "DND5E.ACTIVITY.FIELDS.chain.queued.label": "The next activity in the chain is",
+    "DND5E.ACTIVITY.FIELDS.chain.button.next": "Continue Chain",
+    "DND5E.ACTIVITY.FIELDS.chain.button.stop": "Stop Chain"
 }
