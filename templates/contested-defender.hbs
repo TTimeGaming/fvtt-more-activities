@@ -1,0 +1,29 @@
+<div class="contested-defender">
+    <div class="contest-info">
+        <header class="message-header flexrow">
+            <div class="message-sender">
+                <a class="avatar">
+                    <img src="{{ actor.img }}" alt="{{ actor.name }}">
+                </a>
+                <span class="name-stacked">
+                    <span class="title">{{ actor.name }}</span>
+                    <span class="subtitle">{{ side }}</span>
+                </span>
+            </div>
+        </header>
+    </div>
+    
+    <fieldset>
+        <legend><label> Select Roll </label></legend>
+
+        <div class="form-group">
+            <div class="roll-options">
+                {{#each rollOptions as |option|}}
+                <button class="roll-option-btn" data-option="{{ option.key }}">
+                    {{ option.label }}
+                </button>
+                {{/each}}
+            </div>
+        </div>
+    </fieldset>
+</div>

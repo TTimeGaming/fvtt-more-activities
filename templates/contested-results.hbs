@@ -1,0 +1,60 @@
+<div class="dnd5e2 chat-card contested-results">
+    <section class="card-header description collapsible">
+        <header class="summary">
+            <img class="gold-icon" src="{{ activity.item.img }}" alt="{{ activity.item.name }}">
+            <div class="name-stacked border">
+                <span class="title">{{ activity.item.name }}</span>
+                <span class="subtitle">Contest Results</span>
+            </div>
+        </header>
+    </section>
+    
+    <div class="card-content">
+        <section class="card-content collapsible">
+            <div class="wrapper">
+                <div class="contest-results-list">
+                    <div class="contest-result-row initiator-row">
+                        <div class="result-summary">
+                            <span class="actor-name">{{ activity.attackerLabel }}:</span>
+                            <span class="roll-total">{{ initiatorRoll.total }}</span>
+                        </div>
+                        <div class="result-details">
+                            <div class="roll-breakdown">
+                                <strong>{{ initiatorRoll.rollLabel }}:</strong>
+                                <span class="roll-formula">{{ initiatorRoll.formula }}</span>
+                                <div class="roll-result">
+                                    {{#each initiatorResults as |result| }}
+                                    <strong>{{ result }}</strong>
+                                    {{/each}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {{#each defenderRolls as |defenderRoll|}}
+                    <div class="contest-result-row defender-row">
+                        <div class="result-summary">
+                            <span class="actor-name">{{ defenderRoll.actor.name }}:</span>
+                            <span class="result-indicator {{#if defenderRoll.won}}win{{else if defenderRoll.lost}}loss{{else}}draw{{/if}}">
+                                {{#if defenderRoll.won}}(W){{else if defenderRoll.lost}}(L){{else}}(D){{/if}}
+                            </span>
+                            <span class="roll-total">{{ defenderRoll.roll.total }}</span>
+                        </div>
+                        <div class="result-details">
+                            <div class="roll-breakdown">
+                                <strong>{{ defenderRoll.roll.rollLabel }}:</strong>
+                                <span class="roll-formula">{{ defenderRoll.roll.formula }}</span>
+                                <div class="roll-result">
+                                    {{#each defenderRoll.results as |result| }}
+                                    <strong>{{ result }}</strong>
+                                    {{/each}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

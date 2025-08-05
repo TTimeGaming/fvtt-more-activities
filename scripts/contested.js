@@ -1,86 +1,344 @@
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
 export class ContestedData {
     static async init() {
         Handlebars.registerHelper(`includes`, function(array, value) {
             return Array.isArray(array) && array.includes(value);
         });
 
-        Handlebars.registerHelper(`formatBonus`, function(value) {
-            if (value === undefined || value == null) return ``;
-
-            const num = parseInt(value);
-            return isNaN(num) ? `` : num >= 0 ? `(+${num})` : `(${num})`;
-        });
+        await ContestedManager.init();
     }
 
     static applyListeners(message, html) {
-        if (!message.flags[`more-activities`]?.type === `contested`) return;
+        $(html).find('.contested-results .result-summary').click(function() {
+            const row = $(this).closest('.contest-result-row');
+            row.toggleClass('expanded');
+        });
+    }
 
-        $(html).find(`.defender-selection select`).change(async(event) => {
-            const selectElement = event.currentTarget;
-            const selectedActorId = selectElement.value;
-            const activityId = message.flags[`more-activities`].activityId;
-            const itemId = message.flags[`more-activities`].itemId;
-            const actorId = message.flags[`more-activities`].actorId;
+    /**
+     * Get human-readable labels for roll options with bonuses
+     * @param {string} rollType - The type of roll (ability, skill, tool)
+     * @param {string[]} options - Array of option keys
+     * @param {Actor5e} actor - Actor to get bonuses for (optional)
+     * @returns {Object[]}
+     * @private
+     */
+    static getOptionLabels(rollType, options, actor = null) {
+        const config = {
+            ability: CONFIG.DND5E.abilities,
+            skill: CONFIG.DND5E.skills,
+        };
 
-            const actor = game.actors.get(actorId);
-            const item = actor?.items.get(itemId);
-            const activity = item?.system.activities.get(activityId);
+        return options.map(option => {
+            const optionConfig = config[rollType][option];
+            let label = optionConfig?.label || optionConfig || option;
 
-            if (!activity || !selectedActorId) return;
+            if (!actor) {
+                return {
+                    key: option,
+                    label: label
+                };
+            }
 
-            const defender = game.actors.get(selectedActorId);
-            await activity.updateDefenderOptions(message, defender);
+            try {
+                let bonus = null;
+                switch (rollType) {
+                    case `ability`:
+                        bonus = actor.system.abilities[option]?.mod;
+                        break;
+                    case `skill`:
+                        bonus = actor.system.skills[option]?.total;
+                        break;
+                }
+
+                if (bonus !== undefined && bonus != null) {
+                    const formatted = bonus >= 0 ? `+${bonus}` : `${bonus}`;
+                    label += ` (${formatted})`;
+                }
+            }
+            catch(error) {
+            }
+
+            return {
+                key: option,
+                label: label
+            };
+        });
+    }
+}
+
+class ContestedManager {
+    static contests = new Map();
+
+    static async init() {
+        game.socket.on(`module.more-activities`, (data) => {
+            switch (data.type) {
+                case `createActivity`:
+                    this._createContest(data);
+                    break;
+                case `promptDefender`:
+                    this._promptDefender(data);
+                    break;
+                case `recordRoll`:
+                    this._recordRoll(data);
+                    break;
+                case `deleteContest`:
+                    this._deleteContest(data);
+                    break;
+                case `generateResult`:
+                    this._generateResultsCard(data);
+                    break;
+            }
+        });
+    }
+
+    static createContest(activity) {
+        const contestId = foundry.utils.randomID();
+        const data = {
+            type: `createActivity`,
+            contestId: contestId,
+            initiatorId: activity.actor?.id,
+            activityData: {
+                id: activity.id,
+                name: activity.name,
+                itemId: activity.item?.id,
+                itemName: activity.item?.name,
+                attackerRollType: activity.attackerRollType,
+                defenderRollType: activity.defenderRollType,
+                attackerOptions: activity.attackerOptions,
+                defenderOptions: activity.defenderOptions,
+            },
+        };
+
+        game.socket.emit(`module.more-activities`, data);
+        return this._createContest(data);
+    }
+
+    static async promptDefender(contestId, defender) {
+        const data = {
+            type: `promptDefender`,
+            contestId: contestId,
+            defenderId: defender.id,
+        };
+
+        game.socket.emit(`module.more-activities`, data);
+        this._promptDefender(data);
+    }
+
+    static async recordRoll(contestId, actorId, rollData) {
+        const data = {
+            type: `recordRoll`,
+            contestId: contestId,
+            actorId: actorId,
+            rollData: rollData,
+        };
+
+        game.socket.emit(`module.more-activities`, data);
+        this._recordRoll(data);
+
+        const contest = this.contests.get(contestId);
+        if (!contest || contest.rolls.size < contest.defenders.length + 1) return;
+
+        const resultData = {
+            type: `generateResult`,
+            contestId: contestId,
+        };
+        game.socket.emit(`module.more-activities`, resultData);
+        this._generateResultsCard(resultData);
+
+        const deleteData = {
+            type: `deleteContest`,
+            contestId: contestId,
+        };
+
+        game.socket.emit(`module.more-activities`, deleteData);
+        this._deleteContest(deleteData);
+    }
+
+    static _createContest(data) {
+        const contest = {
+            id: data.contestId,
+            initiatorId: data.initiatorId,
+            activityData: data.activityData,
+            defenders: [],
+            rolls: new Map(),
+        };
+        this.contests.set(data.contestId, contest);
+        return contest;
+    }
+
+    static _promptDefender(data) {
+        const contest = this.contests.get(data.contestId);
+        if (!contest) return;
+
+        contest.defenders.push(data.defenderId);
+        
+        const user = this._getUserForActor(data.defenderId);
+        if (user?.id !== game.userId) return;
+
+        this._handleDefenderApp(data.contestId, data.defenderId);
+    }
+
+    static async _recordRoll(data) {
+        const contest = this.contests.get(data.contestId);
+        if (!contest) return;
+
+        switch (data.rollData.rollType) {
+            case `ability`:
+                data.rollData.rollLabel = CONFIG.DND5E.abilities[data.rollData.option].label;
+                break;
+            case `skill`:
+                data.rollData.rollLabel = CONFIG.DND5E.skills[data.rollData.option].label;
+                break;
+        }
+
+        contest.rolls.set(data.actorId, data.rollData);
+    }
+
+    static _deleteContest(data) {
+        this.contests.delete(data.contestId);
+    }
+
+    static _handleDefenderApp(contestId, actorId) {
+        const contest = this.contests.get(contestId);
+        if (!contest) return;
+
+        const actor = game.actors.get(actorId);
+        if (!actor) return;
+
+        new ContestedDefenderApp(contestId, actor, `defender`).render(true);
+    }
+
+    static async _generateResultsCard(data) {
+        const contest = this.contests.get(data.contestId);
+        if (!contest) return;
+
+        const user = this._getUserForActor(contest.initiatorId);
+        if (user?.id !== game.userId) return;
+
+        const initiatorRoll = contest.rolls.get(contest.initiatorId);
+        const defenderRolls = contest.defenders.map(defenderId => {
+            const roll = contest.rolls.get(defenderId);
+            const won = roll.total > initiatorRoll.total;
+            const lost = roll.total < initiatorRoll.total;
+
+            const results = [];
+            for (const term of roll.roll.terms) {
+                if (!term.results) continue;
+
+                for (const result of term.results)
+                    results.push(result.result);
+            }
+            
+            const actor = game.actors.get(defenderId);
+            return {
+                actor: actor,
+                roll: roll,
+                results: results,
+                won: won,
+                lost: lost
+            };
         });
 
-        $(html).find(`.contested-roll-button`).click(async(event) => {
-            event.preventDefault();
+        const results = [];
+        for (const term of initiatorRoll.roll.terms) {
+            if (!term.results) continue;
 
-            const button = event.currentTarget;
-            const side = button.dataset.side;
-            const rollOption = button.dataset.option;
-            const activityId = message.flags[`more-activities`].activityId;
-            const itemId = message.flags[`more-activities`].itemId;
-            const actorId = message.flags[`more-activities`].actorId;
+            for (const result of term.results)
+                results.push(result.result);
+        }
 
-            const actor = game.actors.get(actorId);
-            const item = actor?.items.get(itemId);
-            const activity = item?.system.activities.get(activityId);
+        const initiator = game.actors.get(contest.initiatorId);
+        const item = initiator.items.get(contest.activityData.itemId);
+        const activity = item.system.activities.get(contest.activityData.id);
+    
+        const templateData = {
+            activity: activity,
+            initiatorRoll: initiatorRoll,
+            initiatorResults: results,
+            defenderRolls: defenderRolls
+        };
+        
+        const content = await foundry.applications.handlebars.renderTemplate(`modules/more-activities/templates/contested-results.hbs`, templateData);
+        ChatMessage.create({
+            content: content,
+            speaker: ChatMessage.getSpeaker({ actor: initiator })
+        });
 
-            if (!activity) {
-                ui.notifications.error(`Could not find the contested check activity.`);
+        this._applyContestEffects(contest, activity, templateData);
+    }
+    
+    static async _applyContestEffects(contest, activity, templateData) {
+        if (activity.appliedEffects.length === 0) return;
+
+        console.log(contest);
+        console.log(activity);
+        console.log(templateData);
+
+        const attackerActor = contest.initiator;
+        for (const defender of templateData.defenderRolls) {
+            const defenderActor = defender.actor;
+            if (!defenderActor) continue;
+
+            const winner = defender.lost ? attackerActor : defenderActor;
+            const loser = defender.lost ? defenderActor : attackerActor;
+
+            let targetActor = null;
+            switch (activity.applyEffectsTo) {
+                case `loserAttacker`:
+                    if (!defender.lost) targetActor = loser;
+                    break;
+                case `loserDefender`:
+                    if (defender.lost) targetActor = loser;
+                    break;
+                case `loser`:
+                    targetActor = loser;
+                    break;
+                case `winnerAttacker`:
+                    if (defender.lost) targetActor = winner;
+                    break;
+                case `winnerDefender`:
+                    if (!defender.lost) targetActor = winner;
+                    break;
+                case `winner`:
+                    targetActor = winner;
+                    break;
+            }
+
+            if (targetActor == null) {
+                console.warn('Cannot apply effects: cannot identify target');
                 return;
             }
 
-            let targetActor = actor;
-            if (side === `defender`) {
-                const defenderSelect = $(event.target).closest(`.chat-message`).find(`.defender-selection select`);
-                const selectedActorId = defenderSelect.val();
-                if (selectedActorId)
-                    targetActor = game.actors.get(selectedActorId);
+            const item = activity?.item;
+            for (const effectId of activity.appliedEffects) {
+                const effect = item?.effects?.get(effectId);
+                if (!effect) {
+                    console.warn(`Effect ${effectId} not found on item ${item?.name}`);
+                    continue;
+                }
+                
+                try {
+                    const effectData = effect.toObject();
+                    effectData.origin = item?.uuid;
+                    await targetActor.createEmbeddedDocuments(`ActiveEffect`, [ effectData ]);
+                    ui.notifications.info(`Applied ${effect.name} to ${targetActor.name}`);
+                }
+                catch (error) {
+                    console.error(`Failed to apply effect ${effect.name} to ${targetActor.name}:`, error);
+                    ui.notifications.error(`Failed to apply effect ${effect.name} to ${targetActor.name}`);
+                }
             }
+        }
+    }
 
-
-            await activity.handleRoll(targetActor, side, rollOption, message);
-        });
-
-        $(html).find(`.contested-reroll-button`).click(async(event) => {
-            event.preventDefault();
-
-            const activityId = message.flags[`more-activities`].activityId;
-            const itemId = message.flags[`more-activities`].itemId;
-            const actorId = message.flags[`more-activities`].actorId;
-
-            const actor = game.actors.get(actorId);
-            const item = actor?.items.get(itemId);
-            const activity = item?.system.activities.get(activityId);
-
-            if (!activity) {
-                ui.notifications.error(`Could not find the contested check activity.`);
-                return;
-            }
-
-            await activity.resetContestedCheck(message);
-        });
+    static _getUserForActor(actorId) {
+        const actor = game.actors.find(a => a.id === actorId);
+        const validUsers = game.users.filter(u => actor.testUserPermission(u, `OWNER`) && u.active);
+        const validUser = validUsers.find(u => !u.isGM);
+        const gmUser = validUsers.find(u => u.isGM);
+        return validUser ? validUser : gmUser;
     }
 }
 
@@ -132,7 +390,7 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
         schema.tieCondition = new fields.StringField({
             required: false,
             initial: `defender`,
-            choices: [ `attacker`, `defender`, `tie`, `reroll` ],
+            choices: [ `attacker`, `defender`, `tie`, ],
         });
 
         schema.allowPlayerTargeting = new fields.BooleanField({
@@ -204,7 +462,6 @@ export class ContestedActivitySheet extends dnd5e.applications.activity.Activity
             { value: `attacker`, label: `Attacker Wins` },
             { value: `defender`, label: `Defender Wins` },
             { value: `tie`, label: `Tie` },
-            { value: `reroll`, label: `Reroll` },
         ];
 
         context.applyEffectsToOptions = [
@@ -310,124 +567,116 @@ export class ContestedActivity extends dnd5e.documents.activity.ActivityMixin(Co
      */
     async use(config, dialog, message) {
         const results = await super.use(config, dialog, message);
-        await this._createContestedMessage();
+        new ContestedInitiatorApp(this).render(true);
         return results;
     }
 
     /**
-     * Handle a roll for one side of the contest
-     * @param {Actor5e} rollActor - The actor making the roll
-     * @param {string} side - "attacker" or "defender"
-     * @param {string} rollOption - The specific ability/skill/tool to roll
-     * @param {ChatMessage} message - The chat message to update
-     * @returns {Promise<void>}
+     * Get the actor that owns this activity's item.
+     * @type {Actor5e|null}
      */
-    async handleRoll(rollActor, side, rollOption, message) {
-        const rollType = side === `attacker` ? this.attackerRollType : this.defenderRollType;
-
-        if (!rollActor) {
-            ui.notifications.warn(`No actor found for the ${side}.`);
-            return;
-        }
-
-        try {
-            let roll;
-            switch (rollType) {
-                case `ability`:
-                    roll = await rollActor.rollAbilityCheck({ ability: rollOption });
-                    break;
-                case `skill`:
-                    roll = await rollActor.rollSkill({ skill: rollOption });
-                    break;
-                default:
-                    throw new Error(`Unknown roll type: ${rollType}`);
-            }
-
-            if (roll === undefined || roll == null || roll.length === 0) return;
-
-            const flags = foundry.utils.deepClone(message.flags[`more-activities`]);
-            if (side === `defender`)
-                flags.defenderActorId = rollActor.id;
-
-            await this._updateContestedMessage(message, side, roll[0], flags);
-        } catch (error) {
-            console.error(`Error performing contested roll:`, error);
-            ui.notifications.error(`Error performing roll: ${error.message}`);
-        }
+    get actor() {
+        return this.item?.actor || null;
     }
+}
 
-    /**
-     * Update defender options with bonuses for selected actor
-     * @param {ChatMessage} message - The chat message to update
-     * @param {Actor5e} defenderActor - The selected defender actor
-     * @returns {Promise<void>}
-     */
-    async updateDefenderOptions(message, defenderActor) {
-        const flags = foundry.utils.deepClone(message.flags[`more-activities`]);
-        flags.selectedDefenderId = defenderActor?.id;
+class ContestedInitiatorApp extends HandlebarsApplicationMixin(ApplicationV2) {
+    static DEFAULT_OPTIONS = {
+        classes: [ `dnd5e2`, `contested-initiator-app` ],
+        tag: `form`,
+        position: {
+            width: 400,
+            height: `auto`,
+        },
+    };
 
-        const templateData = await this._prepareMessageTemplateData(flags, defenderActor);
-        const content = await foundry.applications.handlebars.renderTemplate(`modules/more-activities/templates/contested-chat.hbs`, templateData);
+    static PARTS = {
+        form: {
+            template: `modules/more-activities/templates/contested-initiator.hbs`,
+        },
+    };
 
-        await message.update({
-            content: content,
-            flags: { 'more-activities': flags }
+    constructor(activity, options = {}) {
+        super({
+            window: {
+                title: `Select Targets`,
+            },
+            ...options,
         });
+        this.activity = activity;
+        this.actor = activity?.actor;
+        this.contest = ContestedManager.createContest(activity);
+        this.selectedDefenders = [];
+        this._prepopulateDefenders();
     }
 
-    /**
-     * Reset the contested check for a reroll
-     * @param {ChatMessage} message - The chat message to reset
-     * @returns {Promise<void>}
-     */
-    async resetContestedCheck(message) {
-        const flags = {
-            'more-activities': {
-                type: `contested`,
-                activityId: this.id,
-                itemId: this.item.id,
-                actorId: this.actor?.id,
-                selectedDefenderId: message.flags[`more-activities`]?.selectedDefenderId,
-                attackerRoll: null,
-                defenderRoll: null,
-                defenderActorId: null,
-                result: null
-            }
-        };
-
-        const defenderActor = flags[`more-activities`].selectedDefenderId ?
-            game.actors.get(flags[`more-activities`].selectedDefenderId) : null;
-
-        const templateData = await this._prepareMessageTemplateData(flags[`more-activities`], defenderActor);
-        const content = await foundry.applications.handlebars.renderTemplate(`modules/more-activities/templates/contested-chat.hbs`, templateData);
-        await message.update({
-            content: content,
-            flags: flags
-        });
-    }
-
-    async _createContestedMessage() {
+    /** @inheritdoc */
+    async _prepareContext() {
         const defendersData = await this._getPotentialDefenders();
-
-        const messageData = {
-            user: game.user.id,
-            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-            content: await this._getContestedMessageContent(null, defendersData),
-            flags: {
-                'more-activities': {
-                    type: `contested`,
-                    activityId: this.id,
-                    itemId: this.item.id,
-                    actorId: this.actor?.id,
-                    selectedDefenderId: null,
-                    attackerRoll: null,
-                    defenderRoll: null,
-                    defenderActorId: null,
-                    result: null
-                }
-            }
+        return {
+            isGM: game.user.isGM,
+            activity: this.activity,
+            defendersData: defendersData,
+            selectedDefenders: this.selectedDefenders.map((element, index) => ({
+                ...element,
+                index: index,
+            })),
+            attackerOptions: ContestedData.getOptionLabels(
+                this.activity.attackerRollType, 
+                this.activity.attackerOptions, 
+                this.activity.actor
+            )
         };
-        return ChatMessage.create(messageData);
+    }
+
+    /** @inheritdoc */
+    async _onRender(context, options) {
+        if (!this.element.querySelector(`.window-subtitle`)) {
+            const subtitle = document.createElement(`h2`);
+            subtitle.classList.add(`window-subtitle`);
+            subtitle.innerText = this.activity.item?.name || this.activity.name || ``,
+            this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
+        }
+
+        this.element.querySelector(`select[name="defenderId"]`).addEventListener(`change`, async(event) => {
+            const selectElement = event.currentTarget;
+            const actorId = selectElement.value;
+            if (!actorId || this.selectedDefenders.find(d => d.id === actorId)) return;
+
+            const actor = game.actors.get(actorId);
+            if (!actor) return;
+
+            const optionElement = selectElement.querySelector(`option[value="${actorId}"]`);
+            this.selectedDefenders.push({
+                ...actor,
+                id: actorId,
+                defenderType: optionElement.parentElement.getAttribute(`data-type`),
+            });
+            this.render();
+        });
+
+        this.element.querySelectorAll(`.defender-delete-btn`).forEach(btn => {
+            btn.addEventListener(`click`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+                const selectedDefenders = this.selectedDefenders.filter((_, i) => i !== index);
+                this.selectedDefenders = selectedDefenders;
+                this.render();
+            });
+        });
+
+        this.element.querySelector(`.start-contest-btn`).addEventListener(`click`, async(event) => {
+            if (this.selectedDefenders.length === 0) {
+                ui.notifications.warn(`Select at least one defender`);
+                return;
+            }
+
+            for (const defender of this.selectedDefenders) {
+                await ContestedManager.promptDefender(this.contest.id, defender);
+            }
+
+            new ContestedDefenderApp(this.contest.id, this.actor, `attacker`).render(true);
+            this.close();
+        });
     }
 
     /**
@@ -443,268 +692,137 @@ export class ContestedActivity extends dnd5e.documents.activity.ActivityMixin(Co
         let nonPlayerCharacters = [];
         let allTokens = [];
 
-        if (this.allowPlayerTargeting || isGM) {
+        if (this.activity.allowPlayerTargeting || isGM) {
+            const selectedActorsIds = this.selectedDefenders.map(actor => actor.id);
+
             if (isGM) {
-                playerCharacters = game.actors.filter(actor => actor.type === `character` && actor !== this.actor);
-                nonPlayerCharacters = game.actors.filter(actor => actor.type !== `character` && actor !== this.actor);
+                playerCharacters = game.actors.filter(actor => actor.type === `character` && actor !== this.actor && !selectedActorsIds.includes(actor.id));
+                nonPlayerCharacters = game.actors.filter(actor => actor.type !== `character` && actor !== this.actor && !selectedActorsIds.includes(actor.id));
 
                 const scene = game.scenes.current;
                 if (scene) {
                     allTokens = scene.tokens
                         .map(token => token.actor)
-                        .filter(actor => actor && actor !== this.actor && actor.type !== `character`)
+                        .filter(actor => actor && actor !== this.actor && actor.type !== `character` && !selectedActorsIds.includes(actor.id))
                     ;
                 }
             }
             else {
-                playerCharacters = game.actors.filter(actor => actor.type === `character` && actor.isOwner && actor !== this.actor);
-                nonPlayerCharacters = game.actors.filter(actor => actor.type !== `character` && actor.isOwner && actor !== this.actor);
+                playerCharacters = game.actors.filter(actor => actor.type === `character` && actor.isOwner && actor !== this.actor && !selectedActorsIds.includes(actor.id));
+                nonPlayerCharacters = game.actors.filter(actor => actor.type !== `character` && actor.isOwner && actor !== this.actor && !selectedActorsIds.includes(actor.id));
             }
         }
         
         return {
-            targets: targets,
-            playerCharacters: playerCharacters,
-            nonPlayerCharacters: nonPlayerCharacters,
-            allTokens: allTokens,
+            targets: targets.filter(t => !this.selectedDefenders.find(d => d.id === t.id)),
+            playerCharacters: playerCharacters.filter(t => !this.selectedDefenders.find(d => d.id === t.id)),
+            nonPlayerCharacters: nonPlayerCharacters.filter(t => !this.selectedDefenders.find(d => d.id === t.id)),
+            allTokens: allTokens.filter(t => !this.selectedDefenders.find(d => d.id === t.id)),
             hasMultipleGroups: [ targets, playerCharacters, nonPlayerCharacters, allTokens ].filter(group => group.length > 0).length > 1,
         };
     }
 
-    /**
-     * Get the HTML content for the contested check message
-     * @param {Actor5e} selectedDefender - Currently selected defender
-     * @param {Object} defendersData - All available defenders
-     * @returns {Promise<string>}
-     * @private
-     */
-    async _getContestedMessageContent(selectedDefender = null, defendersData = []) {
-        if (!defendersData) defendersData = await this._getPotentialDefenders();
+    async _prepopulateDefenders() {
+        for (const target of Array.from(game.user.targets).map(token => token.actor).filter(actor => actor && actor !== this.actor)) {
+            this.selectedDefenders.push({
+                ...target,
+                id: target.id,
+                defenderType: `Target`
+            });
+        }
+    }
+}
 
-        const templateData = await this._prepareMessageTemplateData({
-            selectedDefenderId: selectedDefender?.id,
-            attackerRoll: null,
-            defenderRoll: null,
-            result: null,
-        }, selectedDefender, defendersData);
-        return await foundry.applications.handlebars.renderTemplate(`modules/more-activities/templates/contested-chat.hbs`, templateData);
+class ContestedDefenderApp extends HandlebarsApplicationMixin(ApplicationV2) {
+    static DEFAULT_OPTIONS = {
+        classes: [ `dnd5e2`, `contested-defender-app` ],
+        tag: `form`,
+        position: {
+            width: 300,
+            height: `auto`,
+        },
+    };
+
+    static PARTS = {
+        form: {
+            template: `modules/more-activities/templates/contested-defender.hbs`,
+        },
+    };
+
+    constructor(contestId, actor, side, options = {}) {
+        super({
+            window: {
+                title: `Contest Roll`,
+            },
+            ...options,
+        });
+        this.contestId = contestId;
+        this.actor = actor;
+        this.side = side;
+        this.contest = ContestedManager.contests.get(contestId);
     }
 
-    /**
-     * Prepare template data for the message
-     * @param {Object} flags - Message flags
-     * @param {Actor5e} selectedDefender - Selected defender actor
-     * @param {Object} defendersData - Available defender options
-     * @returns {Promise<Object>}
-     * @private
-     */
-    async _prepareMessageTemplateData(flags, selectedDefender = null, defendersData = null) {
-        if (!defendersData) defendersData = await this._getPotentialDefenders();
-
-        const isGM = game.user.isGM;
-        const totalDefenders = defendersData.targets.length + defendersData.playerCharacters.length + defendersData.nonPlayerCharacters.length + defendersData.allTokens.length;
+    /** @inheritdoc */
+    async _prepareContext() {
+        const rollType = this.side === `attacker` ?
+            this.contest.activityData.attackerRollType :
+            this.contest.activityData.defenderRollType
+        ;
+        const options = this.side === `attacker` ?
+            this.contest.activityData.attackerOptions :
+            this.contest.activityData.defenderOptions
+        ;
 
         return {
-            activity: this,
-            item: this.item,
+            contest: this.contest,
             actor: this.actor,
-            isGM: isGM,
-            allowPlayerTargeting: this.allowPlayerTargeting,
-            attackerLabel: this.attackerLabel,
-            defenderLabel: this.defenderLabel,
-            attackerOptions: this._getOptionLabels(this.attackerRollType, this.attackerOptions, this.actor),
-            defenderOptions: selectedDefender ? 
-                this._getOptionLabels(this.defenderRollType, this.defenderOptions, selectedDefender) :
-                this._getOptionLabels(this.defenderRollType, this.defenderOptions),
-            defendersData: {
-                ...defendersData,
-                selectedDefenderId: flags.selectedDefenderId,
-            },
-            selectedDefender: selectedDefender,
-            hasDefenderSelection: totalDefenders > 1,
-            attackerRoll: flags.attackerRoll,
-            defenderRoll: flags.defenderRoll,
-            result: flags.result
+            side: `${this.side[0].toUpperCase()}${this.side.substring(1)}`,
+            rollOptions: ContestedData.getOptionLabels(rollType, options, this.actor)
         };
     }
 
-    /**
-     * Get human-readable labels for roll options with bonuses
-     * @param {string} rollType - The type of roll (ability, skill, tool)
-     * @param {string[]} options - Array of option keys
-     * @param {Actor5e} actor - Actor to get bonuses for (optional)
-     * @returns {Object[]}
-     * @private
-     */
-    _getOptionLabels(rollType, options, actor = null) {
-        const config = {
-            ability: CONFIG.DND5E.abilities,
-            skill: CONFIG.DND5E.skills,
-        };
+    /** @inheritdoc */
+    async _onRender(context, options) {
+        if (!this.element.querySelector(`.window-subtitle`)) {
+            const subtitle = document.createElement(`h2`);
+            subtitle.classList.add(`window-subtitle`);
+            subtitle.innerText = this.contest.activityData.itemName || this.contest.activityData.name || ``,
+            this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
+        }
 
-        return options.map(option => {
-            const optionConfig = config[rollType][option];
-            let label = optionConfig?.label || optionConfig || option;
-
-            if (!actor) {
-                return {
-                    key: option,
-                    label: label
-                };
-            }
-
-            try {
-                let bonus = null;
-                switch (rollType) {
-                    case `ability`:
-                        bonus = actor.system.abilities[option]?.mod;
-                        break;
-                    case `skill`:
-                        bonus = actor.system.skills[option]?.total;
-                        break;
-                }
-
-                if (bonus !== undefined && bonus != null) {
-                    const formatted = bonus >= 0 ? `+${bonus}` : `${bonus}`;
-                    label += ` (${formatted})`;
-                }
-            }
-            catch(error) {
-            }
-
-            return {
-                key: option,
-                label: label
-            };
+        this.element.querySelectorAll(`.roll-option-btn`).forEach(btn => {
+            btn.addEventListener(`click`, async(event) => {
+                const option = event.target.dataset.option;
+                await this._performRoll(option);
+            });
         });
     }
 
-    /**
-     * Update the contested check message with a new roll result
-     * @param {ChatMessage} message - The message to update
-     * @param {string} side - "attacker" or "defender"  
-     * @param {Roll} roll - The roll result
-     * @param {Object} flags - Updated flags object
-     * @returns {Promise<void>}
-     * @private
-     */
-    async _updateContestedMessage(message, side, roll, flags) {
-        flags[`${side}Roll`] = {
-            total: roll.total,
-            formula: roll.formula,
-            tooltip: await roll.getTooltip()
-        };
-
-        let selectedDefender = null;
-        if (flags.selectedDefenderId)
-            selectedDefender = game.actors.get(flags.selectedDefenderId);
-
-        if (flags.attackerRoll && flags.defenderRoll) {
-            flags.result = this._determineWinner(flags.attackerRoll.total, flags.defenderRoll.total);
-            await this._applyContestEffects(flags);
+    async _performRoll(option) {
+        const rollType = this.side === 'attacker' ? 
+            this.contest.activityData.attackerRollType : 
+            this.contest.activityData.defenderRollType
+        ;
+            
+        let roll;
+        switch (rollType) {
+            case 'ability':
+                roll = await this.actor.rollAbilityCheck({ ability: option });
+                break;
+            case 'skill':
+                roll = await this.actor.rollSkill({ skill: option });
+                break;
         }
+        
+        if (!roll || !roll[0]) return;
 
-        const templateData = await this._prepareMessageTemplateData(flags, selectedDefender);
-        const content = await foundry.applications.handlebars.renderTemplate(`modules/more-activities/templates/contested-chat.hbs`, templateData);
-        await message.update({
-            content: content,
-            flags: { 'more-activities': flags }
+        await ContestedManager.recordRoll(this.contestId, this.actor.id, {
+            total: roll[0].total,
+            formula: roll[0].formula,
+            option: option,
+            rollType: rollType,
+            roll: roll[0],
         });
-    }
-
-    /**
-     * Apply effects based on contest result
-     * @param {Object} flags - Contest flags containing result and actor IDs
-     * @returns {Promise<void>}
-     * @private
-     */
-    async _applyContestEffects(flags) {
-        if (!flags.result || this.appliedEffects.length === 0) return;
-
-        const attackerActor = this.actor;
-        const defenderActor = flags.defenderActorId ? game.actors.get(flags.defenderActorId) : null;
-
-        if (!attackerActor || !defenderActor) {
-            console.warn(`Cannot apply effects: missing attacker or defender actor`);
-            return;
-        }
-
-        let winner = null;
-        let loser = null;
-
-        if (flags.result === `attacker`) {
-            winner = attackerActor;
-            loser = defenderActor;
-        } else if (flags.result === `defender`) {
-            winner = defenderActor;
-            loser = attackerActor;
-        }
-
-        let targetActors = [];
-        switch (this.applyEffectsTo) {
-            case `loserAttacker`:
-                if (loser && flags.result === `defender`) targetActors = [loser];
-                break;
-            case `loserDefender`:
-                if (loser && flags.result === `attacker`) targetActors = [loser];
-                break;
-            case `loser`:
-                if (loser) targetActors = [loser];
-                break;
-            case `winnerAttacker`:
-                if (winner && flags.result === `defender`) targetActors = [winner];
-                break;
-            case `winnerDefender`:
-                if (winner && flags.result === `attacker`) targetActors = [winner];
-                break;
-            case `winner`:
-                if (winner) targetActors = [winner];
-                break;
-        }
-
-        if (targetActors.length === 0) {
-            console.warn('Cannot apply effects: cannot identify target');
-            return;
-        }
-
-        for (const effectId of this.appliedEffects) {
-            const effect = this.item?.effects?.get(effectId);
-            if (!effect) {
-                console.warn(`Effect ${effectId} not found on item ${this.item.name}`);
-                continue;
-            }
-
-            for (const targetActor of targetActors) {
-                try {
-                    const effectData = effect.toObject();
-                    effectData.origin = this.item?.uuid;
-                    await targetActor.createEmbeddedDocuments(`ActiveEffect`, [ effectData ]);
-                    ui.notifications.info(`Applied ${effect.name} to ${targetActor.name}`);
-                }
-                catch (error) {
-                    console.error(`Failed to apply effect ${effect.name} to ${targetActor.name}:`, error);
-                    ui.notifications.error(`Failed to apply effect ${effect.name} to ${targetActor.name}`);
-                }
-            }
-        }
-    }
-
-    /**
-     * Determine the winner of the contested check
-     * @param {number} attackerTotal - Attacker's roll total
-     * @param {number} defenderTotal - Defender's roll total
-     * @returns {string} - "attacker", "defender", "tie", or "reroll"
-     * @private
-     */
-    _determineWinner(attackerTotal, defenderTotal) {
-        return attackerTotal > defenderTotal ? `attacker` : defenderTotal > attackerTotal ? `defender` : this.tieCondition;
-    }
-
-    /**
-     * Get the actor that owns this activity's item.
-     * @type {Actor5e|null}
-     */
-    get actor() {
-        return this.item?.actor || null;
+        this.close();
     }
 }

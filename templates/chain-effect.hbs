@@ -59,6 +59,84 @@
                         </div>
                     </div>
                 </div>
+
+                {{#if chainedActivity.availableListeners.length}}
+                <div class="activity-listeners">
+                    <div class="listeners-header">
+                        <label>Activation Triggers</label>
+                    </div>
+                    <div class="listeners-list">
+                        <div class="listeners-add">
+                            <label>Add Trigger:</label>
+                            <select class="add-listener-select" data-activity-index="{{ index }}">
+                                <option value="">-- Select Trigger --</option>
+                                {{#each chainedActivity.availableListeners as |triggerGroup|}}
+                                <optgroup label="{{ triggerGroup.activityName }}">
+                                    {{#each triggerGroup.triggers as |trigger|}}
+                                    {{#unless trigger.selected}}
+                                    <option value="{{ trigger.value }}">{{ trigger.label }}</option>
+                                    {{/unless}}
+                                    {{/each}}
+                                </optgroup>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+
+                    {{#if chainedActivity.enrichedListeners.length}}
+                    {{#each chainedActivity.enrichedListeners as |listener triggerIndex|}}
+                    <div class="active-mapping-item">
+                        <span class="mapping-label"><strong>{{ listener.sourceActivityName }}: </strong> {{ listener.label }}</span>
+                        <button type="button" class="remove-mapping-btn" 
+                                data-activity-index="{{ ../index }}" 
+                                data-listener-key="{{ listener.value }}"
+                                title="Remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    {{/each}}
+                    {{else}}
+                    <p class="no-mappings-hint">This activity will not be triggered by any previous activities.</p>
+                    {{/if}}
+                </div>
+                {{else}}
+                {{#unless (eq index 0)}}
+                <div class="activity-listeners">
+                    <div class="listeners-header">
+                        <label>Activation Triggers</label>
+                    </div>
+                    <p class="no-available-triggers-hint">No triggers available from previous activities.</p>
+                </div>
+                {{/unless}}
+                {{/if}}
+
+                {{#unless (eq index (subtract ../chainedActivities.length 1))}}
+                <div class="activity-triggers">
+                    <div class="triggers-header">
+                        <label>Continuation Options</label>
+                        <button type="button" class="add-trigger-btn" data-activity-index="{{ index }}" data-activity-type="{{ chainedActivity.activityType }}" title="Add Trigger">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+
+                    {{#if chainedActivity.triggers.length}}
+                    <div class="triggers-list">
+                        {{#each chainedActivity.triggers as |trigger triggerIndex|}}
+                        <div class="trigger-item" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}">
+                            <div class="trigger-controls">
+                                <input type="text" class="trigger-label-input" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}" value="{{ trigger }}" placeholder="Trigger Label">
+                                <button type="button" class="remove-trigger-btn" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}" title="Remove Trigger">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                    {{else}}
+                    <p class="no-triggers-hint">No triggers defined. Add triggers to control chain progression.</p>
+                    {{/if}}
+                </div>
+                {{/unless}}
             </div>
             {{/each}}
         </div>

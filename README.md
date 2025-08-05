@@ -74,10 +74,12 @@ Your support helps fund:
 
 ### Contested Activity
 <img src="./assets/contested-activity.png" width="700" />
-<img src="./assets/contested-picker.png" height="400" />
+<img src="./assets/contested-roller.png" height="350" />
+<img src="./assets/contested-result.png" height="350" />
 
 ### Chain Activity
 <img src="./assets/chain-activity.png" width="700" />
+<img src="./assets/chain-message.png" width="350" />
 
 ---
 
