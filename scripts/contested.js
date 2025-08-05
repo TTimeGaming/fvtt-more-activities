@@ -607,6 +607,7 @@ class ContestedInitiatorApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.actor = activity?.actor;
         this.contest = ContestedManager.createContest(activity);
         this.selectedDefenders = [];
+        this._prepopulateDefenders();
     }
 
     /** @inheritdoc */
@@ -719,6 +720,16 @@ class ContestedInitiatorApp extends HandlebarsApplicationMixin(ApplicationV2) {
             allTokens: allTokens.filter(t => !this.selectedDefenders.find(d => d.id === t.id)),
             hasMultipleGroups: [ targets, playerCharacters, nonPlayerCharacters, allTokens ].filter(group => group.length > 0).length > 1,
         };
+    }
+
+    async _prepopulateDefenders() {
+        for (const target of Array.from(game.user.targets).map(token => token.actor).filter(actor => actor && actor !== this.actor)) {
+            this.selectedDefenders.push({
+                ...target,
+                id: target.id,
+                defenderType: `Target`
+            });
+        }
     }
 }
 
