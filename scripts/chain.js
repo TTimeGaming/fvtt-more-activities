@@ -3,20 +3,6 @@ export class ChainData {
         Handlebars.registerHelper(`subtract`, function(a, b) {
             return a - b;
         });
-
-        const originalItem5eUse = CONFIG.Item.documentClass.prototype.use;
-        CONFIG.Item.documentClass.prototype.use = async function(config={}, dialog={}, message={}) {
-            const activities = this.system.activities.filter(a => !ChainData.isActivityChained(this, a.id));
-            if (activities.length > 1) {
-                return await originalItem5eUse.call(this, config, dialog, message);
-            }
-
-            const { chooseActivity, ...activityConfig } = config;
-            let usageConfig = activityConfig;
-            let dialogConfig = dialog;
-            let messageConfig = message;
-            return activities[0].use(usageConfig, dialogConfig, messageConfig);
-        }
     }
 
     static disableChained(sheet, html) {
