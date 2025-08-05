@@ -305,6 +305,7 @@
     pointer-events: none;
 }
 
+.dnd5e2.activity-chain .activity-listeners,
 .dnd5e2.activity-chain .activity-triggers {
     display: flex;
     flex-direction: column;
@@ -312,12 +313,14 @@
     padding: 0.5rem;
 }
 
+.dnd5e2.activity-chain .listeners-header,
 .dnd5e2.activity-chain .triggers-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+.dnd5e2.activity-chain .listeners-header label,
 .dnd5e2.activity-chain .triggers-header label {
     font-weight: bold;
     font-size: 0.8rem;
@@ -339,6 +342,7 @@
     border-color: var(--button-background-color-hover);
 }
 
+.dnd5e2.activity-chain .listeners-list,
 .dnd5e2.activity-chain .triggers-list {
     display: flex;
     flex-direction: column;
@@ -384,6 +388,63 @@
     font-style: italic;
     font-size: 0.7rem;
     margin: 0;
+}
+
+.dnd5e2.activity-chain .listeners-list {
+    padding: 0.25rem 0.5rem;
+}
+
+.dnd5e2.activity-chain .listeners-add {
+    display: flex;
+    align-items: center;
+}
+
+.dnd5e2.activity-chain .listeners-add > * {
+    flex: 1;
+    font-size: 0.7rem;
+}
+
+.dnd5e2.activity-chain .active-mapping-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    font-size: 0.65rem;
+}
+
+.dnd5e2.activity-chain .mapping-label {
+    flex: 1;
+    font-weight: 500;
+}
+
+.dnd5e2.activity-chain .remove-mapping-btn {
+    background: transparent;
+    border: none;
+    color: var(--dnd5e-color-text-light);
+    cursor: pointer;
+    font-size: 0.6rem;
+    width: 1rem;
+    height: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    transition: all 0.1s ease;
+}
+
+.dnd5e2.activity-chain .remove-mapping-btn:hover {
+    background: var(--dnd5e-color-danger);
+    color: white;
+}
+
+.dnd5e2.activity-chain .no-mappings-hint,
+.dnd5e2.activity-chain .no-available-triggers-hint {
+    font-style: italic;
+    font-size: 0.7rem;
+    margin: 0;
+    color: var(--dnd5e-color-text-light);
 }
 
 .chat-message .chain-triggers {

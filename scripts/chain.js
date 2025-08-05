@@ -112,6 +112,19 @@ export class ChainActivityData extends dnd5e.dataModels.activity.BaseActivityDat
             required: false,
             initial: [],
         });
+
+        schema.chainListeners = new fields.ArrayField(new fields.ArrayField(
+            new fields.StringField({
+                required: true,
+                blank: false,
+            }), {
+                required: false,
+                initial: [],
+            }),
+        {
+            required: false,
+            initial: [],
+        });
         
         return schema;
     }
@@ -152,11 +165,49 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
         const chainedActivityIds = this.activity?.chainedActivityIds || [];
         const chainedActivityNames = this.activity?.chainedActivityNames || [];
         const chainTriggers = this.activity?.chainTriggers || [];
+        const chainListeners = this.activity?.chainListeners || [];
 
         const chainedActivities = [];
         for (let i = 0; i < chainedActivityIds.length; i++) {
             const activity = this.item?.system.activities.get(chainedActivityIds[i]);
             const triggers = chainTriggers[i] || [];
+            const listeners = chainListeners[i] || [];
+
+            const availableListeners = [];
+            for (let j = 0; j < i; j++) {
+                const prevActivity = this.item?.system.activities.get(chainedActivityIds[j]);
+                const prevTriggers = chainTriggers[j] || [];
+                if (prevTriggers.length == 0) continue;
+
+                const prevName = chainedActivityNames[j] || prevActivity?.name || prevActivity?.type || `Activity ${j + 1}`;
+                availableListeners.push({
+                    activityName: prevName,
+                    activityIndex: j,
+                    triggers: prevTriggers.map((trigger, triggerIndex) => ({
+                        label: trigger,
+                        value: `${j}:${triggerIndex}`,
+                        selected: listeners.includes(`${j}:${triggerIndex}`),
+                    })),
+                });
+            }
+
+            const enrichedListeners = listeners.map(listenerKey => {
+                const [ sourceActivityIndex, sourceTriggerIndex ] = listenerKey.split(`:`).map(Number);
+
+                const sourceActivity = this.item?.system.activities.get(chainedActivityIds[sourceActivityIndex]);
+                const sourceName = chainedActivityNames[sourceActivityIndex] || sourceActivity?.name || sourceActivity?.type || `Activity ${sourceActivityIndex + 1}`;
+
+                const sourceTriggers = chainTriggers[sourceActivityIndex] || [];
+                const triggerLabel = sourceTriggers[sourceTriggerIndex] || `Unknown Trigger`;
+
+                return {
+                    mappingKey: listenerKey,
+                    label: triggerLabel,
+                    sourceActivityName: sourceName,
+                    sourceActivityIndex: sourceActivityIndex,
+                    sourceTriggerIndex: sourceTriggerIndex,
+                };
+            });
 
             chainedActivities.push({
                 id: chainedActivityIds[i],
@@ -165,6 +216,9 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
                 activityType: activity?.type || `unknown`,
                 icon: activity?.img || null,
                 triggers: triggers,
+                listeners: listeners,
+                enrichedListeners: enrichedListeners,
+                availableListeners: availableListeners,
                 exists: !!activity,
                 index: i,
             });
@@ -257,6 +311,27 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
                 }
             });
         });
+        
+        this.element?.querySelectorAll(`.add-listener-select`).forEach(select => {
+            select.addEventListener(`change`, async(event) => {
+                const activityIndex = parseInt(event.target.dataset.activityIndex);
+                const value = event.target.value;
+                if (!value) return;
+                
+                const [sourceActivityIndex, sourceTriggerIndex] = value.split(`:`).map(Number);
+                
+                await this._addListener(activityIndex, sourceActivityIndex, sourceTriggerIndex);
+                event.target.value = ``;
+            });
+        });
+
+        this.element?.querySelectorAll(`.remove-mapping-btn`).forEach(btn => {
+            btn.addEventListener(`click`, async(event) => {
+                const activityIndex = parseInt(event.target.dataset.activityIndex);
+                const listenerKey = event.target.dataset.listenerKey;
+                await this._removeListener(activityIndex, listenerKey);
+            });
+        });
     }
 
     /**
@@ -274,17 +349,20 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
         const ids = [...currentIds];
         const names = [...(this.activity.chainedActivityNames || [])];
         const triggers = [...(this.activity.chainTriggers || [])];
+        const listeners = [...(this.activity.chainListeners || [])];
 
         ids.push(activityId);
         names.push(activity.name || activity.type);
 
         const defaultTriggers = this._getDefaultTriggersForActivity(activity.type);
         triggers.push(defaultTriggers);
+        listeners.push([]);
 
         await this.activity.update({
             chainedActivityIds: ids,
             chainedActivityNames: names,
-            chainTriggers: triggers
+            chainTriggers: triggers,
+            chainListeners: listeners,
         });
     }
 
@@ -300,11 +378,13 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
         const ids = currentIds.filter((_, i) => i !== index);
         const names = (this.activity.chainedActivityNames || []).filter((_, i) => i !== index);
         const triggers = (this.activity.chainTriggers || []).filter((_, i) => i !== index);
+        const listeners = (this.activity.chainListeners || []).filter((_, i) => i !== index);
 
         await this.activity.update({
             chainedActivityIds: ids,
             chainedActivityNames: names,
             chainTriggers: triggers,
+            chainListeners: listeners,
         });
     }
 
@@ -321,19 +401,23 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
         const ids = [...currentIds];
         const names = [...(this.activity.chainedActivityNames || [])];
         const triggers = [...(this.activity.chainTriggers || [])];
+        const listeners = [...(this.activity.chainListeners || [])];
 
         const [movedId] = ids.splice(fromIndex, 1);
         const [movedName] = names.splice(fromIndex, 1);
         const [movedTriggers] = triggers.splice(fromIndex, 1);
+        const [movedListeners] = listeners.splice(fromIndex, 1);
 
         ids.splice(toIndex, 0, movedId);
         names.splice(toIndex, 0, movedName);
         triggers.splice(toIndex, 0, movedTriggers || []);
+        listeners.splice(toIndex, 0, movedListeners || []);
 
         await this.activity.update({
             chainedActivityIds: ids,
             chainedActivityNames: names,
             chainTriggers: triggers,
+            chainListeners: listeners,
         });
     }
 
@@ -411,6 +495,47 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
             await this.activity.update({ chainTriggers });
         }
     }
+    
+    /**
+     * Add a trigger mapping for an activity
+     * @param {number} activityIndex - Index of the activity
+     * @param {string} sourceActivityIndex - Index of the source activity
+     * @param {number} sourceTriggerIndex - Index of the trigger within the source activity
+     * @private
+     */
+    async _addListener(activityIndex, sourceActivityIndex, sourceTriggerIndex) {
+        const chainListeners = [...(this.activity.chainListeners || [])];
+        while (chainListeners.length <= activityIndex) {
+            chainListeners.push([]);
+        }
+        
+        const currentListeners = chainListeners[activityIndex] || [];    
+        const listenerKey = `${sourceActivityIndex}:${sourceTriggerIndex}`;
+        if (currentListeners.includes(listenerKey)) return;
+
+        currentListeners.push(listenerKey);
+        chainListeners[activityIndex] = currentListeners;
+        await this.activity.update({ chainListeners });
+    }
+
+    /**
+     * Remove a trigger mapping for an activity
+     * @param {number} activityIndex - Index of the activity
+     * @param {string} listenerKey - The listener key to remove (format: "sourceActivityIndex:sourceTriggerIndex")
+     * @private
+     */
+    async _removeListener(activityIndex, listenerKey) {
+        const chainListeners = [...(this.activity.chainListeners || [])];
+        if (!chainListeners[activityIndex]) return;
+
+        const currentListeners = chainListeners[activityIndex];
+        const index = currentListeners.indexOf(listenerKey);
+        if (index === -1) return;
+
+        currentListeners.splice(index, 1);
+        chainListeners[activityIndex] = currentListeners;
+        await this.activity.update({ chainListeners });
+    }
 }
 
 export class ChainActivity extends dnd5e.documents.activity.ActivityMixin(ChainActivityData) {
@@ -450,7 +575,29 @@ export class ChainActivity extends dnd5e.documents.activity.ActivityMixin(ChainA
      * @returns {Promise<void>}
      */
     async continueChainFrom(fromIndex, trigger) {
-        await this._executeChainedActivity(fromIndex + 1, {}, {}, {});
+        const chainListeners = this.chainListeners || [];
+        const chainTriggers = this.chainTriggers || [];
+
+        const sourceTriggers = chainTriggers[fromIndex] || [];
+        const sourceTriggerIndex = sourceTriggers.indexOf(trigger);
+
+        if (sourceTriggerIndex === -1) {
+            console.warn(`Chain activity: Trigger "${trigger}" not found in activity ${fromIndex}`);
+            return;
+        }
+
+        const listenerKey = `${fromIndex}:${sourceTriggerIndex}`;
+
+        const activities = [];
+        for (let i = fromIndex + 1; i < chainListeners.length; i++) {
+            const listeners = chainListeners[i] || [];
+            if (listeners.includes(listenerKey))
+                activities.push(i);
+        }
+
+        for (const activityIndex of activities) {
+            await this._executeChainedActivity(activityIndex, {}, {}, {});
+        }
     }
 
     /**
