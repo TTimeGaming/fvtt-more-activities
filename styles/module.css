@@ -221,32 +221,6 @@
     transform: rotate(90deg);
 }
 
-.dnd5e2.activity-chain .add-activity-controls {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-.dnd5e2.activity-chain .add-activity-controls select {
-    flex: 1;
-}
-
-.dnd5e2.activity-chain .add-activity-btn {
-    padding: 0.25rem 0.5rem;
-    background: var(--dnd5e-color-button);
-    color: var(--dnd5e-color-button-text);
-    border: 1px solid var(--dnd5e-color-button-outline);
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    white-space: nowrap;
-}
-
-.dnd5e2.activity-chain .add-activity-btn:hover {
-    background: var(--dnd5e-color-button-hover);
-    border-color: var(--dnd5e-color-button-hover-outline);
-}
-
 .dnd5e2.activity-chain .chained-activities-list {
     display: flex;
     flex-direction: column;
@@ -256,7 +230,7 @@
 
 .dnd5e2.activity-chain .chained-activity-item {
     border-radius: 4px;
-    background: var(--dnd5e-background-parchment);
+    background: var(--dnd5e-background-card);
     padding: 0.5rem;
 }
 
@@ -274,33 +248,10 @@
 
 .dnd5e2.activity-chain .activity-name {
     font-weight: bold;
-    color: var(--dnd5e-color-text-heading);
 }
 
 .dnd5e2.activity-chain .activity-name .missing-activity {
-    color: var(--dnd5e-color-warning);
     font-style: italic;
-}
-
-.dnd5e2.activity-chain .activity-type {
-    font-size: 0.8rem;
-    color: var(--dnd5e-color-text-light);
-    text-transform: capitalize;
-}
-
-.dnd5e2.activity-chain .activity-type-icon {
-    width: 1rem;
-    height: 1rem;
-    object-fit: contain;
-    text-align: center;
-}
-
-.dnd5e2.activity-chain .activity-type-icon.fas {
-    font-size: 0.9rem;
-    color: var(--dnd5e-color-text-heading);
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .dnd5e2.activity-chain .activity-meta-controls {
@@ -314,9 +265,6 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.25rem 0.5rem;
-    background: var(--dnd5e-color-card-footer);
-    border: 1px solid var(--dnd5e-color-card-outline);
-    border-radius: 3px;
 }
 
 .dnd5e2.activity-chain .activity-type-icon {
@@ -324,13 +272,15 @@
     color: var(--dnd5e-color-text-heading);
     width: 1rem;
     text-align: center;
+    width: 1rem;
+    height: 1rem;
+    object-fit: contain;
+    text-align: center;
 }
 
 .dnd5e2.activity-chain .activity-type {
     font-size: 0.8rem;
-    color: var(--dnd5e-color-text-light);
     text-transform: capitalize;
-    white-space: nowrap;
 }
 
 .dnd5e2.activity-chain .activity-controls {
@@ -341,9 +291,40 @@
 
 .dnd5e2.activity-chain .activity-controls button {
     padding: 0.25rem;
-    background: var(--dnd5e-color-button);
-    color: var(--dnd5e-color-button-text);
-    border: 1px solid var(--dnd5e-color-button-outline);
+    cursor: pointer;
+    font-size: 0.7rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dnd5e2.activity.chained-activity .activation-tab {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.dnd5e2.activity-chain .activity-triggers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem;
+}
+
+.dnd5e2.activity-chain .triggers-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dnd5e2.activity-chain .triggers-header label {
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.dnd5e2.activity-chain .add-trigger-btn {
+    background: var(--button-background-color);
     border-radius: 3px;
     cursor: pointer;
     font-size: 0.7rem;
@@ -354,87 +335,103 @@
     justify-content: center;
 }
 
-.dnd5e2.activity-chain .activity-controls button:hover {
-    background: var(--dnd5e-color-button-hover);
-    border-color: var(--dnd5e-color-button-hover-outline);
+.dnd5e2.activity-chain .add-trigger-btn:hover {
+    border-color: var(--button-background-color-hover);
 }
 
-.dnd5e2.activity-chain .remove-activity-btn {
-    background: var(--dnd5e-color-warning) !important;
-    border-color: var(--dnd5e-color-warning) !important;
-}
-
-.dnd5e2.activity-chain .remove-activity-btn:hover {
-    background: var(--dnd5e-color-warning-hover) !important;
-    border-color: var(--dnd5e-color-warning-hover) !important;
-}
-
-.dnd5e2.activity.chained-activity .window-header {
-    background: var(--dnd5e-color-warning-background);
-    border-bottom: 2px solid var(--dnd5e-color-warning);
-}
-
-.dnd5e2.activity.chained-activity .activation-tab {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-.dnd5e2.dialog.chain-completion .dialog-icon {
-    color: var(--dnd5e-color-success);
-}
-
-.dnd5e2.dialog.chain-completion {
-    border: 2px solid var(--dnd5e-color-primary);
-}
-
-.dnd5e2.dialog.chain-completion .dialog-content {
+.dnd5e2.activity-chain .triggers-list {
     display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 1rem;
-    min-height: 80px;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
-.dnd5e2.dialog.chain-completion .dialog-icon {
-    flex-shrink: 0;
-    font-size: 2rem;
-    color: var(--dnd5e-color-primary);
-    margin-top: 0.25rem;
+.dnd5e2.activity-chain .trigger-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.dnd5e2.dialog.chain-completion .dialog-text {
+.dnd5e2.activity-chain .trigger-label-input {
     flex: 1;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.25);
+    font-size: 0.7rem;
 }
 
-.dnd5e2.dialog.chain-completion .dialog-text p {
-    margin: 0 0 0.5rem 0;
-    line-height: 1.4;
+.dnd5e2.activity-chain .trigger-label-input:focus {
+    border-color: var(--dnd5e-color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--dnd5e-color-primary-rgb), 0.2);
 }
 
-.dnd5e2.dialog.chain-completion .dialog-text p:last-child {
-    margin-bottom: 0;
+.dnd5e2.activity-chain .remove-trigger-btn {
+    background: var(--button-background-color);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.dnd5e2.dialog.chain-completion .dialog-buttons button {
-    min-width: 100px;
+.dnd5e2.activity-chain .remove-trigger-btn:hover {
+    border-color: var(--button-background-color-hover);
 }
 
-.dnd5e2.dialog.chain-completion .dialog-buttons button[data-action="continue"] {
-    background: var(--dnd5e-color-success);
-    border-color: var(--dnd5e-color-success);
+.dnd5e2.activity-chain .no-triggers-hint {
+    font-style: italic;
+    font-size: 0.7rem;
+    margin: 0;
 }
 
-.dnd5e2.dialog.chain-completion .dialog-buttons button[data-action="continue"]:hover {
-    background: var(--dnd5e-color-success-hover);
-    border-color: var(--dnd5e-color-success-hover);
+.chat-message .chain-triggers {
+    margin: 0.75rem 0 0.25rem 0;
+    padding: 0.75rem;
+    background: var(--dnd5e-color-card);
+    border: 1px solid var(--dnd5e-color-gold);
+    border-radius: 4px;
 }
 
-.dnd5e2.dialog.chain-completion .dialog-buttons button[data-action="stop"] {
-    background: var(--dnd5e-color-warning);
-    border-color: var(--dnd5e-color-warning);
+.chat-message .chain-triggers-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: var(--dnd5e-color-primary);
+    font-size: 0.9rem;
 }
 
-.dnd5e2.dialog.chain-completion .dialog-buttons button[data-action="stop"]:hover {
-    background: var(--dnd5e-color-warning-hover);
-    border-color: var(--dnd5e-color-warning-hover);
+.chat-message .chain-triggers-header i {
+    color: var(--dnd5e-color-primary);
+}
+
+.chat-message .chain-triggers-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.chat-message .chain-trigger-btn {
+    padding: 0.25rem;
+    background: var(--input-background);
+    color: var(--color-text-primary);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: bold;
+    transition: all 0.1s ease;
+}
+
+.chat-message .chain-trigger-btn:hover {
+    background: var(--dnd5e-color-primary-hover);
+    border-color: var(--dnd5e-color-primary-hover);
+    transform: translateY(-1px);
+}
+
+.chat-message .chain-trigger-btn:active {
+    transform: translateY(0);
 }

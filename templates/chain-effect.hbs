@@ -59,6 +59,33 @@
                         </div>
                     </div>
                 </div>
+                {{#unless (eq index (subtract ../chainedActivities.length 1))}}
+                <div class="activity-triggers">
+                    <div class="triggers-header">
+                        <label>Chain Triggers</label>
+                        <button type="button" class="add-trigger-btn" data-activity-index="{{ index }}" data-activity-type="{{ chainedActivity.activityType }}" title="Add Trigger">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+
+                    {{#if chainedActivity.triggers.length}}
+                    <div class="triggers-list">
+                        {{#each chainedActivity.triggers as |trigger triggerIndex|}}
+                        <div class="trigger-item" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIindex }}">
+                            <div class="trigger-controls">
+                                <input type="text" class="trigger-label-input" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}" value="{{ trigger }}" placeholder="Trigger Label">
+                                <button type="button" class="remove-trigger-btn" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}" title="Remove Trigger">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                    {{else}}
+                    <p class="no-triggers-hint">No triggers defined. Add triggers to control chain progression.</p>
+                    {{/if}}
+                </div>
+                {{/unless}}
             </div>
             {{/each}}
         </div>

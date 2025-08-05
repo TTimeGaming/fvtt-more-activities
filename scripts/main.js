@@ -50,6 +50,7 @@ Hooks.on(`renderActivityChoiceDialog`, (dialog, html) => {
 
 Hooks.on(`renderChatMessageHTML`, (message, html) => {
     ContestedData.applyListeners(message, html);
+    ChainData.applyListeners(message, html);
 });
 
 Hooks.on(`renderActivitySheet`, (sheet, html) => {
