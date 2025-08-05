@@ -79,6 +79,7 @@ Your support helps fund:
 
 ### Chain Activity
 <img src="./assets/chain-activity.png" width="700" />
+<img src="./assets/chain-message.png" width="350" />
 
 ---
 
