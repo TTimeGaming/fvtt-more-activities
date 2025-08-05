@@ -1,0 +1,73 @@
+<div class="contested-initiator">
+    <fieldset>
+        <legend><label> Your Roll Options </label></legend>
+
+        <div class="form-group">
+            <div class="roll-preview">
+                {{#each attackerOptions as |option|}}
+                <div class="option-preview">{{ option.label }}</div>
+                {{/each}}
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend><label> Defenders </label></legend>
+
+        <div class="form-group">
+            <label>Add Defenders:</label>
+            <select name="defenderId">
+                <option value="">-- Select Defender --</option>
+                {{#if defendersData.targets}}
+                <optgroup label="Targeted Actors" data-type="Target">
+                    {{#each defendersData.targets as |actor|}}
+                    <option value="{{ actor.id }}">{{ actor.name }}</option>
+                    {{/each}}
+                </optgroup>
+                {{/if}}
+                {{#if defendersData.playerCharacters}}
+                <optgroup label="{{#if isGM}}Player{{else}}Your{{/if}} Characters" data-type="Character">
+                    {{#each defendersData.playerCharacters as |actor|}}
+                    <option value="{{ actor.id }}">{{ actor.name }}</option>
+                    {{/each}}
+                </optgroup>
+                {{/if}}
+                {{#if defendersData.nonPlayerCharacters}}
+                <optgroup label="{{#if isGM}}{{else}}Your {{/if}}NPCs" data-type="NPC">
+                    {{#each defendersData.nonPlayerCharacters as |actor|}}
+                    <option value="{{ actor.id }}">{{ actor.name }}</option>
+                    {{/each}}
+                </optgroup>
+                {{/if}}
+                {{#if defendersData.allTokens}}
+                <optgroup label="Scene Tokens" data-type="Token">
+                    {{#each defendersData.allTokens as |actor|}}
+                    <option value="{{ actor.id }}">{{ actor.name }}</option>
+                    {{/each}}
+                </optgroup>
+                {{/if}}
+            </select>
+        </div>
+        
+        {{#if selectedDefenders.length}}
+        <div class="form-group">
+            <label>Selected Defenders:</label>
+            <div class="selected-defenders">
+                {{#each selectedDefenders as |defender|}}
+                <div class="defender-item">
+                    <div class="defender-name">{{ defender.name }}</div>
+                    <div class="defender-buttons">
+                        <div class="defender-type">{{ defender.defenderType }}</div>
+                        <button type="button" class="defender-delete-btn" data-index="{{ defender.index }}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+        {{/if}}
+    </fieldset>
+    
+    <button type="button" class="start-contest-btn">Start Contest</button>
+</div>

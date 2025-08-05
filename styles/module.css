@@ -30,166 +30,195 @@
     flex-direction: column;
 }
 
-.dnd5e2.activity-contested .form-group.stacked {
-    margin-bottom: 1rem;
+.contested-initiator {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
-.chat-message .contested-check {
+.contested-initiator fieldset {
+    gap: 0.5rem;
+}
+
+.contested-initiator .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    margin: 1rem 0;
 }
 
-.chat-message .contest-side {
-    padding: 0.5rem;
-    border: 1px solid var(--dnd5e-color-card-outline);
+.contested-initiator .roll-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.contested-initiator .option-preview {
+    background: var(--dnd5e-background-card);
+    padding: 0.5rem 0.5rem;
     border-radius: 4px;
-    background: var(--dnd5e-color-card-footer);
-}
-
-.chat-message .contest-side h4 {
-    margin: 0 0 0.5rem 0;
-    color: var(--dnd5e-color-text-heading);
+    font-size: 0.8rem;
     font-weight: bold;
-    text-align: center;
 }
 
-.chat-message .roll-buttons {
+.contested-initiator .selected-defenders {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
-.chat-message .contested-roll-button {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid var(--dnd5e-color-button-outline);
-    border-radius: 3px;
-    background: var(--dnd5e-color-button);
-    color: var(--dnd5e-color-button-text);
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: bold;
-    text-align: center;
-    transition: all 0.1s ease;
-}
-
-.chat-message .contested-roll-button:hover {
-    background: var(--dnd5e-color-button-hover);
-    border-color: var(--dnd5e-color-button-hover-outline);
-}
-
-.chat-message .roll-result {
+.contested-initiator .defender-item {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-}
-
-.chat-message .dice-total {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--dnd5e-color-text-heading);
-}
-
-.chat-message .contest-result {
-    margin-top: 0.5rem;
-    text-align: center;
     padding: 0.5rem;
     border-radius: 4px;
-    font-weight: bold;
-    font-size: 0.875rem;
+    background: var(--dnd5e-background-card);
 }
 
-.chat-message .defender-selection {
-    margin-bottom: 0.5rem;
-    padding: 0.5rem;
-    background: var(--dnd5e-color-card);
+.contested-initiator .defender-name {
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.contested-initiator .defender-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.6rem;
+}
+
+.contested-initiator .defender-delete-btn {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.contested-initiator .start-contest-btn {
+    padding: 1.25rem;
+}
+
+.contested-defender {
+    padding: 0rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.contested-defender .contest-info {
+    padding: 0.75rem 0 0 0;
+    text-align: center;
+}
+
+.contested-defender .message-header {
+    padding: 0rem 1rem;
+}
+
+.contested-defender .message-sender {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.contested-defender .message-sender .avatar {
+    max-width: 25%;
+}
+
+.contested-defender .message-sender .name-stacked {
+    text-align: right;
+}
+
+.contested-defender .roll-options {
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
+    text-align: center;
+    gap: 0.75rem;
+}
+
+.contested-defender .roll-option-btn {
+    padding: 1rem;
+}
+
+.contested-results .contest-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.contested-results .contest-result-row {
     border: 1px solid var(--dnd5e-color-card-outline);
     border-radius: 3px;
+    background: var(--dnd5e-color-card);
 }
 
-.chat-message .defender-selection label {
-    display: block;
-    font-weight: bold;
-    font-size: 0.8rem;
-    color: var(--dnd5e-color-text-heading);
-    margin-bottom: 0.25rem;
+.contested-results .contest-result-row.initiator-row {
+    border-left: 4px solid var(--dnd5e-color-primary);
 }
 
-.chat-message .defender-selection select {
-    width: 100%;
-    padding: 0.25rem;
-    border: 1px solid var(--dnd5e-color-border);
-    border-radius: 3px;
-    background: var(--dnd5e-color-input);
-    color: var(--dnd5e-color-text);
-    font-size: 0.8rem;
+.contested-results .contest-result-row.defender-row {
+    border-left: 4px solid var(--dnd5e-color-secondary);
 }
 
-.chat-message .defender-selection select:focus {
-    outline: none;
-    border-color: var(--dnd5e-color-primary);
-    box-shadow: 0 0 0 2px rgba(var(--dnd5e-color-primary-rgb), 0.2);
-}
-
-.chat-message .defender-selection select optgroup {
-    font-weight: bold;
-    color: var(--dnd5e-color-text-heading);
-    background: var(--dnd5e-color-card-footer);
-    font-style: normal;
-    padding: 0.25rem 0;
-}
-
-.chat-message .defender-selection select option {
-    font-weight: normal;
-    color: var(--dnd5e-color-text);
-    background: var(--dnd5e-color-input);
-    padding: 0.25rem 0.5rem;
-}
-
-.chat-message .contested-reroll-button {
-    width: 100%;
-    margin-top: 0.5rem;
-    padding: 0.5rem;
-    border: 1px solid var(--dnd5e-color-button-outline);
-    border-radius: 3px;
-    background: var(--dnd5e-color-button);
-    color: var(--dnd5e-color-button-text);
+.contested-results .result-summary {
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     cursor: pointer;
-    font-size: 0.875rem;
+}
+
+.contested-results .actor-name {
+    font-weight: 600;
+    color: var(--dnd5e-color-text-heading);
+    flex: 1;
+}
+
+.contested-results .result-indicator {
     font-weight: bold;
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+    min-width: 1.5rem;
     text-align: center;
-    transition: all 0.1s ease;
 }
 
-.chat-message .contested-reroll-button:hover {
-    background: var(--dnd5e-color-button-hover);
-    border-color: var(--dnd5e-color-button-hover-outline);
+.contested-results .roll-total {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--dnd5e-color-text-heading);
+    font-family: var(--dnd5e-font-roboto-slab);
+    min-width: 2rem;
+    text-align: right;
 }
 
-.chat-message .result-message.winner-attacker {
-    background: var(--dnd5e-color-success-background);
-    color: var(--dnd5e-color-success-text);
-    border: 1px solid var(--dnd5e-color-success);
+.contested-results .result-details {
+    padding: 0.75rem;
+    display: none;
 }
 
-.chat-message .result-message.winner-defender {
-    background: var(--dnd5e-color-success-background);
-    color: var(--dnd5e-color-success-text);
-    border: 1px solid var(--dnd5e-color-success);
+.contested-results .contest-result-row.expanded .result-details {
+    display: block;
 }
 
-.chat-message .result-message.tie {
-    background: var(--dnd5e-color-warning-background);
-    color: var(--dnd5e-color-warning-text);
-    border: 1px solid var(--dnd5e-color-warning);
+.contested-results .roll-breakdown {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 0.5rem;
+    gap: 0.5rem;
 }
 
-.chat-message .result-message.reroll {
-    background: var(--dnd5e-color-info-background);
-    color: var(--dnd5e-color-info-text);
-    border: 1px solid var(--dnd5e-color-info);
+.contested-results .result-summary::after {
+    content: "▶";
+    font-size: 0.7rem;
+    color: var(--dnd5e-color-text-light);
+    transition: transform 0.2s ease;
+    margin-left: 0.5rem;
+}
+
+.contested-results .contest-result-row.expanded .result-summary::after {
+    transform: rotate(90deg);
 }
 
 .dnd5e2.activity-chain .add-activity-controls {
