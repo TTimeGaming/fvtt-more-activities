@@ -6,26 +6,7 @@ export class ContestedData {
             return Array.isArray(array) && array.includes(value);
         });
 
-        game.socket.on(`module.more-activities`, (data) => {
-            console.log(data);
-            switch (data.type) {
-                case `openDefenderApp`:
-                    ContestedData.handleDefenderApp(data);
-                    break;
-            }
-        });
-    }
-
-    static handleDefenderApp(data) {
-        if (data.userId !== game.user.id) return;
-
-        const contest = ContestedManager.contests.get(data.contestId);
-        if (!contest) return;
-
-        const actor = game.actors.get(data.actorId);
-        if (!actor) return;
-
-        new ContestedDefenderApp(data.contestId, actor, `defender`).render(true);
+        await ContestedManager.init();
     }
 
     static applyListeners(message, html) {
@@ -90,69 +71,155 @@ export class ContestedData {
 class ContestedManager {
     static contests = new Map();
 
-    static createContest(activity) {
-        const contestId = foundry.utils.randomID();
-        const contest = {
-            id: contestId,
-            activity: activity,
-            initiator: activity.actor,
-            defenders: [],
-            rolls: new Map(),
-        };
-        this.contests.set(contestId, contest);
-        return contest;
+    static async init() {
+        game.socket.on(`module.more-activities`, (data) => {
+            switch (data.type) {
+                case `createActivity`:
+                    this._createContest(data);
+                    break;
+                case `promptDefender`:
+                    this._promptDefender(data);
+                    break;
+                case `recordRoll`:
+                    this._recordRoll(data);
+                    break;
+                case `deleteContest`:
+                    this._deleteContest(data);
+                    break;
+                case `generateResult`:
+                    this._generateResultsCard(data);
+                    break;
+            }
+        });
     }
 
-    static async addDefender(contestId, defender) {
-        const contest = this.contests.get(contestId);
-        if (!contest) return;
-        
-        contest.defenders.push(defender);
-        
-        const user = this._getUserForActor(defender);
-        if (!user) return;
-
+    static createContest(activity) {
+        const contestId = foundry.utils.randomID();
         const data = {
-            type: `openDefenderApp`,
+            type: `createActivity`,
             contestId: contestId,
-            userId: user.id,
-            actorId: defender.id,
+            initiatorId: activity.actor?.id,
+            activityData: {
+                id: activity.id,
+                name: activity.name,
+                itemId: activity.item?.id,
+                itemName: activity.item?.name,
+                attackerRollType: activity.attackerRollType,
+                defenderRollType: activity.defenderRollType,
+                attackerOptions: activity.attackerOptions,
+                defenderOptions: activity.defenderOptions,
+            },
         };
 
-        if (user.id !== game.userId) {
-            game.socket.emit(`module.more-activities`, data);
-            return;
-        }
+        game.socket.emit(`module.more-activities`, data);
+        return this._createContest(data);
+    }
 
-        ContestedData.handleDefenderApp(data);
+    static async promptDefender(contestId, defender) {
+        const data = {
+            type: `promptDefender`,
+            contestId: contestId,
+            defenderId: defender.id,
+        };
+
+        game.socket.emit(`module.more-activities`, data);
+        this._promptDefender(data);
     }
 
     static async recordRoll(contestId, actorId, rollData) {
+        const data = {
+            type: `recordRoll`,
+            contestId: contestId,
+            actorId: actorId,
+            rollData: rollData,
+        };
+
+        game.socket.emit(`module.more-activities`, data);
+        this._recordRoll(data);
+
         const contest = this.contests.get(contestId);
+        if (!contest || contest.rolls.size < contest.defenders.length + 1) return;
+
+        const resultData = {
+            type: `generateResult`,
+            contestId: contestId,
+        };
+        game.socket.emit(`module.more-activities`, resultData);
+        this._generateResultsCard(resultData);
+
+        const deleteData = {
+            type: `deleteContest`,
+            contestId: contestId,
+        };
+
+        game.socket.emit(`module.more-activities`, deleteData);
+        this._deleteContest(deleteData);
+    }
+
+    static _createContest(data) {
+        const contest = {
+            id: data.contestId,
+            initiatorId: data.initiatorId,
+            activityData: data.activityData,
+            defenders: [],
+            rolls: new Map(),
+        };
+        this.contests.set(data.contestId, contest);
+        return contest;
+    }
+
+    static _promptDefender(data) {
+        const contest = this.contests.get(data.contestId);
         if (!contest) return;
 
-        switch (rollData.rollType) {
+        contest.defenders.push(data.defenderId);
+        
+        const user = this._getUserForActor(data.defenderId);
+        if (user?.id !== game.userId) return;
+
+        this._handleDefenderApp(data.contestId, data.defenderId);
+    }
+
+    static async _recordRoll(data) {
+        const contest = this.contests.get(data.contestId);
+        if (!contest) return;
+
+        switch (data.rollData.rollType) {
             case `ability`:
-                rollData.rollLabel = CONFIG.DND5E.abilities[rollData.option].label;
+                data.rollData.rollLabel = CONFIG.DND5E.abilities[data.rollData.option].label;
                 break;
             case `skill`:
-                rollData.rollLabel = CONFIG.DND5E.skills[rollData.option].label;
+                data.rollData.rollLabel = CONFIG.DND5E.skills[data.rollData.option].label;
                 break;
         }
 
-        rollData.tooltip = await rollData.roll?.getTooltip() || ``;
-        contest.rolls.set(actorId, rollData);
-
-        if (contest.rolls.size < contest.defenders.length + 1) return; // +1 for initiator
-
-        await this._generateResultsCard(contest);
-        this.contests.delete(contestId);
+        contest.rolls.set(data.actorId, data.rollData);
     }
 
-    static async _generateResultsCard(contest) {
-        const initiatorRoll = contest.rolls.get(contest.initiator.id);
-        const defenderRolls = contest.defenders.map(defender => {
-            const roll = contest.rolls.get(defender.id);
+    static _deleteContest(data) {
+        this.contests.delete(data.contestId);
+    }
+
+    static _handleDefenderApp(contestId, actorId) {
+        const contest = this.contests.get(contestId);
+        if (!contest) return;
+
+        const actor = game.actors.get(actorId);
+        if (!actor) return;
+
+        new ContestedDefenderApp(contestId, actor, `defender`).render(true);
+    }
+
+    static async _generateResultsCard(data) {
+        const contest = this.contests.get(data.contestId);
+        if (!contest) return;
+
+        const user = this._getUserForActor(contest.initiatorId);
+        if (user?.id !== game.userId) return;
+
+        const initiatorRoll = contest.rolls.get(contest.initiatorId);
+        const defenderRolls = contest.defenders.map(defenderId => {
+            const roll = contest.rolls.get(defenderId);
             const won = roll.total > initiatorRoll.total;
             const lost = roll.total < initiatorRoll.total;
 
@@ -164,8 +231,9 @@ class ContestedManager {
                     results.push(result.result);
             }
             
+            const actor = game.actors.get(defenderId);
             return {
-                actor: defender,
+                actor: actor,
                 roll: roll,
                 results: results,
                 won: won,
@@ -180,9 +248,13 @@ class ContestedManager {
             for (const result of term.results)
                 results.push(result.result);
         }
+
+        const initiator = game.actors.get(contest.initiatorId);
+        const item = initiator.items.get(contest.activityData.itemId);
+        const activity = item.system.activities.get(contest.activityData.id);
     
         const templateData = {
-            activity: contest.activity,
+            activity: activity,
             initiatorRoll: initiatorRoll,
             initiatorResults: results,
             defenderRolls: defenderRolls
@@ -191,25 +263,29 @@ class ContestedManager {
         const content = await foundry.applications.handlebars.renderTemplate(`modules/more-activities/templates/contested-results.hbs`, templateData);
         ChatMessage.create({
             content: content,
-            speaker: ChatMessage.getSpeaker({ actor: contest.initiator })
+            speaker: ChatMessage.getSpeaker({ actor: initiator })
         });
 
-        ContestedManager._applyContestEffects(contest, templateData);
+        this._applyContestEffects(contest, activity, templateData);
     }
     
-    static async _applyContestEffects(contest, templateData) {
-        if (contest.activity.appliedEffects.length === 0) return;
+    static async _applyContestEffects(contest, activity, templateData) {
+        if (activity.appliedEffects.length === 0) return;
+
+        console.log(contest);
+        console.log(activity);
+        console.log(templateData);
 
         const attackerActor = contest.initiator;
         for (const defender of templateData.defenderRolls) {
-            const defenderActor = game.actors.get(defender.actor.id);
+            const defenderActor = defender.actor;
             if (!defenderActor) continue;
 
             const winner = defender.lost ? attackerActor : defenderActor;
             const loser = defender.lost ? defenderActor : attackerActor;
 
             let targetActor = null;
-            switch (contest.activity.applyEffectsTo) {
+            switch (activity.applyEffectsTo) {
                 case `loserAttacker`:
                     if (!defender.lost) targetActor = loser;
                     break;
@@ -235,8 +311,8 @@ class ContestedManager {
                 return;
             }
 
-            const item = contest.activity?.item;
-            for (const effectId of contest.activity.appliedEffects) {
+            const item = activity?.item;
+            for (const effectId of activity.appliedEffects) {
                 const effect = item?.effects?.get(effectId);
                 if (!effect) {
                     console.warn(`Effect ${effectId} not found on item ${item?.name}`);
@@ -257,9 +333,12 @@ class ContestedManager {
         }
     }
 
-    static _getUserForActor(actor) {
-        const actorDoc = game.actors.find(a => a.id === actor.id);
-        return game.users.find(u => actorDoc.testUserPermission(u, "OWNER")) ||  game.users.find(u => u.isGM);
+    static _getUserForActor(actorId) {
+        const actor = game.actors.find(a => a.id === actorId);
+        const validUsers = game.users.filter(u => actor.testUserPermission(u, `OWNER`) && u.active);
+        const validUser = validUsers.find(u => !u.isGM);
+        const gmUser = validUsers.find(u => u.isGM);
+        return validUser ? validUser : gmUser;
     }
 }
 
@@ -591,7 +670,7 @@ class ContestedInitiatorApp extends HandlebarsApplicationMixin(ApplicationV2) {
             }
 
             for (const defender of this.selectedDefenders) {
-                await ContestedManager.addDefender(this.contest.id, defender);
+                await ContestedManager.promptDefender(this.contest.id, defender);
             }
 
             new ContestedDefenderApp(this.contest.id, this.actor, `attacker`).render(true);
@@ -675,12 +754,12 @@ class ContestedDefenderApp extends HandlebarsApplicationMixin(ApplicationV2) {
     /** @inheritdoc */
     async _prepareContext() {
         const rollType = this.side === `attacker` ?
-            this.contest.activity.attackerRollType :
-            this.contest.activity.defenderRollType
+            this.contest.activityData.attackerRollType :
+            this.contest.activityData.defenderRollType
         ;
         const options = this.side === `attacker` ?
-            this.contest.activity.attackerOptions :
-            this.contest.activity.defenderOptions
+            this.contest.activityData.attackerOptions :
+            this.contest.activityData.defenderOptions
         ;
 
         return {
@@ -696,7 +775,7 @@ class ContestedDefenderApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!this.element.querySelector(`.window-subtitle`)) {
             const subtitle = document.createElement(`h2`);
             subtitle.classList.add(`window-subtitle`);
-            subtitle.innerText = this.contest.activity.item?.name || this.contest.activity.name || ``,
+            subtitle.innerText = this.contest.activityData.itemName || this.contest.activityData.name || ``,
             this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
         }
 
@@ -710,8 +789,8 @@ class ContestedDefenderApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     async _performRoll(option) {
         const rollType = this.side === 'attacker' ? 
-            this.contest.activity.attackerRollType : 
-            this.contest.activity.defenderRollType
+            this.contest.activityData.attackerRollType : 
+            this.contest.activityData.defenderRollType
         ;
             
         let roll;
