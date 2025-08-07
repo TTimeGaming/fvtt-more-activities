@@ -1,0 +1,45 @@
+<section class="tab activity-{{ tab.id }} {{ tab.cssClass }}" data-tab="{{ tab.id }}" data-group="{{ tab.group }}">
+    <fieldset>
+        <legend><label> Configuration </label></legend>
+
+        <div class="form-group">
+            <label>Target Self</label>
+            <div class="form-fields">
+                <dnd5e-checkbox name="targetSelf" {{#if targetSelf}}checked{{/if}}></dnd5e-checkbox>
+            </div>
+            <p class="hint">Allow the user to target themself?</p>
+        </div>
+
+        <div class="form-group">
+            <label>Manual Placement</label>
+            <div class="form-fields">
+                <dnd5e-checkbox name="manualPlacement" {{#if manualPlacement}}checked{{/if}}></dnd5e-checkbox>
+            </div>
+            <p class="hint">Allow the user to manually place teleported tokens?</p>
+        </div>
+
+        <div class="form-group">
+            <label>Keep Arrangement</label>
+            <div class="form-fields">
+                {{#if manualPlacement}}
+                <dnd5e-checkbox name="keepArrangement" disabled></dnd5e-checkbox>
+                {{else}}
+                <dnd5e-checkbox name="keepArrangement" {{#if keepArrangement}}checked{{/if}}></dnd5e-checkbox>
+                {{/if}}
+            </div>
+            <p class="hint">Keep the same token arrangement upon teleportation?</p>
+        </div>
+
+        <div class="form-group stacked">
+            <label>Cluster Radius</label>
+            <div class="form-fields">
+                {{#if (or manualPlacement keepArrangement)}}
+                <input type="number" name="clusterRadius" value="0" placeholder="Cluster Radius" disabled>
+                {{else}}
+                <input type="number" name="clusterRadius" min="0" value="{{ clusterRadius }}" placeholder="Cluster Radius">
+                {{/if}}
+            </div>
+            <p class="hint">The radius to cluster teleported tokens</p>
+        </div>
+    </fieldset>
+</section>

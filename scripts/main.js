@@ -2,6 +2,7 @@ import { MacroActivityData, MacroActivitySheet, MacroActivity } from './macro.js
 import { HookActivityData, HookActivitySheet, HookActivity, HookData } from './hook.js';
 import { ContestedActivityData, ContestedActivitySheet, ContestedActivity, ContestedData } from './contested.js';
 import { ChainActivityData, ChainActivitySheet, ChainActivity, ChainData } from './chain.js';
+import { TeleportActivityData, TeleportActivitySheet, TeleportActivity, TeleportData } from './teleport.js';
 import { Compat } from './compat.js';
 
 Hooks.once(`init`, async() => {
@@ -40,7 +41,14 @@ Hooks.once(`init`, async() => {
         typeLabel: `DND5E.ACTIVITY.Type.chain`,
     };
 
-    console.log(`More Activities | Registered (4) Activity Types`);
+    CONFIG.DND5E.activityTypes.teleport = {
+        documentClass: TeleportActivity,
+        dataModel: TeleportActivityData,
+        sheetClass: TeleportActivitySheet,
+        typeLabel: `DND5E.ACTIVITY.Type.teleport`,
+    };
+
+    console.log(`More Activities | Registered (5) Activity Types`);
 });
 
 Hooks.on(`renderActivityChoiceDialog`, (dialog, html) => {
@@ -51,8 +59,10 @@ Hooks.on(`renderActivityChoiceDialog`, (dialog, html) => {
 Hooks.on(`renderChatMessageHTML`, (message, html) => {
     ContestedData.applyListeners(message, html);
     ChainData.applyListeners(message, html);
+    TeleportData.disableMTMessagePrompt(message, html);
 });
 
 Hooks.on(`renderActivitySheet`, (sheet, html) => {
     ChainData.disableChained(sheet, html);
+    TeleportData.disableMTActivityPrompt(sheet, html);
 });
