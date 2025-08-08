@@ -501,12 +501,15 @@
     margin-left: 1rem;
 }
 
-.teleport-destination-app .window-content {
+.teleport-destination-app .window-content,
+.movement-destination-app .window-content {
     overflow: hidden;
 }
 
 .teleport-targets,
-.teleport-destination {
+.teleport-destination,
+.movement-targets,
+.movement-destination {
     padding: 1rem 0rem;
     display: flex;
     flex-direction: column;
@@ -514,17 +517,19 @@
 }
 
 .teleport-targets fieldset,
-.teleport-destination .destination-info {
+.movement-targets fieldset {
     gap: 0.5rem;
 }
 
-.teleport-targets .form-group {
+.teleport-targets .form-group,
+.movement-targets .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.teleport-targets .config-info {
+.teleport-targets .config-info,
+.movement-targets .config-info {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -535,19 +540,21 @@
 }
 
 .teleport-targets .config-item,
-.teleport-destination .config-item {
+.movement-targets .config-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.teleport-targets .selected-targets {
+.teleport-targets .selected-targets,
+.movement-targets .selected-targets {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
-.teleport-targets .target-item {
+.teleport-targets .target-item,
+.movement-targets .target-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -556,74 +563,57 @@
     background: var(--dnd5e-background-card);
 }
 
-.teleport-targets .target-info {
+.teleport-targets .target-info,
+.movement-targets .target-info {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
-.teleport-targets .target-name {
+.teleport-targets .target-name,
+.movement-targets .target-name {
     font-size: 0.8rem;
     font-weight: bold;
 }
 
-.teleport-targets .target-distance {
+.teleport-targets .target-distance,
+.movement-targets .target-distance {
     font-size: 0.7rem;
     color: var(--dnd5e-color-text-light);
 }
 
-.teleport-targets .target-controls {
+.teleport-targets .target-controls,
+.movement-targets .target-controls {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.teleport-targets .target-delete-btn {
+.teleport-targets .target-delete-btn,
+.movement-targets .target-delete-btn {
     width: 1.5rem;
     height: 1.5rem;
     font-size: 0.7rem;
 }
 
-.teleport-targets .start-teleport-btn {
+.teleport-targets .start-teleport-btn,
+.movement-targets .start-movement-btn {
     padding: 1.25rem;
     background: var(--dnd5e-color-primary);
     color: white;
 }
 
-.teleport-destination .destination-info {
-    text-align: center;
-    background: var(--dnd5e-background-card);
-    padding: 1rem;
-    border-radius: 4px;
-}
-
-.teleport-destination .target-list {
-    list-style: none;
-    padding: 0;
-    margin: 0.5rem 0;
-}
-
-.teleport-destination .target-list li {
-    padding: 0.25rem 0;
-}
-
-.teleport-destination .teleport-config {
-    background: var(--dnd5e-background-card);
-    padding: 0.75rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.teleport-destination .destination-controls {
+.teleport-destination .destination-controls,
+.movement-destination .destination-controls {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.teleport-destination .cancel-teleport-btn {
+.teleport-destination .cancel-teleport-btn,
+.movement-destination .push-movement-btn,
+.movement-destination .pull-movement-btn,
+.movement-destination .cancel-movement-btn {
     padding: 1.25rem;
     background: var(--dnd5e-color-secondary);
     color: white;

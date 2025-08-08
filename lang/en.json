@@ -70,5 +70,24 @@
     "DND5E.ACTIVITY.FIELDS.teleport.originToken.label": "Origin Token",
     "DND5E.ACTIVITY.FIELDS.teleport.destination.label": "Click a point within range to set as the destination.",
     "DND5E.ACTIVITY.FIELDS.teleport.dragAndDrop.label": "Drag tokens to the canvas to teleport them.",
-    "DND5E.ACTIVITY.FIELDS.teleport.dragCompleted.label": "All tokens have been placed!"
+    "DND5E.ACTIVITY.FIELDS.teleport.dragCompleted.label": "All tokens have been placed!",
+
+    "DND5E.ACTIVITY.Type.movement": "Movement",
+    "DND5E.ACTIVITY.FIELDS.movement.moreTargets.label": "Select at least one target to teleport.",
+    "DND5E.ACTIVITY.FIELDS.movement.lessTargets.label": "Select fewer targets to teleport.",
+    "DND5E.ACTIVITY.FIELDS.movement.outOfBounds.label": "Clicked point is outside of permitted radius.",
+    "DND5E.ACTIVITY.FIELDS.movement.maximumTargets.label": "Maximum number of targets already selected.",
+    "DND5E.ACTIVITY.FIELDS.movement.manualRemaining.label": "Please place all remaining tokens.",
+    "DND5E.ACTIVITY.FIELDS.movement.success.label": "token(s) successfully moved!",
+    "DND5E.ACTIVITY.FIELDS.movement.maxTargets.label": "Max Targets",
+    "DND5E.ACTIVITY.FIELDS.movement.maxTargets.hint": "The permitted number of tokens to forcibly move",
+    "DND5E.ACTIVITY.FIELDS.movement.targetRange.label": "Target Range",
+    "DND5E.ACTIVITY.FIELDS.movement.targetRange.hint": "The range around the user to select targets from (in feet)",
+    "DND5E.ACTIVITY.FIELDS.movement.movementDistance.label": "Movement Distance",
+    "DND5E.ACTIVITY.FIELDS.movement.movementDistance.hint": "The distance tokens can be forcibly moved by the user (in feet)",
+    "DND5E.ACTIVITY.FIELDS.movement.movementType.label": "Movement Type",
+    "DND5E.ACTIVITY.FIELDS.movement.movementType.hint": "The direction in which tokens are forcibly moved",
+    "DND5E.ACTIVITY.FIELDS.movement.originToken.label": "Origin Token",
+    "DND5E.ACTIVITY.FIELDS.movement.dragAndDrop.label": "Drag tokens to the canvas to teleport them.",
+    "DND5E.ACTIVITY.FIELDS.movement.dragCompleted.label": "All tokens have been placed!"
 }
