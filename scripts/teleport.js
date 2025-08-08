@@ -217,6 +217,12 @@ export class TeleportActivity extends dnd5e.documents.activity.ActivityMixin(Tel
      */
     async use(config, dialog, message) {
         const results = await super.use(config, dialog, message);
+        const token = TeleportData.getOriginToken(this.actor);
+        if (!token) {
+            ui.notifications.warn(`No valid token for this actor on the canvas`);
+            return results;
+        }
+
         new TeleportTargetApp(this).render(true);
         return results;
     }
@@ -258,6 +264,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.selectedTargets = [];
         this.selectionTarget = null;
         this.destinationClose = null;
+        this.isSelecting = false;
         this._prepopulateTargets();
     }
 
@@ -280,6 +287,8 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     /** @inheritdoc */
     async _onRender(context, options) {
+        this.isSelecting = false;
+
         const originToken = TeleportData.getOriginToken(this.actor);
 
         if (this.activity?.maxTargets === 1 && this.activity?.onlyTargetSelf) {
@@ -357,6 +366,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
             this.destinationClose = new TeleportDestinationApp(this, this.activity, this.actor, this.selectedTargets);
             this.destinationClose.render(true);
+            this.isSelecting = true;
             this.close();
         });
     }
@@ -364,10 +374,19 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
     /** @inheritdoc */
     async close(options = {}) {
         await super.close(options);
-        if (!this.selectionTarget) return;
+        
+        if (this.selectionTarget)
+        {
+            TeleportData.removeMeasuredTemplate(this.selectionTarget);
+            this.selectionTarget = null;
+        }
 
-        TeleportData.removeMeasuredTemplate(this.selectionTarget);
-        this.selectionTarget = null;
+        if (!this.isSelecting)
+        {
+            this.selectedTargets.forEach(target => {
+                target.token.setTarget(false, { releaseOthers: true, groupSelection: true });
+            });
+        }
     }
 
     /**
@@ -385,7 +404,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             token: originToken
         });
 
-        originToken.setTarget(true, { releaseOthers: true, groupSelection: true });   
+        originToken.setTarget(true, { releaseOthers: true, groupSelection: true });
 
         this.destinationClose = new TeleportDestinationApp(this, this.activity, this.actor, this.selectedTargets);
         this.destinationClose.openTarget = false;
@@ -469,8 +488,8 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
         classes: [ `dnd5e2`, `teleport-destination-app` ],
         tag: `form`,
         position: {
-            width: 300,
-            height: 150,
+            width: 350,
+            height: 200,
         },
     };
 
@@ -503,6 +522,13 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     /** @inheritdoc */
     async _onRender(context, options) {
+        if (!this.element.querySelector(`.window-subtitle`)) {
+            const subtitle = document.createElement(`h2`);
+            subtitle.classList.add(`window-subtitle`);
+            subtitle.innerText = this.activity?.item?.name || this.activity?.name || ``,
+            this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
+        }
+
         this.element.querySelector(`.cancel-teleport-btn`)?.addEventListener(`click`, async(event) => {
             this.close();
         });
@@ -533,7 +559,6 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
     async _selectDestination() {
         if (this.destinationTarget) return;
         
-        ui.notifications.info(`Click on the canvas to select teleport destination`);
         const handler = async (event) => {
             if (!this.destinationTarget) return;
 
@@ -720,10 +745,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         tag: `form`,
         position: {
             width: 400,
-            height: 300,
-        },
-        window: {
-            resizable: true
+            height: `auto`,
         }
     };
 
@@ -740,9 +762,15 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             },
             ...options,
         });
+
+        const snapped = game.canvas.grid.getCenterPoint({
+            x: Math.round(destX * 10) / 10,
+            y: Math.round(destY * 10) / 10,
+        });
+
         this.targetApp = targetApp;
-        this.destX = destX;
-        this.destY = destY;
+        this.destX = snapped.x;
+        this.destY = snapped.y;
         this.placementRadius = targetApp.activity.manualRadius;
         this.tokensToPlace = [...targetApp.selectedTargets];
         this.placedTokens = [];
@@ -793,7 +821,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             distance: this.placementRadius,
         });
     }
-    
+
     /**
      * Handle drag start
      * @param {DragEvent} event 
@@ -836,7 +864,6 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         const oldPosition = await this._executeSingleTokenTeleport(this.currentDragData.token.token.actor, snapped.x, snapped.y);
         const placedToken = this.tokensToPlace.splice(this.currentDragData.index, 1)[0];
-        console.log(placedToken);
         this.placedTokens.push({
             actor: placedToken.token.actor,
             position: oldPosition,

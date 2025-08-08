@@ -496,3 +496,229 @@
 .chat-message .chain-trigger-btn:active {
     transform: translateY(0);
 }
+
+.teleport-targets,
+.teleport-destination {
+    padding: 1rem 0rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.teleport-targets fieldset,
+.teleport-destination .destination-info {
+    gap: 0.5rem;
+}
+
+.teleport-targets .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.teleport-targets .config-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--dnd5e-background-card);
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.teleport-targets .config-item,
+.teleport-destination .config-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.teleport-targets .selected-targets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.teleport-targets .target-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 4px;
+    background: var(--dnd5e-background-card);
+}
+
+.teleport-targets .target-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.teleport-targets .target-name {
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.teleport-targets .target-distance {
+    font-size: 0.7rem;
+    color: var(--dnd5e-color-text-light);
+}
+
+.teleport-targets .target-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.teleport-targets .target-delete-btn {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.7rem;
+}
+
+.teleport-targets .start-teleport-btn {
+    padding: 1.25rem;
+    background: var(--dnd5e-color-primary);
+    color: white;
+}
+
+.teleport-destination .destination-info {
+    text-align: center;
+    background: var(--dnd5e-background-card);
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+.teleport-destination .target-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+}
+
+.teleport-destination .target-list li {
+    padding: 0.25rem 0;
+}
+
+.teleport-destination .teleport-config {
+    background: var(--dnd5e-background-card);
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.teleport-destination .destination-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.teleport-destination .cancel-teleport-btn {
+    padding: 1.25rem;
+    background: var(--dnd5e-color-secondary);
+    color: white;
+}
+
+.dnd5e2.activity.teleport-activity .targeting-tab {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.manual-placement-container {
+   padding: 0.5rem;
+   display: flex;
+   flex-direction: column;
+   gap: 0.5rem;
+}
+
+.placement-header {
+   text-align: center;
+}
+
+.placement-header p {
+   font-size: 0.8rem;
+}
+
+.placement-progress span {
+   font-weight: bold;
+}
+
+.tokens-to-place {
+   max-height: 200px;
+   overflow-y: auto;
+   padding: 0.5rem;
+   display: flex;
+   flex-direction: column;
+   gap: 0.5rem;
+}
+
+.token-drag-item {
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   padding: 0.25rem;
+   background: var(--dnd5e-background-card);
+   border-radius: 3px;
+   cursor: grab;
+   transition: all 0.2s ease;
+}
+
+.token-drag-item:hover {
+   transform: translateY(-1px);
+   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.token-drag-item:active {
+   cursor: grabbing;
+}
+
+.token-image {
+   width: 32px;
+   height: 32px;
+   border-radius: 50%;
+   border: 1px solid var(--color-border);
+   object-fit: cover;
+   pointer-events: none;
+}
+
+.token-name {
+   flex: 1;
+   font-weight: bold;
+   font-size: 0.75rem;
+}
+
+.no-tokens {
+   text-align: center;
+   color: var(--color-text-dark-secondary);
+   font-weight: bold;
+   font-style: italic;
+}
+
+.placement-buttons {
+   display: flex;
+   gap: 0.5rem;
+   justify-content: center;
+}
+
+.finish-placement-btn {
+   background: var(--button-hover-background-color);
+   padding: 1.25rem;
+   border-radius: 4px;
+   cursor: pointer;
+   font-weight: bold;
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+}
+
+.cancel-placement-btn {
+   background: var(--color-button-secondary);
+   padding: 1.25rem;
+   border-radius: 4px;
+   cursor: pointer;
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+}
