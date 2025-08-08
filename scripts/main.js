@@ -3,6 +3,7 @@ import { HookActivityData, HookActivitySheet, HookActivity, HookData } from './h
 import { ContestedActivityData, ContestedActivitySheet, ContestedActivity, ContestedData } from './contested.js';
 import { ChainActivityData, ChainActivitySheet, ChainActivity, ChainData } from './chain.js';
 import { TeleportActivityData, TeleportActivitySheet, TeleportActivity, TeleportData } from './teleport.js';
+import { MovementActivityData, MovementActivitySheet, MovementActivity, MovementData } from './movement.js';
 import { Compat } from './compat.js';
 
 Hooks.once(`init`, async() => {
@@ -48,7 +49,14 @@ Hooks.once(`init`, async() => {
         typeLabel: `DND5E.ACTIVITY.Type.teleport`,
     };
 
-    console.log(`More Activities | Registered (5) Activity Types`);
+    CONFIG.DND5E.activityTypes.movement = {
+        documentClass: MovementActivity,
+        dataModel: MovementActivityData,
+        sheetClass: MovementActivitySheet,
+        typeLabel: `DND5E.ACTIVITY.Type.movement`,
+    };
+
+    console.log(`More Activities | Registered (6) Activity Types`);
 });
 
 Hooks.on(`renderActivityChoiceDialog`, (dialog, html) => {
@@ -61,6 +69,7 @@ Hooks.on(`renderChatMessageHTML`, (message, html) => {
     ContestedData.applyListeners(message, html);
     ChainData.applyListeners(message, html);
     TeleportData.applyListeners(message, html);
+    MovementData.applyListeners(message, html);
 });
 
 Hooks.on(`renderActivitySheet`, (sheet, html) => {

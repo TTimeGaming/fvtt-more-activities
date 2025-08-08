@@ -1,0 +1,811 @@
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+const TEMPLATE_NAME = `movement`;
+
+export class MovementData {
+    static applyListeners(message, html) {
+        if (message.flags?.dnd5e?.activity?.type !== `movement`) return;
+
+        const button = $(`
+            <button type="button">
+                <dnd5e-icon src="modules/more-activities/icons/movement.svg" style="--icon-fill: var(--button-text-color)"></dnd5e-icon>
+                <span>Force Movement</span>
+            </button>`
+        );
+
+        let buttons = $(html).find(`.card-buttons`);
+        if (buttons.length === 0) {
+            buttons = $(`<div class="card-buttons"></div>`);
+            $(html).find(`.card-header`).after(buttons);
+        }
+
+        button.on(`click`, () => {
+            const actor = game.actors.get(message.speaker.actor);
+            if (!actor.testUserPermission(game.user, `OWNER`)) return;
+
+            const item = actor.items.get(message.flags.dnd5e.item.id);
+            if (!item) return;
+
+            const activity = item.system.activities.get(message.flags.dnd5e.activity.id);
+            if (!activity) return;
+
+            const token = MovementData.getOriginToken(actor);
+            if (!token) return;
+
+            new MovementTargetApp(activity).render(true);
+        });
+
+        buttons.prepend(button);
+    }
+
+    static calculateMovementDestinations(origin, target, distance, movementType) {
+        const moveDistance = game.canvas.grid.size * distance / game.canvas.grid.distance;
+        const destinations = [];
+
+        if (movementType === `push`) {
+            const angle = this.getAngleBetween(origin, target);
+            const newX = target.x + Math.cos(angle) * moveDistance;
+            const newY = target.y + Math.sin(angle) * moveDistance;
+            const snapped = game.canvas.grid.getTopLeftPoint({
+                x: Math.round(newX * 10) / 10,
+                y: Math.round(newY * 10) / 10,
+            });
+            destinations.push({ x: snapped.x, y: snapped.y, type: `automatic` });
+        } else if (movementType === `pull`) {
+            const angle = this.getAngleBetween(target, origin);
+            const newX = target.x + Math.cos(angle) * moveDistance;
+            const newY = target.y + Math.sin(angle) * moveDistance;
+            const snapped = game.canvas.grid.getTopLeftPoint({
+                x: Math.round(newX * 10) / 10,
+                y: Math.round(newY * 10) / 10,
+            });
+            destinations.push({ x: snapped.x, y: snapped.y, type: `automatic` });
+        }
+
+        return destinations;
+    }
+
+    static getAngleBetween(origin, target) {
+        const dx = target.x - origin.x;
+        const dy = target.y - origin.y;
+        return Math.atan2(dy, dx);
+    }
+
+    static calculateDistanceSqr(token1, token2) {
+        if (!token1 || !token2) return Infinity;
+        if (token1._destroyed || token2._destroyed) return Infinity;
+
+        const dx = (token1.x + (token1.w / 2)) - (token2.x + (token2.w / 2));
+        const dy = (token1.y + (token1.w / 2)) - (token2.y + (token2.w / 2));
+        const distance = dx * dx + dy * dy;
+        return distance / (game.canvas.grid.size * game.canvas.grid.size);
+    }
+
+    static getTokensInRange(originToken, range) {
+        if (!originToken) return [];
+
+        return game.canvas.tokens.placeables
+            .filter(token => token !== originToken)
+            .map(token => {
+                const distance = this.calculateDistanceSqr(originToken, token);
+                const calcDistance = game.canvas.grid.distance * Math.round(Math.sqrt(distance) * 10) / 10;
+
+                return {
+                    token: token,
+                    actor: token.actor,
+                    distance: calcDistance,
+                    inRange: calcDistance <= range,
+                };
+            })
+            .filter(token => token.inRange)
+            .sort((a, b) => a.distance - b.distance)
+        ;
+    }
+
+    static getOriginToken(actor) {
+        return actor != null ? game.canvas.tokens.placeables.find(token => token.actor?.id === actor.id) : null;
+    }
+
+    static createMeasuredTemplate({ x, y, distance, t = `circle`, borderColor = `#ffffff`, fillColor = `#ffffff` }) {
+        const data = {
+            t: t,
+            user: game.user.id,
+            x: x,
+            y: y,
+            distance: distance,
+            borderColor: borderColor,
+            fillColor: fillColor,
+        };
+        const document = new CONFIG.MeasuredTemplate.documentClass(data, { parent: game.canvas.scene });
+
+        const object = new CONFIG.MeasuredTemplate.objectClass(document);
+        object.draw();
+        game.canvas.templates.addChild(object);
+        return object;
+    }
+
+    static removeMeasuredTemplate(measuredTemplate) {
+        game.canvas.templates.removeChild(measuredTemplate);
+        measuredTemplate.clear();
+        measuredTemplate.destroy();
+    }
+}
+
+export class MovementActivityData extends dnd5e.dataModels.activity.BaseActivityData {
+    static defineSchema() {
+        const fields = foundry.data.fields;
+        const schema = super.defineSchema();
+
+        schema.maxTargets = new fields.NumberField({
+            required: false,
+            initial: 1,
+            min: 1,
+        });
+
+        schema.targetRange = new fields.NumberField({
+            required: false,
+            initial: 30,
+            min: 0,
+        });
+
+        schema.movementDistance = new fields.NumberField({
+            required: false,
+            initial: 10,
+            min: 0,
+        });
+
+        schema.movementType = new fields.StringField({
+            required: false,
+            initial: `push`,
+            options: [ `push`, `pull`, `either`, `free` ],
+        });
+
+        return schema;
+    }
+}
+
+export class MovementActivitySheet extends dnd5e.applications.activity.ActivitySheet {
+    /** @inheritdoc */
+    static DEFAULT_OPTIONS = {
+        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-${TEMPLATE_NAME}` ],
+    };
+
+    /** @inheritdoc */
+    static PARTS = {
+        ...super.PARTS,
+        effect: {
+            template: `modules/more-activities/templates/${TEMPLATE_NAME}-effect.hbs`,
+            templates: [
+                ...super.PARTS.effect.templates,
+            ],
+        }
+    };
+
+    /** @inheritdoc */
+    async _prepareEffectContext(context) {
+        context = await super._prepareEffectContext(context);
+        
+        context.maxTargets = this.activity?.maxTargets ?? 1;
+        context.targetRange = this.activity?.targetRange ?? 30;
+        context.movementDistance = this.activity?.movementDistance ?? 10;
+        context.movementType = this.activity?.movementType ?? `push`;
+
+        context.movementTypeOptions = [
+            { value: `push`, label: `Push (Away)`, selected: context.movementType === `push` },
+            { value: `pull`, label: `Pull (Toward)`, selected: context.movementType === `pull` },
+            { value: `either`, label: `Either (Choose)`, selected: context.movementType === `either` },
+            { value: `free`, label: `Free Movement`, selected: context.movementType === `free` },
+        ];
+
+        return context;
+    }
+
+    /** @inheritdoc */
+    _onRender(context, options) {
+    }
+}
+
+export class MovementActivity extends dnd5e.documents.activity.ActivityMixin(MovementActivityData) {
+    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.${TEMPLATE_NAME.toUpperCase()}`];
+
+    static metadata = Object.freeze(
+        foundry.utils.mergeObject(super.metadata, {
+            type: `macro`,
+            img: `modules/more-activities/icons/${TEMPLATE_NAME}.svg`,
+            title: `DND5E.ACTIVITY.Type.${TEMPLATE_NAME}`,
+            hint: `DND5E.ACTIVITY.Hint.${TEMPLATE_NAME}`,
+            sheetClass: MovementActivitySheet
+        }, { inplace: false })
+    );
+
+    static defineSchema() {
+        return MovementActivityData.defineSchema();
+    }
+
+    /**
+     * Execute the macro activity
+     * @param {ActivityUseConfiguration} config - Configuration data for the activity usage.
+     * @param {ActivityDialogConfiguration} dialog - Configuration data for the activity dialog.
+     * @param {ActivityMessageConfiguration} message - Configuration data for the activity message.
+     * @returns {Promise<ActivityUsageResults|void>}
+     */
+    async use(config, dialog, message) {
+        const results = await super.use(config, dialog, message);
+        new MovementTargetApp(this).render(true);
+        return results;
+    }
+
+    /**
+     * Get the actor that owns this activity's item.
+     * @type {Actor5e|null
+     */
+    get actor() {
+        return this.item?.actor || null;
+    }
+}
+
+class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
+    static DEFAULT_OPTIONS = {
+        classes: [ `dnd5e2`, `movement-target-app` ],
+        tag: `form`,
+        position: {
+            width: 300,
+            height: `auto`,
+        },
+    };
+
+    static PARTS = {
+        form: {
+            template: `modules/more-activities/templates/movement-target.hbs`,
+        },
+    };
+
+    constructor(activity, options = {}) {
+        super({
+            window: {
+                title: `Move Targets`
+            },
+            ...options,
+        });
+        this.activity = activity;
+        this.actor = activity?.actor;
+        this.selectedTargets = [];
+        this.selectionTarget = null;
+        this.isSelecting = false;
+        this._prepopulateTargets();
+    }
+
+    /** @inheritdoc */
+    async _prepareContext() {
+        const tokensData = await this._getAvailableTokens();
+        return {
+            activity: this.activity,
+            tokensData: tokensData,
+            selectedTargets: this.selectedTargets.map((element, index) => ({
+                ...element,
+                index: index
+            })),
+            maxTargets: this.activity.maxTargets,
+            targetRange: this.activity.targetRange,
+            movementDistance: this.activity.movementDistance,
+            movementType: this.activity.movementType,
+            originToken: MovementData.getOriginToken(this.actor),
+        };
+    }
+
+    /** @inheritdoc */
+    async _onRender(context, options) {
+        this.isSelecting = false;
+
+        const originToken = MovementData.getOriginToken(this.actor);
+
+        if (!this.selectionTarget)
+        {
+            this.selectionTarget = MovementData.createMeasuredTemplate({
+                x: originToken.x + (originToken.w / 2),
+                y: originToken.y + (originToken.h / 2),
+                distance: this.activity.targetRange,
+                fillColor: `#6192B1`,
+            });
+        }
+
+        this._updateCanvasSelection();
+
+        if (!this.element.querySelector(`.window-subtitle`)) {
+            const subtitle = document.createElement(`h2`);
+            subtitle.classList.add(`window-subtitle`);
+            subtitle.innerText = this.activity?.item?.name || this.activity?.name || ``,
+            this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
+        }
+
+        this.element.querySelector(`select[name="targetId"]`)?.addEventListener(`change`, async(event) => {
+            const selectElement = event.currentTarget;
+            const tokenId = selectElement.value;
+            if (!tokenId || this.selectedTargets.find(t => t.id === tokenId)) return;
+
+            const token = game.canvas.tokens.get(tokenId);
+            if (!token) return;
+
+            if (this.selectedTargets.length >= this.activity.maxTargets) {
+                ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.maximumTargets.label`));
+                selectElement.value = ``;
+                return;
+            }
+
+            const distance = originToken ? MovementData.calculateDistanceSqr(originToken, token) : 0;
+            this.selectedTargets.push({
+                id: tokenId,
+                name: token.name,
+                distance: game.canvas.grid.distance * Math.round(Math.sqrt(distance) * 10) / 10,
+                token: token
+            });
+
+            this._updateCanvasSelection();
+            this.render();
+        });
+
+        this.element.querySelectorAll(`.target-delete-btn`).forEach(btn => {
+            btn.addEventListener(`click`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+                let removedTarget = null;
+                this.selectedTargets = this.selectedTargets.filter((target, i) => {
+                    if (i === index) { removedTarget = target; return false; }
+                    return true;
+                });
+                this._updateCanvasSelection(removedTarget);
+                this.render();
+            });
+        });
+
+        this.element.querySelector(`.start-movement-btn`)?.addEventListener(`click`, async(event) => {
+            if (this.selectedTargets.length === 0) {
+                ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.moreTargets.label`));
+                return;
+            }
+
+            if (this.selectedTargets.length > this.activity.maxTargets) {
+                ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.lessTargets.label`));
+                return;
+            }
+
+            await this._startMovement();
+            this.isSelecting = true;
+            this.close();
+        });
+    }
+
+    /** @inheritdoc */
+    async close(options = {}) {
+        await super.close(options);
+
+        if (this.selectionTarget)
+        {
+            MovementData.removeMeasuredTemplate(this.selectionTarget);
+            this.selectionTarget = null;
+        }
+
+        if (!this.isSelecting)
+        {
+            this.selectedTargets.forEach(target => {
+                target.token.setTarget(false, { releaseOthers: true, groupSelection: true });
+            });
+        }
+    }
+
+    /**
+     * Start the movement process
+     * @private
+     */
+    async _startMovement() {
+        switch (this.activity.movementType) {
+            case `push`:
+            case `pull`:
+                await this._executeMovement(this.activity.movementType);
+                break;
+            case `either`:
+                const destination = new MovementDestinationApp(this, this.activity, this.actor, this.selectedTargets);
+                destination.awaitDirection(async(direction) => {
+                    await this._executeMovement(direction);
+                });
+                destination.render(true);
+                break;
+            default:
+                new MovementPlacementApp(this, this.actor).render(true);
+                break;
+        }
+    }
+
+    /**
+     * Execute automatic push/pull movement
+     * @private
+     */
+    async _executeMovement(direction) {
+        const updates = [];
+
+        const originToken = MovementData.getOriginToken(this.actor);
+        for (const target of this.selectedTargets) {
+            const destinations = MovementData.calculateMovementDestinations(
+                originToken,
+                target.token,
+                this.activity.movementDistance,
+                direction,
+            );
+
+            if (destinations.length > 0) {
+                const dest = destinations[0];
+                updates.push({
+                    _id: target.id,
+                    x: dest.x,
+                    y: dest.y
+                });
+            }
+        }
+
+        this.selectedTargets.forEach(target => {
+            target.token.setTarget(false, { releaseOthers: true, groupSelection: true });
+        });
+
+        if (updates.length === 0) return;
+
+        await game.canvas.scene.updateEmbeddedDocuments(`Token`, updates);
+        ui.notifications.info(`${updates.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.success.label`)}`);
+    }
+
+    /**
+     * Update canvas token selection to match selected targets
+     * @private
+     */
+    _updateCanvasSelection(removedTarget) {
+        game.canvas.tokens.releaseAll();
+
+        if (removedTarget)
+            removedTarget.token.setTarget(false, { releaseOthers: false, groupSelection: true });
+
+        this.selectedTargets.forEach(target => {
+            target.token.setTarget(true, { releaseOthers: false, groupSelection: true });
+        });
+    }
+
+    /**
+     * Get available tokens for movement
+     * @returns {Array}
+     * @private
+     */
+    async _getAvailableTokens() {
+        const originToken = MovementData.getOriginToken(this.actor);
+
+        const tokens = [];
+        const selectedIds = this.selectedTargets.map(t => t.id);
+
+        const otherTokens = MovementData.getTokensInRange(originToken, this.activity.targetRange)
+            .filter(data => !selectedIds.includes(data.token.id))
+            .map(data => ({
+                ...data,
+                name: data.token.name,
+                type: 'other'
+            }))
+        ;
+
+        return {
+            selfTokens: tokens.filter(t => t.type === 'self'),
+            otherTokens: otherTokens.filter(t => t.type === 'other'),
+            hasMultipleGroups: tokens.length > 0 && otherTokens.length > 0
+        };
+    }
+
+    _prepopulateTargets() {
+        for (const token of Array.from(game.user.targets)) {
+            let distance = Infinity;
+            if (this.activity.targetRange > 0) {
+                const originToken = MovementData.getOriginToken(this.actor);
+                distance = originToken ? MovementData.calculateDistanceSqr(originToken, token) : 0;
+                if (distance > this.activity.targetRange * this.activity.targetRange) continue;
+            }
+            
+            this.selectedTargets.push({
+                id: token.id,
+                name: token.name,
+                distance: game.canvas.grid.distance * Math.round(Math.sqrt(distance) * 10) / 10,
+                token: token
+            });
+        }
+    }
+}
+
+class MovementDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
+    static DEFAULT_OPTIONS = {
+        classes: [ `dnd5e2`, `movement-destination-app` ],
+        tag: `form`,
+        position: {
+            width: 350,
+            height: 250,
+        },
+    };
+
+    static PARTS = {
+        form: {
+            template: `modules/more-activities/templates/movement-cancel.hbs`,
+        },
+    };
+
+    constructor(targetApp, activity, actor, selectedTargets, options = {}) {
+        super({
+            window: {
+                title: `Cancel Movement`
+            },
+            ...options,
+        });
+        this.targetApp = targetApp;
+        this.activity = activity;
+        this.actor = actor;
+        this.selectedTargets = selectedTargets;
+        this.openTarget = true;
+    }
+
+    async awaitDirection(callback) {
+        this.directionCallback = callback;
+    }
+
+    /** @inheritdoc */
+    async _prepareContext() {
+        return {};
+    }
+
+    /** @inheritdoc */
+    async _onRender(context, options) {
+        if (!this.element.querySelector(`.window-subtitle`)) {
+            const subtitle = document.createElement(`h2`);
+            subtitle.classList.add(`window-subtitle`);
+            subtitle.innerText = this.activity?.item?.name || this.activity?.name || ``,
+            this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
+        }
+
+        this.element.querySelector(`.pull-movement-btn`)?.addEventListener(`click`, async(event) => {
+            this.directionCallback?.(`pull`);
+            this.openTarget = false;
+            this.close();
+        });
+
+        this.element.querySelector(`.push-movement-btn`)?.addEventListener(`click`, async(event) => {
+            this.directionCallback?.(`push`);
+            this.openTarget = false;
+            this.close();
+        });
+
+        this.element.querySelector(`.cancel-movement-btn`)?.addEventListener(`click`, async(event) => {
+            this.close();
+        });
+    }
+    
+    /** @inheritdoc */
+    async close(options = {}) {
+        await super.close(options);
+
+        if (this.openTarget)
+            this.targetApp.render(true);
+    }
+}
+
+class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
+    static DEFAULT_OPTIONS = {
+        classes: [`dnd5e2`, `movement-manual-placement-app`],
+        tag: `form`,
+        position: {
+            width: 400,
+            height: `auto`,
+        }
+    };
+
+    static PARTS = {
+        form: {
+            template: `modules/more-activities/templates/movement-placement.hbs`,
+        },
+    };
+
+    constructor(targetApp, actor, options = {}) {
+        super({
+            window: {
+                title: `Movement Placement`
+            },
+            ...options,
+        });
+
+        const token = MovementData.getOriginToken(actor);
+
+        const snapped = game.canvas.grid.getCenterPoint({
+            x: Math.round(token.x * 10) / 10,
+            y: Math.round(token.y * 10) / 10,
+        });
+
+        this.targetApp = targetApp;
+        this.destX = snapped.x;
+        this.destY = snapped.y;
+        this.tokensToPlace = [...targetApp.selectedTargets];
+        this.destinationTargets = [];
+        this.placementRadius = targetApp.activity.movementDistance;
+        this.placedTokens = [];
+        this.currentDragData = null;
+        this.isFinished = false;
+        this.isHardClose = false;
+
+        for (let i = 0; i < this.tokensToPlace.length; i++)
+            this.destinationTargets[i] = null;
+
+        this._renderDestination();
+    }
+
+    /** @inheritdoc */
+    async _prepareContext() {
+        return {
+            tokensToPlace: this.tokensToPlace.map((token, index) => ({
+                ...token,
+                index: index,
+                imgSrc: token.token.document.texture.src
+            })),
+            placedCount: this.placedTokens.length,
+            totalCount: this.tokensToPlace.length + this.placedTokens.length,
+            canFinish: this.tokensToPlace.length === 0
+        };
+    }
+
+    /** @inheritdoc */
+    async _onRender(context, options) {
+        if (!this.element.querySelector(`.window-subtitle`)) {
+            const subtitle = document.createElement(`h2`);
+            subtitle.classList.add(`window-subtitle`);
+            subtitle.innerText = this.targetApp.activity?.item?.name || this.targetApp.activity?.name || ``,
+            this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
+        }
+
+        this.element.querySelectorAll('.token-drag-item').forEach(tokenEl => {
+            tokenEl.addEventListener('dragstart', this._onDragStart.bind(this));
+            tokenEl.addEventListener('dragend', this._onDragEnd.bind(this));
+        });
+
+        this.element.querySelector('.finish-placement-btn')?.addEventListener('click', this._onFinishPlacement.bind(this));
+        this.element.querySelector('.cancel-placement-btn')?.addEventListener('click', this._onCancelPlacement.bind(this));
+    }
+
+    /** @inheritdoc */
+    async close(options = {}) {
+        await super.close(options);
+        if (!this.isFinished && !this.isHardClose)
+            this._onCancelPlacement();
+    }
+
+    _renderDestination() {
+        for (let i = 0; i < this.tokensToPlace.length; i++) {
+            this.destinationTargets[i] = MovementData.createMeasuredTemplate({
+                x: this.tokensToPlace[i].token.x + (this.tokensToPlace[i].token.w / 2),
+                y: this.tokensToPlace[i].token.y + (this.tokensToPlace[i].token.h / 2),
+                distance: this.placementRadius,
+                fillColor: `#D2D3D5`,
+            });
+        }
+    }
+
+    /**
+     * Handle drag start
+     * @param {DragEvent} event 
+     * @private
+     */
+    _onDragStart(event) {
+        const index = parseInt(event.target.dataset.index);
+        const token = this.tokensToPlace[index];
+        
+        this.currentDragData = { index, token };
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', JSON.stringify({ type: 'movement-token', index }));
+
+        event.target.style.opacity = '0.5';
+    }
+
+    /**
+     * Handle drag end
+     * @param {DragEvent} event 
+     * @private
+     */
+    async _onDragEnd(event) {
+        if (!this.currentDragData) return;
+        
+        const token = this.tokensToPlace[this.currentDragData.index].token;
+        const origin = game.canvas.grid.getCenterPoint({
+            x: Math.round((token.x + (token.w / 2)) * 10) / 10,
+            y: Math.round((token.y + (token.h / 2)) * 10) / 10,
+        });
+
+        const pos = game.canvas.canvasCoordinatesFromClient(event);
+        const distance = Math.sqrt(Math.pow(pos.x - origin.x, 2) + Math.pow(pos.y - origin.y, 2));
+
+        if (distance > (this.placementRadius * game.canvas.grid.size) / game.canvas.grid.distance) {
+            ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.outOfBounds.label`));
+            event.target.style.opacity = '1';
+            this.currentDragData = null;
+            return;
+        }
+
+        const snapped = game.canvas.grid.getTopLeftPoint({
+            x: Math.round(pos.x * 10) / 10,
+            y: Math.round(pos.y * 10) / 10,
+        });
+
+        const oldPosition = await this._executeSingleTokenMovement(this.currentDragData.token.token.actor, snapped.x, snapped.y);
+        const placedToken = this.tokensToPlace.splice(this.currentDragData.index, 1)[0];
+        this.placedTokens.push({
+            actor: placedToken.token.actor,
+            position: oldPosition,
+        });
+
+        if (this.destinationTargets[this.currentDragData.index]) {
+            MovementData.removeMeasuredTemplate(this.destinationTargets[this.currentDragData.index]);
+            this.destinationTargets[this.currentDragData.index] = null;
+        }
+
+        this.render();
+        this.currentDragData = null;
+    }
+    /**
+     * Handle finish placement
+     * @private
+     */
+    async _onFinishPlacement() {
+        if (this.tokensToPlace.length > 0) {
+            ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.manualRemaining.label`));
+            return;
+        }
+        
+        for (let i = 0; i < this.destinationTargets.length; i++) {
+            if (!this.destinationTargets[i]) continue;
+            MovementData.removeMeasuredTemplate(this.destinationTargets[i]);
+            this.destinationTargets[i] = null;
+        }
+        
+        ui.notifications.info(`${this.placedTokens.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.success.label`)}`);
+
+        this.isFinished = true;
+        this.close();
+    }
+
+    /**
+     * Handle cancel placement
+     * @private
+     */
+    async _onCancelPlacement() {
+        for (const placedToken of this.placedTokens) {
+            await this._executeSingleTokenMovement(
+                placedToken.actor,
+                placedToken.position.x,
+                placedToken.position.y
+            );
+        }
+
+        for (let i = 0; i < this.destinationTargets.length; i++) {
+            if (!this.destinationTargets[i]) continue;
+            MovementData.removeMeasuredTemplate(this.destinationTargets[i]);
+            this.destinationTargets[i] = null;
+        }
+        
+        this.targetApp.render(true);
+        this.isHardClose = true;
+        this.close();
+    }
+
+    async _executeSingleTokenMovement(actor, x, y) {
+        const originalToken = MovementData.getOriginToken(actor);
+        if (!originalToken) return;
+
+        const oldPosition = {
+            x: originalToken.x,
+            y: originalToken.y
+        };
+
+        await game.canvas.scene.updateEmbeddedDocuments(`Token`, [{
+            _id: originalToken.id,
+            x: x,
+            y: y
+        }]);
+
+        originalToken.setTarget(false, { releaseOthers: true, groupSelection: true });
+        return oldPosition;
+    }
+}

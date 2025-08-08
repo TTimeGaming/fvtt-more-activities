@@ -1,0 +1,32 @@
+<div class="manual-placement-container">
+    <div class="placement-header">
+        <p>{{localize "DND5E.ACTIVITY.FIELDS.movement.dragAndDrop.label"}}</p>
+        <div class="placement-progress">
+            <span>Placed: {{placedCount}}/{{totalCount}}</span>
+        </div>
+    </div>
+
+    <div class="tokens-to-place">
+        {{#each tokensToPlace}}
+        <div class="token-drag-item" draggable="true" data-index="{{index}}">
+            <img src="{{imgSrc}}" alt="{{name}}" class="token-image">
+            <span class="token-name">{{name}}</span>
+        </div>
+        {{/each}}
+        
+        {{#unless tokensToPlace.length}}
+        <div class="no-tokens">{{localize "DND5E.ACTIVITY.FIELDS.movement.dragCompleted.label"}}</div>
+        {{/unless}}
+    </div>
+
+    <div class="placement-buttons">
+        {{#if canFinish}}
+        <button type="button" class="finish-placement-btn">
+            <i class="fas fa-check"></i> Finish Placement
+        </button>
+        {{/if}}
+        <button type="button" class="cancel-placement-btn">
+            <i class="fas fa-times"></i> Cancel
+        </button>
+    </div>
+</div>
