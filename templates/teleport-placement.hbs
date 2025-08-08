@@ -1,0 +1,32 @@
+<div class="manual-placement-container">
+    <div class="placement-header">
+        <p>Drag tokens from here to the canvas to place them within range of the destination.</p>
+        <div class="placement-progress">
+            <span>Placed: {{placedCount}}/{{totalCount}}</span>
+        </div>
+    </div>
+
+    <div class="tokens-to-place">
+        {{#each tokensToPlace}}
+        <div class="token-drag-item" draggable="true" data-index="{{index}}">
+            <img src="{{imgSrc}}" alt="{{name}}" class="token-image">
+            <span class="token-name">{{name}}</span>
+        </div>
+        {{/each}}
+        
+        {{#unless tokensToPlace.length}}
+        <div class="no-tokens">All tokens have been placed!</div>
+        {{/unless}}
+    </div>
+
+    <div class="placement-buttons">
+        {{#if canFinish}}
+        <button type="button" class="finish-placement-btn">
+            <i class="fas fa-check"></i> Finish Placement
+        </button>
+        {{/if}}
+        <button type="button" class="cancel-placement-btn">
+            <i class="fas fa-times"></i> Cancel
+        </button>
+    </div>
+</div>

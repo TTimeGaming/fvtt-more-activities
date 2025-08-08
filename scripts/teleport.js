@@ -1,11 +1,13 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 export class TeleportData {
-    static disableMTActivityPrompt(sheet, html) {
+    static disableTargeting(sheet, html) {
         const activity = sheet.activity;
         const item = activity?.item;
         if (!item || !activity) return;
         if (activity.type !== `teleport`) return;
+
+        sheet.element.classList.add(`teleport-activity`);
 
         const measuredTemplatePrompt = html.querySelector(`.tab[data-tab="identity"] dnd5e-checkbox[name="target.prompt"]`);
         measuredTemplatePrompt.setAttribute(`disabled`, `disabled`);
@@ -15,6 +17,16 @@ export class TeleportData {
         warning.setAttribute(`style`, `max-width: 15px;`);
         warning.innerHTML = `<i class="fa-solid fa-warning"></i>`;
         measuredTemplatePrompt.insertAdjacentElement(`afterend`, warning);
+
+        const targetingTab = html.querySelector(`.sheet-tabs a[data-tab="activation-targeting"]`);
+        if (targetingTab) {
+            targetingTab.classList.add(`targeting-tab`);
+
+            const warning = document.createElement(`abbr`);
+            warning.setAttribute(`title`, `Targeting is disabled for Teleport activities.`);
+            warning.innerHTML = `<i class="fa-solid fa-warning" style="pointer-events: all;"></i>`;
+            targetingTab.appendChild(warning);
+        }
     }
 
     static disableMTMessagePrompt(message, html) {
@@ -27,6 +39,7 @@ export class TeleportData {
 
     static calculateDistanceSqr(token1, token2) {
         if (!token1 || !token2) return Infinity;
+        if (token1._destroyed || token2._destroyed) return Infinity;
 
         const dx = (token1.x + (token1.w / 2)) - (token2.x + (token2.w / 2));
         const dy = (token1.y + (token1.w / 2)) - (token2.y + (token2.w / 2));
@@ -41,16 +54,46 @@ export class TeleportData {
             .filter(token => token !== originToken)
             .map(token => {
                 const distance = this.calculateDistanceSqr(originToken, token);
+                const calcDistance = game.canvas.grid.distance * Math.round(Math.sqrt(distance) * 10) / 10;
+
                 return {
                     token: token,
                     actor: token.actor,
-                    distance: game.canvas.grid.distance * Math.round(Math.sqrt(distance) * 10) / 10,
-                    inRange: distance <= range
+                    distance: calcDistance,
+                    inRange: calcDistance <= range,
                 };
             })
             .filter(token => token.inRange)
             .sort((a, b) => a.distance - b.distance)
         ;
+    }
+
+    static getOriginToken(actor) {
+        return actor != null ? game.canvas.tokens.placeables.find(token => token.actor?.id === actor.id) : null;
+    }
+
+    static createMeasuredTemplate({ x, y, distance, t = `circle`, borderColor = `#ffffff`, fillColor = `#ffffff` }) {
+        const data = {
+            t: t,
+            user: game.user.id,
+            x: x,
+            y: y,
+            distance: distance,
+            borderColor: borderColor,
+            fillColor: fillColor,
+        };
+        const document = new CONFIG.MeasuredTemplate.documentClass(data, { parent: game.canvas.scene });
+
+        const object = new CONFIG.MeasuredTemplate.objectClass(document);
+        object.draw();
+        game.canvas.templates.addChild(object);
+        return object;
+    }
+
+    static removeMeasuredTemplate(measuredTemplate) {
+        game.canvas.templates.removeChild(measuredTemplate);
+        measuredTemplate.clear();
+        measuredTemplate.destroy();
     }
 }
 
@@ -59,9 +102,32 @@ export class TeleportActivityData extends dnd5e.dataModels.activity.BaseActivity
         const fields = foundry.data.fields;
         const schema = super.defineSchema();
 
+        schema.maxTargets = new fields.NumberField({
+            required: false,
+            initial: 1,
+            min: 1,
+        });
+
         schema.targetSelf = new fields.BooleanField({
             required: false,
             initial: false,
+        });
+
+        schema.onlyTargetSelf = new fields.BooleanField({
+            required: false,
+            initial: false,
+        });
+
+        schema.targetRadius = new fields.NumberField({
+            required: false,
+            initial: 15,
+            min: 0,
+        });
+
+        schema.teleportDistance = new fields.NumberField({
+            required: false,
+            initial: 30,
+            min: 0,
         });
 
         schema.manualPlacement = new fields.BooleanField({
@@ -69,9 +135,15 @@ export class TeleportActivityData extends dnd5e.dataModels.activity.BaseActivity
             initial: false,
         });
 
+        schema.manualRadius = new fields.NumberField({
+            required: false,
+            initial: 10,
+            min: 0,
+        });
+
         schema.keepArrangement = new fields.BooleanField({
             required: false,
-            initial: true,
+            initial: false,
         });
 
         schema.clusterRadius = new fields.NumberField({
@@ -105,8 +177,13 @@ export class TeleportActivitySheet extends dnd5e.applications.activity.ActivityS
     async _prepareEffectContext(context) {
         context = await super._prepareEffectContext(context);
 
+        context.maxTargets = this.activity?.maxTargets ?? 1;
         context.targetSelf = this.activity?.targetSelf ?? false;
+        context.onlyTargetSelf = this.activity?.onlyTargetSelf ?? false;
+        context.targetRadius = this.activity?.targetRadius ?? 15;
+        context.teleportDistance = this.activity?.teleportDistance ?? 30;
         context.manualPlacement = this.activity?.manualPlacement ?? false;
+        context.manualRadius = this.activity?.manualRadius ?? 10;
         context.keepArrangement = this.activity?.keepArrangement ?? true;
         context.clusterRadius = this.activity?.clusterRadius ?? 5;
 
@@ -178,12 +255,8 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
         });
         this.activity = activity;
         this.actor = activity?.actor;
-        this.originToken = this._getOriginToken();
         this.selectedTargets = [];
-        this.maxTargets = 2;
-        this.targetRange = 15;
-        this.teleportRange = 15;
-        this.destinationTarget = null;
+        this.selectionTarget = null;
         this.destinationClose = null;
         this._prepopulateTargets();
     }
@@ -199,26 +272,38 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 index: index
             })),
             canTargetSelf: this.activity.targetSelf,
-            maxTargets: this.maxTargets,
-            targetRange: this.targetRange,
-            originToken: this.originToken,
+            maxTargets: this.activity.maxTargets,
+            targetRange: this.activity.targetRadius,
+            originToken: TeleportData.getOriginToken(this.actor),
         };
     }
 
     /** @inheritdoc */
     async _onRender(context, options) {
+        const originToken = TeleportData.getOriginToken(this.actor);
+
+        if (this.activity?.maxTargets === 1 && this.activity?.onlyTargetSelf) {
+            this._skipToDestination();
+            return;
+        }
+
+        if (!this.selectionTarget)
+        {
+            this.selectionTarget = TeleportData.createMeasuredTemplate({
+                x: originToken.x + (originToken.w / 2),
+                y: originToken.y + (originToken.h / 2),
+                distance: this.activity.targetRadius,
+                fillColor: `#6192B1`,
+            });
+        }
+
+        this._updateCanvasSelection();
+
         if (!this.element.querySelector(`.window-subtitle`)) {
             const subtitle = document.createElement(`h2`);
             subtitle.classList.add(`window-subtitle`);
             subtitle.innerText = this.activity?.item?.name || this.activity?.name || ``,
             this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
-        }
-
-        if (this.destinationTarget)
-        {
-            game.canvas.templates.removeChild(this.destinationTarget);
-            this.destinationTarget.destroy();
-            this.destinationTarget = null;
         }
 
         this.element.querySelector(`select[name="targetId"]`)?.addEventListener(`change`, async(event) => {
@@ -229,25 +314,32 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             const token = canvas.tokens.get(tokenId);
             if (!token) return;
 
-            if (this.selectedTargets.length >= this.maxTargets) {
-                ui.notifications.warn(`Maximum number of targets (${this.maxTargets}) already selected`);
+            if (this.selectedTargets.length >= this.activity.maxTargets) {
+                ui.notifications.warn(`Maximum number of targets (${this.activity.maxTargets}) already selected`);
                 return;
             }
 
-            const distance = this.originToken ? TeleportData.calculateDistanceSqr(this.originToken, token) : 0;
+            const distance = originToken ? TeleportData.calculateDistanceSqr(originToken, token) : 0;
             this.selectedTargets.push({
                 id: tokenId,
                 name: token.name,
                 distance: game.canvas.grid.distance * Math.round(Math.sqrt(distance) * 10) / 10,
                 token: token
             });
+
+            this._updateCanvasSelection();
             this.render();
         });
 
         this.element.querySelectorAll(`.target-delete-btn`).forEach(btn => {
             btn.addEventListener(`click`, async(event) => {
                 const index = parseInt(event.target.dataset.index);
-                this.selectedTargets = this.selectedTargets.filter((_, i) => i !== index);
+                let removedTarget = null;
+                this.selectedTargets = this.selectedTargets.filter((target, i) => {
+                    if (i === index) { removedTarget = target; return false; }
+                    return true;
+                });
+                this._updateCanvasSelection(removedTarget);
                 this.render();
             });
         });
@@ -258,27 +350,62 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 return;
             }
 
-            if (this.selectedTargets.length > this.maxTargets) {
+            if (this.selectedTargets.length > this.activity.maxTargets) {
                 ui.notifications.warn(`Select fewer targets to teleport`);
                 return;
             }
 
-            this.destinationClose = new TeleportDestinationApp(this);
+            this.destinationClose = new TeleportDestinationApp(this, this.activity, this.actor, this.selectedTargets);
             this.destinationClose.render(true);
-
-            await this._selectDestination();
             this.close();
         });
     }
 
+    /** @inheritdoc */
+    async close(options = {}) {
+        await super.close(options);
+        if (!this.selectionTarget) return;
+
+        TeleportData.removeMeasuredTemplate(this.selectionTarget);
+        this.selectionTarget = null;
+    }
+
     /**
-     * Get the origin token for the activity
-     * @returns {Token|null}
+     * Skip target selection and go straight to destination
      * @private
      */
-    _getOriginToken() {
-        if (!this.actor) return null;
-        return game.canvas.tokens.placeables.find(token => token.actor?.id === this.actor.id);
+    async _skipToDestination() {
+        const originToken = TeleportData.getOriginToken(this.actor);
+
+        this.selectedTargets = [];
+        this.selectedTargets.push({
+            id: originToken.id,
+            name: originToken.name,
+            distance: 0,
+            token: originToken
+        });
+
+        originToken.setTarget(true, { releaseOthers: true, groupSelection: true });   
+
+        this.destinationClose = new TeleportDestinationApp(this, this.activity, this.actor, this.selectedTargets);
+        this.destinationClose.openTarget = false;
+        this.destinationClose.render(true);
+        this.close();
+    }
+
+    /**
+     * Update canvas token selection to match selected targets
+     * @private
+     */
+    _updateCanvasSelection(removedTarget) {
+        game.canvas.tokens.releaseAll();
+
+        if (removedTarget)
+            removedTarget.token.setTarget(false, { releaseOthers: false, groupSelection: true });
+
+        this.selectedTargets.forEach(target => {
+            target.token.setTarget(true, { releaseOthers: false, groupSelection: true });
+        });
     }
 
     /**
@@ -287,20 +414,22 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
      * @private
      */
     async _getAvailableTokens() {
+        const originToken = TeleportData.getOriginToken(this.actor);
+
         const tokens = [];
         const selectedIds = this.selectedTargets.map(t => t.id);
 
-        if (this.activity.targetSelf && this.originToken && !selectedIds.includes(this.originToken.id)) {
+        if (this.activity.targetSelf && originToken && !selectedIds.includes(originToken.id)) {
             tokens.push({
-                token: this.originToken,
-                name: this.originToken.name,
+                token: originToken,
+                name: originToken.name,
                 distance: 0,
                 inRange: true,
                 type: 'self'
             });
         }
 
-        const otherTokens = TeleportData.getTokensInRange(this.originToken, this.targetRange)
+        const otherTokens = TeleportData.getTokensInRange(originToken, this.activity.targetRadius)
             .filter(data => !selectedIds.includes(data.token.id))
             .map(data => ({
                 ...data,
@@ -319,9 +448,10 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
     _prepopulateTargets() {
         for (const token of Array.from(game.user.targets)) {
             let distance = Infinity;
-            if (this.targetRange > 0) {
-                distance = this.originToken ? TeleportData.calculateDistanceSqr(this.originToken, token) : 0;
-                if (distance > this.targetRange * this.targetRange) continue;
+            if (this.activity.targetRadius > 0) {
+                const originToken = TeleportData.getOriginToken(this.actor);
+                distance = originToken ? TeleportData.calculateDistanceSqr(originToken, token) : 0;
+                if (distance > this.activity.targetRadius * this.activity.targetRadius) continue;
             }
             
             this.selectedTargets.push({
@@ -332,6 +462,69 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             });
         }
     }
+}
+
+class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
+    static DEFAULT_OPTIONS = {
+        classes: [ `dnd5e2`, `teleport-destination-app` ],
+        tag: `form`,
+        position: {
+            width: 300,
+            height: 150,
+        },
+    };
+
+    static PARTS = {
+        form: {
+            template: `modules/more-activities/templates/teleport-cancel.hbs`,
+        },
+    };
+
+    constructor(targetApp, activity, actor, selectedTargets, options = {}) {
+        super({
+            window: {
+                title: `Cancel Teleport`
+            },
+            ...options,
+        });
+        this.targetApp = targetApp;
+        this.activity = activity;
+        this.actor = actor;
+        this.selectedTargets = selectedTargets;
+        this.openTarget = true;
+        this.destinationTarget = null;
+        this._selectDestination();
+    }
+
+    /** @inheritdoc */
+    async _prepareContext() {
+        return {};
+    }
+
+    /** @inheritdoc */
+    async _onRender(context, options) {
+        this.element.querySelector(`.cancel-teleport-btn`)?.addEventListener(`click`, async(event) => {
+            this.close();
+        });
+    }
+    
+    /** @inheritdoc */
+    async close(options = {}) {
+        await super.close(options);
+
+        this.selectedTargets.forEach(target => {
+            target.token.setTarget(false, { releaseOthers: false, groupSelection: true });
+        });
+
+        if (this.destinationTarget)
+        {
+            TeleportData.removeMeasuredTemplate(this.destinationTarget);
+            this.destinationTarget = null;
+        }
+
+        if (this.openTarget)
+            this.targetApp.render(true);
+    }
 
     /**
      * Start destination selection on canvas
@@ -341,21 +534,6 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (this.destinationTarget) return;
         
         ui.notifications.info(`Click on the canvas to select teleport destination`);
-        
-        const templateData = {
-            t: `circle`,
-            user: game.user.id,
-            x: this.originToken.x + (this.originToken.w / 2),
-            y: this.originToken.y + (this.originToken.h / 2),
-            distance: this.teleportRange,
-            borderColor: `#ffffff`,
-            fillColor: `#ffffff`
-        };
-        const templateDoc = new CONFIG.MeasuredTemplate.documentClass(templateData, { parent: game.canvas.scene });
-        this.destinationTarget = new CONFIG.MeasuredTemplate.objectClass(templateDoc);
-        this.destinationTarget.draw();
-        game.canvas.templates.addChild(this.destinationTarget);
-
         const handler = async (event) => {
             if (!this.destinationTarget) return;
 
@@ -370,6 +548,14 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.close();
         };
         game.canvas.stage.on('mousedown', handler);
+
+        
+        const originToken = TeleportData.getOriginToken(this.actor);
+        this.destinationTarget = TeleportData.createMeasuredTemplate({
+            x: originToken.x + (originToken.w / 2),
+            y: originToken.y + (originToken.h / 2),
+            distance: this.activity.teleportDistance,
+        });
     }
 
     /**
@@ -381,34 +567,64 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
     async _executeTeleport(destX, destY) {
         const updates = [];
 
-        if (this.activity.keepArrangement && this.selectedTargets.length > 1) {
-            await this._arrangedTeleport(destX, destY, updates);
-        } else if (this.activity.manualPlacement) {
-            // TODO: Implement manual placement mode
-            await this._clusterTeleport(destX, destY, updates);
-        } else {
-            await this._clusterTeleport(destX, destY, updates);
+        if (this.selectedTargets.length === 1) {
+            const snapped = game.canvas.grid.getTopLeftPoint({
+                x: Math.round(destX * 10) / 10,
+                y: Math.round(destY * 10) / 10,
+            });
+
+            updates.push({
+                _id: this.selectedTargets[0].id,
+                x: snapped.x,
+                y: snapped.y,
+            });
+        }
+        else
+        {
+            if (this.activity.manualPlacement) {
+                await this._manualTeleport(destX, destY);
+                return;
+            }
+
+            if (this.activity.keepArrangement && this.selectedTargets.length > 1) {
+                await this._arrangedTeleport(destX, destY, updates);
+            } else {
+                await this._clusterTeleport(destX, destY, updates);
+            }
         }
 
         if (updates.length == 0) return;
 
         const selectedTokensData = foundry.utils.duplicate(game.canvas.scene.tokens.filter((token) => this.selectedTargets.map(t => t.id).indexOf(token.id) >= 0));
-        for (var i = 0; i < updates.length; i++) {
-            selectedTokensData[i].x = updates[i].x;
-            selectedTokensData[i].y = updates[i].y;
+        for (var i = 0; i < selectedTokensData.length; i++) {
+            const update = updates.find(u => u._id === selectedTokensData[i]._id);
+            if (!update) continue;
+            
+            selectedTokensData[i].x = update.x;
+            selectedTokensData[i].y = update.y;
         }
+        await this._executeTokenMove(selectedTokensData);
 
-        await game.canvas.scene.deleteEmbeddedDocuments(foundry.canvas.placeables.Token.embeddedName, this.selectedTargets.map(t => t.id), { isUndo: true });
-        await game.canvas.scene.createEmbeddedDocuments(foundry.canvas.placeables.Token.embeddedName, selectedTokensData, { isUndo: true });
-
-        game.canvas.templates.removeChild(this.destinationTarget);
-        this.destinationTarget.destroy();
+        TeleportData.removeMeasuredTemplate(this.destinationTarget);
         this.destinationTarget = null;
 
-        this.destinationClose.success();
-        this.destinationClose = null;
+        this.openTarget = false;
+        this.close();
         
         ui.notifications.info(`Successfully teleported ${updates.length} target${updates.length > 1 ? 's' : ''}`);
+    }
+    
+    /**
+     * Execute manual placement teleport
+     * @param {number} destX 
+     * @param {number} destY 
+     * @private
+     */
+    async _manualTeleport(destX, destY) {
+        new TeleportPlacementApp(this.targetApp, destX, destY).render(true);
+
+        this.openTarget = false;
+        this.close();
     }
 
     /**
@@ -449,90 +665,247 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
     async _clusterTeleport(destX, destY, updates) {
         const gridSize = game.canvas.grid.size;
         const clusterRadius = this.activity.clusterRadius * gridSize;
-        
-        if (this.selectedTargets.length === 1) {
+        const clusterRadiusPixels = clusterRadius / game.canvas.grid.distance;
+
+        const originToken = TeleportData.getOriginToken(this.actor);
+        const originIndex = this.selectedTargets.findIndex(t => t.id === originToken?.id);
+        const otherTargets = this.selectedTargets.filter((_, i) => i !== originIndex);
+
+        if (originIndex > -1) {
             const snapped = game.canvas.grid.getTopLeftPoint({
                 x: Math.round(destX * 10) / 10,
                 y: Math.round(destY * 10) / 10,
             });
 
             updates.push({
-                _id: this.selectedTargets[0].id,
+                _id: this.selectedTargets[originIndex].id,
                 x: snapped.x,
                 y: snapped.y,
             });
-            return;
         }
 
-        for (let i = 0; i < this.selectedTargets.length; i++) {
-            const angle = (i / this.selectedTargets.length) * 2 * Math.PI;
-            const distance = Math.min(clusterRadius, (i + 1) * gridSize * 0.7);
-            
-            const offsetX = Math.cos(angle) * distance;
-            const offsetY = Math.sin(angle) * distance;
+        const originSnapped = game.canvas.grid.getCenterPoint({
+            x: Math.round(destX * 10) / 10,
+            y: Math.round(destY * 10) / 10,
+        });
+
+        for (let i = 0; i < otherTargets.length; i++) {
+            const angle = (i / otherTargets.length) * 2 * Math.PI;
+            const offsetX = Math.cos(angle) * clusterRadiusPixels;
+            const offsetY = Math.sin(angle) * clusterRadiusPixels;
 
             const snapped = game.canvas.grid.getTopLeftPoint({
-                x: Math.round((destX + offsetX) * 10) / 10,
-                y: Math.round((destY + offsetY) * 10) / 10,
+                x: Math.round((originSnapped.x + offsetX) * 10) / 10,
+                y: Math.round((originSnapped.y + offsetY) * 10) / 10,
             });
             
             updates.push({
-                _id: this.selectedTargets[i].id,
+                _id: otherTargets[i].id,
                 x: snapped.x,
                 y: snapped.y,
             });
         }
     }
+
+    async _executeTokenMove(tokenData) {
+        const tokenIds = tokenData.map(t => t._id);
+        await game.canvas.scene.deleteEmbeddedDocuments(foundry.canvas.placeables.Token.embeddedName, tokenIds, { isUndo: true });
+        await game.canvas.scene.createEmbeddedDocuments(foundry.canvas.placeables.Token.embeddedName, tokenData, { isUndo: true });
+    }
 }
 
-class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
+class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
-        classes: [ `dnd5e2`, `teleport-destination-app` ],
+        classes: [`dnd5e2`, `teleport-manual-placement-app`],
         tag: `form`,
         position: {
-            width: 300,
-            height: 150,
+            width: 400,
+            height: 300,
         },
+        window: {
+            resizable: true
+        }
     };
 
     static PARTS = {
         form: {
-            template: `modules/more-activities/templates/teleport-cancel.hbs`,
+            template: `modules/more-activities/templates/teleport-placement.hbs`,
         },
     };
 
-    constructor(targetApp, options = {}) {
+    constructor(targetApp, destX, destY, options = {}) {
         super({
             window: {
-                title: `Cancel Teleport`
+                title: `Teleport Placement`
             },
             ...options,
         });
         this.targetApp = targetApp;
-        this.openTarget = true;
-    }
+        this.destX = destX;
+        this.destY = destY;
+        this.placementRadius = targetApp.activity.manualRadius;
+        this.tokensToPlace = [...targetApp.selectedTargets];
+        this.placedTokens = [];
+        this.currentDragData = null;
+        this.destinationTarget = null;
+        this.isFinished = false;
+        this.isHardClose = false;
 
-    success() {
-        this.openTarget = false;
-        this.close();
+        this._renderDestination();
     }
 
     /** @inheritdoc */
     async _prepareContext() {
-        return {};
+        return {
+            tokensToPlace: this.tokensToPlace.map((token, index) => ({
+                ...token,
+                index: index,
+                imgSrc: token.token.document.texture.src
+            })),
+            placedCount: this.placedTokens.length,
+            totalCount: this.tokensToPlace.length + this.placedTokens.length,
+            canFinish: this.tokensToPlace.length === 0
+        };
     }
 
     /** @inheritdoc */
     async _onRender(context, options) {
-        this.element.querySelector(`.cancel-teleport-btn`)?.addEventListener(`click`, async(event) => {
-            this.close();
+        this.element.querySelectorAll('.token-drag-item').forEach(tokenEl => {
+            tokenEl.addEventListener('dragstart', this._onDragStart.bind(this));
+            tokenEl.addEventListener('dragend', this._onDragEnd.bind(this));
         });
+
+        this.element.querySelector('.finish-placement-btn')?.addEventListener('click', this._onFinishPlacement.bind(this));
+        this.element.querySelector('.cancel-placement-btn')?.addEventListener('click', this._onCancelPlacement.bind(this));
     }
-    
+
     /** @inheritdoc */
     async close(options = {}) {
         await super.close(options);
-        if (this.openTarget)
-            this.targetApp.render(true);
+        if (!this.isFinished && !this.isHardClose)
+            this._onCancelPlacement();
+    }
+
+    _renderDestination() {
+        this.destinationTarget = TeleportData.createMeasuredTemplate({
+            x: this.destX,
+            y: this.destY,
+            distance: this.placementRadius,
+        });
+    }
+    
+    /**
+     * Handle drag start
+     * @param {DragEvent} event 
+     * @private
+     */
+    _onDragStart(event) {
+        const index = parseInt(event.target.dataset.index);
+        const token = this.tokensToPlace[index];
+        
+        this.currentDragData = { index, token };
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', JSON.stringify({ type: 'teleport-token', index }));
+
+        event.target.style.opacity = '0.5';
+    }
+
+    /**
+     * Handle drag end
+     * @param {DragEvent} event 
+     * @private
+     */
+    async _onDragEnd(event) {
+        if (!this.currentDragData) return;
+        
+        const pos = game.canvas.canvasCoordinatesFromClient(event);
+        
+        const distance = Math.sqrt(Math.pow(pos.x - this.destX, 2) + Math.pow(pos.y - this.destY, 2));
+
+        if (distance > (this.placementRadius * game.canvas.grid.size) / game.canvas.grid.distance) {
+            ui.notifications.warn(`Token must be placed within ${this.placementRadius} feet of destination`);
+            event.target.style.opacity = '1';
+            this.currentDragData = null;
+            return;
+        }
+
+        const snapped = game.canvas.grid.getTopLeftPoint({
+            x: Math.round(pos.x * 10) / 10,
+            y: Math.round(pos.y * 10) / 10,
+        });
+
+        const oldPosition = await this._executeSingleTokenTeleport(this.currentDragData.token.token.actor, snapped.x, snapped.y);
+        const placedToken = this.tokensToPlace.splice(this.currentDragData.index, 1)[0];
+        console.log(placedToken);
+        this.placedTokens.push({
+            actor: placedToken.token.actor,
+            position: oldPosition,
+        });
+
+        this.render();
+        this.currentDragData = null;
+    }
+    /**
+     * Handle finish placement
+     * @private
+     */
+    async _onFinishPlacement() {
+        if (this.tokensToPlace.length > 0) {
+            ui.notifications.warn(`Please place all ${this.tokensToPlace.length} remaining tokens`);
+            return;
+        }
+        
+        if (this.destinationTarget)
+        {
+            TeleportData.removeMeasuredTemplate(this.destinationTarget);
+            this.destinationTarget = null;
+        }
+        
+        ui.notifications.info(`Successfully teleported ${this.placedTokens.length} target${this.placedTokens.length > 1 ? 's' : ''}`);
+
+        this.isFinished = true;
+        this.close();
+    }
+
+    /**
+     * Handle cancel placement
+     * @private
+     */
+    async _onCancelPlacement() {
+        for (const placedToken of this.placedTokens) {
+            await this._executeSingleTokenTeleport(
+                placedToken.actor,
+                placedToken.position.x,
+                placedToken.position.y
+            );
+        }
+
+        if (this.destinationTarget)
+        {
+            TeleportData.removeMeasuredTemplate(this.destinationTarget);
+            this.destinationTarget = null;
+        }
+        
+        this.targetApp.render(true);
+        this.isHardClose = true;
+        this.close();
+    }
+
+    async _executeSingleTokenTeleport(actor, x, y) {
+        const originalToken = TeleportData.getOriginToken(actor);
+        if (!originalToken) return;
+
+        const tokenData = foundry.utils.duplicate(game.canvas.scene.tokens.find((token) => token.id === originalToken.id));
+        const oldPosition = {
+            x: tokenData.x,
+            y: tokenData.y
+        };
+        tokenData.x = x;
+        tokenData.y = y;
+
+        await game.canvas.scene.deleteEmbeddedDocuments(foundry.canvas.placeables.Token.embeddedName, [originalToken.id], { isUndo: true });
+        await game.canvas.scene.createEmbeddedDocuments(foundry.canvas.placeables.Token.embeddedName, [tokenData], { isUndo: true });
+
+        return oldPosition;
     }
 }

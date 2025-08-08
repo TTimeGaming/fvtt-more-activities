@@ -64,5 +64,5 @@ Hooks.on(`renderChatMessageHTML`, (message, html) => {
 
 Hooks.on(`renderActivitySheet`, (sheet, html) => {
     ChainData.disableChained(sheet, html);
-    TeleportData.disableMTActivityPrompt(sheet, html);
+    TeleportData.disableTargeting(sheet, html);
 });

@@ -37,9 +37,8 @@
                 {{#if tokensData.otherTokens}}
                 <optgroup label="Other Tokens">
                     {{#each tokensData.otherTokens as |tokenData|}}
-                    <option value="{{tokenData.token.id}}" {{#unless tokenData.inRange}}class="out-of-range"{{/unless}}>
+                    <option value="{{tokenData.token.id}}">
                         {{tokenData.name}} ({{tokenData.distance}} ft)
-                        {{#unless tokenData.inRange}} - Out of Range{{/unless}}
                     </option>
                     {{/each}}
                 </optgroup>
