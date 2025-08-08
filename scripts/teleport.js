@@ -352,7 +352,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             const tokenId = selectElement.value;
             if (!tokenId || this.selectedTargets.find(t => t.id === tokenId)) return;
 
-            const token = canvas.tokens.get(tokenId);
+            const token = game.canvas.tokens.get(tokenId);
             if (!token) return;
 
             if (this.selectedTargets.length >= this.activity.maxTargets) {
@@ -670,7 +670,7 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.openTarget = false;
         this.close();
 
-        ui.notifications.info(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`, { count: `${updates.length} target${updates.length > 1 ? `s` : ``}` }));
+        ui.notifications.info(`${updates.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`)}`);
     }
     
     /**
