@@ -1,34 +1,34 @@
 export class MacroData {
     static applyListeners(message, html) {
-        if (message.flags.dnd5e.activity.type === `macro`) {
-            const button = $(`
-                <button type="button">
-                    <dnd5e-icon src="modules/more-activities/icons/macro.svg" style="--icon-fill: var(--button-text-color)"></dnd5e-icon>
-                    <span>Run Macro</span>
-                </button>`
-            );
+        if (message?.flags?.dnd5e?.activity?.type !== `macro`) return;
 
-            let buttons = $(html).find(`.card-buttons`);
-            if (buttons.length === 0) {
-                buttons = $(`<div class="card-buttons"></div>`);
-                $(html).find(`.card-header`).after(buttons);
-            }
+        const button = $(`
+            <button type="button">
+                <dnd5e-icon src="modules/more-activities/icons/macro.svg" style="--icon-fill: var(--button-text-color)"></dnd5e-icon>
+                <span>Run Macro</span>
+            </button>`
+        );
 
-            button.on(`click`, async() => {
-                const actor = game.actors.get(message.speaker.actor);
-                if (!actor.testUserPermission(game.user, `OWNER`)) return;
-
-                const item = actor.items.get(message.flags.dnd5e.item.id);
-                if (!item) return;
-
-                const activity = item.system.activities.get(message.flags.dnd5e.activity.id);
-                if (!activity) return;
-
-                await activity.executeMacro();
-            });
-
-            buttons.prepend(button);
+        let buttons = $(html).find(`.card-buttons`);
+        if (buttons.length === 0) {
+            buttons = $(`<div class="card-buttons"></div>`);
+            $(html).find(`.card-header`).after(buttons);
         }
+
+        button.on(`click`, async() => {
+            const actor = game.actors.get(message.speaker.actor);
+            if (!actor.testUserPermission(game.user, `OWNER`)) return;
+
+            const item = actor.items.get(message.flags.dnd5e.item.id);
+            if (!item) return;
+
+            const activity = item.system.activities.get(message.flags.dnd5e.activity.id);
+            if (!activity) return;
+
+            await activity.executeMacro();
+        });
+
+        buttons.prepend(button);
     }
 }
 
