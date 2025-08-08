@@ -48,11 +48,13 @@ export class HookData {
             `deleteCombat`,
 
             /* D&D 5E Hooks */
-            `dnd5e.rollAbilitySave`,
-            `dnd5e.rollAbilityTest`,
+            `dnd5e.rollAbilityCheck`,
+            `dnd5e.rollSavingThrow`,
             `dnd5e.rollSkill`,
             `dnd5e.rollAttack`,
             `dnd5e.rollDamage`,
+            `dnd5e.rollConcentration`,
+            `dnd5e.rollInitiative`,
             `dnd5e.shortRest`,
             `dnd5e.longRest`
         ].sort();
@@ -79,6 +81,24 @@ export class HookData {
                 case `createItem`:
                 case `deleteItem`:
                     if (item !== localArgs[0]) continue;
+                    break;
+                case `dnd5e.shortRest`:
+                case `dnd5e.longRest`:
+                case `dnd5e.rollInitiative`:
+                    if (item.parent !== localArgs[0]) continue;
+                    break;
+                case `dnd5e.rollAbilityCheck`:
+                case `dnd5e.rollSavingThrow`:
+                case `dnd5e.rollSkill`:
+                case `dnd5e.rollConcentration`:
+                    if (item.parent !== localArgs[1].subject) continue;
+                    break;
+                case `dnd5e.rollAttack`:
+                case `dnd5e.rollDamage`:
+                    if (item.parent != localArgs[1].subject.parent.parent.parent) continue;
+                    break;
+                default:
+                    console.log(...localArgs);
                     break;
             }
             
