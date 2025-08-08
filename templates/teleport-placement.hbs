@@ -1,6 +1,6 @@
 <div class="manual-placement-container">
     <div class="placement-header">
-        <p>Drag tokens to the canvas to teleport them.</p>
+        <p>{{localize "DND5E.ACTIVITY.FIELDS.teleport.dragAndDrop.label"}}</p>
         <div class="placement-progress">
             <span>Placed: {{placedCount}}/{{totalCount}}</span>
         </div>
@@ -15,7 +15,7 @@
         {{/each}}
         
         {{#unless tokensToPlace.length}}
-        <div class="no-tokens">All tokens have been placed!</div>
+        <div class="no-tokens">{{localize "DND5E.ACTIVITY.FIELDS.teleport.dragCompleted.label"}}</div>
         {{/unless}}
     </div>
 

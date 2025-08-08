@@ -5,14 +5,14 @@
         <div class="form-group">
             <div class="config-info">
                 <div class="config-item">
-                    <strong>Max Targets:</strong> {{maxTargets}}
+                    <strong>{{localize "DND5E.ACTIVITY.FIELDS.teleport.maxTargets.label"}}:</strong> {{maxTargets}}
                 </div>
                 <div class="config-item">
-                    <strong>Target Range:</strong> {{targetRange}} ft
+                    <strong>{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetRadius.label"}}:</strong> {{targetRange}} ft
                 </div>
                 {{#if originToken}}
                 <div class="config-item">
-                    <strong>Origin:</strong> {{originToken.name}}
+                    <strong>{{localize "DND5E.ACTIVITY.FIELDS.teleport.originToken.label"}}:</strong> {{originToken.name}}
                 </div>
                 {{/if}}
             </div>
@@ -54,9 +54,9 @@
                 <div class="target-item">
                     <div class="target-info">
                         <div class="target-name">{{target.name}}</div>
-                        <div class="target-distance">{{target.distance}} ft</div>
                     </div>
                     <div class="target-controls">
+                        <div class="target-distance">{{target.distance}} ft</div>
                         <button type="button" class="target-delete-btn" data-index="{{target.index}}">
                             <i class="fas fa-trash"></i>
                         </button>

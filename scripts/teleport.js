@@ -13,7 +13,7 @@ export class TeleportData {
         measuredTemplatePrompt.setAttribute(`disabled`, `disabled`);
 
         const warning = document.createElement(`abbr`);
-        warning.setAttribute(`title`, `Measured Template is disabled for Teleport activities.`);
+        warning.setAttribute(`title`, game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.blockedPrompt.label`));
         warning.setAttribute(`style`, `max-width: 15px;`);
         warning.innerHTML = `<i class="fa-solid fa-warning"></i>`;
         measuredTemplatePrompt.insertAdjacentElement(`afterend`, warning);
@@ -23,7 +23,7 @@ export class TeleportData {
             targetingTab.classList.add(`targeting-tab`);
 
             const warning = document.createElement(`abbr`);
-            warning.setAttribute(`title`, `Targeting is disabled for Teleport activities.`);
+            warning.setAttribute(`title`, game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.blockedTargeting.label`));
             warning.innerHTML = `<i class="fa-solid fa-warning" style="pointer-events: all;"></i>`;
             targetingTab.appendChild(warning);
         }
@@ -219,7 +219,7 @@ export class TeleportActivity extends dnd5e.documents.activity.ActivityMixin(Tel
         const results = await super.use(config, dialog, message);
         const token = TeleportData.getOriginToken(this.actor);
         if (!token) {
-            ui.notifications.warn(`No valid token for this actor on the canvas`);
+            ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.invalidScope.label`));
             return results;
         }
 
@@ -324,7 +324,8 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             if (!token) return;
 
             if (this.selectedTargets.length >= this.activity.maxTargets) {
-                ui.notifications.warn(`Maximum number of targets (${this.activity.maxTargets}) already selected`);
+                ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.maximumTargets.label`, { count: this.activity.maxTargets }));
+                selectElement.value = ``;
                 return;
             }
 
@@ -355,12 +356,12 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         this.element.querySelector(`.start-teleport-btn`)?.addEventListener(`click`, async(event) => {
             if (this.selectedTargets.length === 0) {
-                ui.notifications.warn(`Select at least one target to teleport`);
+                ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.moreTargets.label`));
                 return;
             }
 
             if (this.selectedTargets.length > this.activity.maxTargets) {
-                ui.notifications.warn(`Select fewer targets to teleport`);
+                ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.lessTargets.label`));
                 return;
             }
 
@@ -564,7 +565,7 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
             const pos = game.canvas.canvasCoordinatesFromClient(event.data.originalEvent);
             if (!this.destinationTarget.testPoint(pos)) {
-                ui.notifications.info(`Must teleport within configured radius`);
+                ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.outOfBounds.label`));
                 return;
             }
 
@@ -580,6 +581,7 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
             x: originToken.x + (originToken.w / 2),
             y: originToken.y + (originToken.h / 2),
             distance: this.activity.teleportDistance,
+            fillColor: `#50B849`,
         });
     }
 
@@ -635,8 +637,8 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         this.openTarget = false;
         this.close();
-        
-        ui.notifications.info(`Successfully teleported ${updates.length} target${updates.length > 1 ? 's' : ''}`);
+
+        ui.notifications.info(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`, { count: `${updates.length} target${updates.length > 1 ? `s` : ``}` }));
     }
     
     /**
@@ -798,6 +800,13 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     /** @inheritdoc */
     async _onRender(context, options) {
+        if (!this.element.querySelector(`.window-subtitle`)) {
+            const subtitle = document.createElement(`h2`);
+            subtitle.classList.add(`window-subtitle`);
+            subtitle.innerText = this.targetApp.activity?.item?.name || this.targetApp.activity?.name || ``,
+            this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
+        }
+
         this.element.querySelectorAll('.token-drag-item').forEach(tokenEl => {
             tokenEl.addEventListener('dragstart', this._onDragStart.bind(this));
             tokenEl.addEventListener('dragend', this._onDragEnd.bind(this));
@@ -819,6 +828,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             x: this.destX,
             y: this.destY,
             distance: this.placementRadius,
+            fillColor: `#D2D3D5`,
         });
     }
 
@@ -851,7 +861,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         const distance = Math.sqrt(Math.pow(pos.x - this.destX, 2) + Math.pow(pos.y - this.destY, 2));
 
         if (distance > (this.placementRadius * game.canvas.grid.size) / game.canvas.grid.distance) {
-            ui.notifications.warn(`Token must be placed within ${this.placementRadius} feet of destination`);
+            ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.outOfBounds.label`));
             event.target.style.opacity = '1';
             this.currentDragData = null;
             return;
@@ -878,7 +888,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
      */
     async _onFinishPlacement() {
         if (this.tokensToPlace.length > 0) {
-            ui.notifications.warn(`Please place all ${this.tokensToPlace.length} remaining tokens`);
+            ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.manualRemaining.label`));
             return;
         }
         
@@ -888,7 +898,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.destinationTarget = null;
         }
         
-        ui.notifications.info(`Successfully teleported ${this.placedTokens.length} target${this.placedTokens.length > 1 ? 's' : ''}`);
+        ui.notifications.info(`${this.placedTokens.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`)}`);
 
         this.isFinished = true;
         this.close();

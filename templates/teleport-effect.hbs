@@ -3,23 +3,23 @@
         <legend><label> Configuration </label></legend>
 
         <div class="form-group stacked">
-            <label>Max Targets</label>
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.maxTargets.label"}}</label>
             <div class="form-fields">
                 <input type="number" name="maxTargets" min="0" value="{{ maxTargets }}" placeholder="Max Targets">
             </div>
-            <p class="hint">The permitted number of tokens to teleport</p>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.maxTargets.hint"}}</p>
         </div>
 
         <div class="form-group">
-            <label>Target Self</label>
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetSelf.label"}}</label>
             <div class="form-fields">
                 <dnd5e-checkbox name="targetSelf" {{#if targetSelf}}checked{{/if}}></dnd5e-checkbox>
             </div>
-            <p class="hint">Allow the user to target themself?</p>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetSelf.hint"}}</p>
         </div>
 
-        <div class="form-group">
-            <label>Only Target Self</label>
+        <div class="form-group indented">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.onlyTargetSelf.label"}}</label>
             <div class="form-fields">
                 {{#if (and targetSelf (eq maxTargets 1))}}
                 <dnd5e-checkbox name="onlyTargetSelf" {{#if onlyTargetSelf}}checked{{/if}}></dnd5e-checkbox>
@@ -27,30 +27,30 @@
                 <dnd5e-checkbox name="onlyTargetSelf" disabled></dnd5e-checkbox>
                 {{/if}}
             </div>
-            <p class="hint">Should the user only target themself?</p>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.onlyTargetSelf.hint"}}</p>
         </div>
 
         <div class="form-group stacked">
-            <label>Target Radius</label>
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetRadius.label"}}</label>
             <div class="form-fields">
                 <input type="number" name="targetRadius" min="0" value="{{ targetRadius }}" placeholder="Target Radius">
             </div>
-            <p class="hint">The radius around the user to select targets from (in feet)</p>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetRadius.hint"}}</p>
         </div>
 
         <div class="form-group stacked">
-            <label>Teleport Distance</label>
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.teleportDistance.label"}}</label>
             <div class="form-fields">
                 <input type="number" name="teleportDistance" min="0" value="{{ teleportDistance }}" placeholder="Teleport Distance">
             </div>
-            <p class="hint">The distance tokens can be teleported from the user</p>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.teleportDistance.hint"}}</p>
         </div>
     </fieldset>
     <fieldset>
         <legend><label> Placement </label></legend>
 
         <div class="form-group">
-            <label>Manual Placement</label>
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualPlacement.label"}}</label>
             <div class="form-fields">
                 {{#if (or keepArrangement (eq maxTargets 1))}}
                 <dnd5e-checkbox name="manualPlacement" disabled></dnd5e-checkbox>
@@ -58,11 +58,11 @@
                 <dnd5e-checkbox name="manualPlacement" {{#if manualPlacement}}checked{{/if}}></dnd5e-checkbox>
                 {{/if}}
             </div>
-            <p class="hint">Allow the user to manually place teleported tokens?</p>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualPlacement.hint"}}</p>
         </div>
 
-        <div class="form-group stacked">
-            <label>Placement Radius</label>
+        <div class="form-group stacked indented">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualRadius.label"}}</label>
             <div class="form-fields">
                 {{#if manualPlacement}}
                 <input type="number" name="manualRadius" min="0" value="{{ manualRadius }}" placeholder="Placement Radius">
@@ -70,11 +70,11 @@
                 <input type="number" name="manualRadius" value="0" placeholder="Placement Radius" disabled>
                 {{/if}}
             </div>
-            <p class="hint">The radius to allow placement of tokens within after teleporting</p>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualRadius.hint"}}</p>
         </div>
 
         <div class="form-group">
-            <label>Keep Arrangement</label>
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.keepArrangement.label"}}</label>
             <div class="form-fields">
                 {{#if (or manualPlacement (eq maxTargets 1))}}
                 <dnd5e-checkbox name="keepArrangement" disabled></dnd5e-checkbox>
@@ -82,11 +82,11 @@
                 <dnd5e-checkbox name="keepArrangement" {{#if keepArrangement}}checked{{/if}}></dnd5e-checkbox>
                 {{/if}}
             </div>
-            <p class="hint">Keep the same token arrangement upon teleportation?</p>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.keepArrangement.hint"}}</p>
         </div>
 
         <div class="form-group stacked">
-            <label>Cluster Radius</label>
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.clusterRadius.label"}}</label>
             <div class="form-fields">
                 {{#if (or manualPlacement keepArrangement (eq maxTargets 1))}}
                 <input type="number" name="clusterRadius" value="0" placeholder="Cluster Radius" disabled>
@@ -94,7 +94,7 @@
                 <input type="number" name="clusterRadius" min="0" value="{{ clusterRadius }}" placeholder="Cluster Radius">
                 {{/if}}
             </div>
-            <p class="hint">The radius to cluster teleported tokens</p>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.clusterRadius.hint"}}</p>
         </div>
     </fieldset>
 </section>
