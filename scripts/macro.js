@@ -1,3 +1,37 @@
+export class MacroData {
+    static applyListeners(message, html) {
+        if (message.flags.dnd5e.activity.type === `macro`) {
+            const button = $(`
+                <button type="button">
+                    <dnd5e-icon src="modules/more-activities/icons/macro.svg" style="--icon-fill: var(--button-text-color)"></dnd5e-icon>
+                    <span>Run Macro</span>
+                </button>`
+            );
+
+            let buttons = $(html).find(`.card-buttons`);
+            if (buttons.length === 0) {
+                buttons = $(`<div class="card-buttons"></div>`);
+                $(html).find(`.card-header`).after(buttons);
+            }
+
+            button.on(`click`, async() => {
+                const actor = game.actors.get(message.speaker.actor);
+                if (!actor.testUserPermission(game.user, `OWNER`)) return;
+
+                const item = actor.items.get(message.flags.dnd5e.item.id);
+                if (!item) return;
+
+                const activity = item.system.activities.get(message.flags.dnd5e.activity.id);
+                if (!activity) return;
+
+                await activity.executeMacro();
+            });
+
+            buttons.prepend(button);
+        }
+    }
+}
+
 export class MacroActivityData extends dnd5e.dataModels.activity.BaseActivityData {
     static defineSchema() {
         const fields = foundry.data.fields;
@@ -101,7 +135,7 @@ export class MacroActivity extends dnd5e.documents.activity.ActivityMixin(MacroA
      */
     async use(config, dialog, message) {
         const results = await super.use(config, dialog, message);
-        await this._executeMacro();
+        await this.executeMacro();
         return results;
     }
 
@@ -110,7 +144,7 @@ export class MacroActivity extends dnd5e.documents.activity.ActivityMixin(MacroA
      * @returns {Promise<void>}
      * @private
      */
-    async _executeMacro() {
+    async executeMacro() {
         const macroCode = this.macroCode;
         if (!macroCode || macroCode.trim() == ``) {
             ui.notifications.error(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.macro.macroCode.emptyError`));

@@ -1,4 +1,4 @@
-import { MacroActivityData, MacroActivitySheet, MacroActivity } from './macro.js';
+import { MacroActivityData, MacroActivitySheet, MacroActivity, MacroData } from './macro.js';
 import { HookActivityData, HookActivitySheet, HookActivity, HookData } from './hook.js';
 import { ContestedActivityData, ContestedActivitySheet, ContestedActivity, ContestedData } from './contested.js';
 import { ChainActivityData, ChainActivitySheet, ChainActivity, ChainData } from './chain.js';
@@ -57,9 +57,10 @@ Hooks.on(`renderActivityChoiceDialog`, (dialog, html) => {
 });
 
 Hooks.on(`renderChatMessageHTML`, (message, html) => {
+    MacroData.applyListeners(message, html);
     ContestedData.applyListeners(message, html);
     ChainData.applyListeners(message, html);
-    TeleportData.disableMTMessagePrompt(message, html);
+    TeleportData.applyListeners(message, html);
 });
 
 Hooks.on(`renderActivitySheet`, (sheet, html) => {

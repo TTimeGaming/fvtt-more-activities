@@ -29,12 +29,43 @@ export class TeleportData {
         }
     }
 
-    static disableMTMessagePrompt(message, html) {
+    static applyListeners(message, html) {
         if (message.flags?.dnd5e?.activity?.type !== `teleport`) return;
 
         const placeTemplate = html.querySelector(`.card-buttons button[data-action="placeTemplate"]`);
         if (placeTemplate)
             placeTemplate.remove();
+
+        const button = $(`
+            <button type="button">
+                <dnd5e-icon src="modules/more-activities/icons/teleport.svg" style="--icon-fill: var(--button-text-color)"></dnd5e-icon>
+                <span>Teleport</span>
+            </button>`
+        );
+
+        let buttons = $(html).find(`.card-buttons`);
+        if (buttons.length === 0) {
+            buttons = $(`<div class="card-buttons"></div>`);
+            $(html).find(`.card-header`).after(buttons);
+        }
+
+        button.on(`click`, () => {
+            const actor = game.actors.get(message.speaker.actor);
+            if (!actor.testUserPermission(game.user, `OWNER`)) return;
+
+            const item = actor.items.get(message.flags.dnd5e.item.id);
+            if (!item) return;
+
+            const activity = item.system.activities.get(message.flags.dnd5e.activity.id);
+            if (!activity) return;
+
+            const token = TeleportData.getOriginToken(actor);
+            if (!token) return;
+
+            new TeleportTargetApp(activity).render(true);
+        });
+
+        buttons.prepend(button);
     }
 
     static calculateDistanceSqr(token1, token2) {
@@ -217,6 +248,7 @@ export class TeleportActivity extends dnd5e.documents.activity.ActivityMixin(Tel
      */
     async use(config, dialog, message) {
         const results = await super.use(config, dialog, message);
+        
         const token = TeleportData.getOriginToken(this.actor);
         if (!token) {
             ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.invalidScope.label`));
