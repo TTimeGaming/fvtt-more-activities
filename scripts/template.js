@@ -1,3 +1,5 @@
+const TEMPLATE_NAME = `template`;
+
 export class TemplateData {
     static async init() {
     }
@@ -18,14 +20,14 @@ export class TemplateActivityData extends dnd5e.dataModels.activity.BaseActivity
 export class TemplateActivitySheet extends dnd5e.applications.activity.ActivitySheet {
     /** @inheritdoc */
     static DEFAULT_OPTIONS = {
-        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-TEMPLATE` ],
+        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-${TEMPLATE_NAME}` ],
     };
 
     /** @inheritdoc */
     static PARTS = {
         ...super.PARTS,
         effect: {
-            template: `modules/more-activities/templates/TEMPLATE-effect.hbs`,
+            template: `modules/more-activities/templates/${TEMPLATE_NAME}-effect.hbs`,
             templates: [
                 ...super.PARTS.effect.templates,
             ],
@@ -44,14 +46,14 @@ export class TemplateActivitySheet extends dnd5e.applications.activity.ActivityS
 }
 
 export class TemplateActivity extends dnd5e.documents.activity.ActivityMixin(TemplateActivityData) {
-    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.TEMPLATE`];
+    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.${TEMPLATE_NAME.toUpperCase()}`];
 
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
             type: `macro`,
-            img: `modules/more-activities/icons/TEMPLATE.svg`,
-            title: `DND5E.ACTIVITY.Type.TEMPLATE`,
-            hint: `DND5E.ACTIVITY.Hint.TEMPLATE`,
+            img: `modules/more-activities/icons/${TEMPLATE_NAME}.svg`,
+            title: `DND5E.ACTIVITY.Type.${TEMPLATE_NAME}`,
+            hint: `DND5E.ACTIVITY.Hint.${TEMPLATE_NAME}`,
             sheetClass: TemplateActivitySheet
         }, { inplace: false })
     );
