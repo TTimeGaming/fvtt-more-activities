@@ -1,6 +1,6 @@
 ## More Activities
 
-![Latest](https://img.shields.io/badge/Module%20Version:%201.5.2-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)  
+![Latest](https://img.shields.io/badge/Module%20Version:%201.5.3-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)  
 
 An extension to the D&D 5E system for FoundryVTT v13+ that provides additional activity types.
 
@@ -14,6 +14,7 @@ An extension to the D&D 5E system for FoundryVTT v13+ that provides additional a
 - **Chain Activity:** Adds the ability to chain multiple activities together with a confirmation to proceed
 - **Teleport Activity:** Adds the ability to teleport tokens on the canvas
 - **Movement Activity:** Adds the ability to force tokens to move on the canvas
+- **Sound Activity:** Adds the ability to play sounds directly from the activity
 
 ### ⚠️ Current Limitations
 
@@ -104,6 +105,9 @@ Your support helps fund:
 <img src="./assets/movement-activity.png" width="700" />
 <img src="./assets/movement-target.png" width="350" />
 <img src="./assets/movement-placement.png" width="350" />
+
+### Sound Activity
+<img src="./assets/sound-activity.png" width="700" />
 
 ---
 
