@@ -71,8 +71,11 @@
     "DND5E.ACTIVITY.FIELDS.teleport.destination.label": "Click a point within range to set as the destination.",
     "DND5E.ACTIVITY.FIELDS.teleport.dragAndDrop.label": "Drag tokens to the canvas to teleport them.",
     "DND5E.ACTIVITY.FIELDS.teleport.dragCompleted.label": "All tokens have been placed!",
+    "DND5E.ACTIVITY.FIELDS.teleport.appliedEffects.label": "Effects",
+    "DND5E.ACTIVITY.FIELDS.teleport.appliedEffects.hint": "Effects to apply to teleported tokens",
 
     "DND5E.ACTIVITY.Type.movement": "Movement",
+    "DND5E.ACTIVITY.FIELDS.movement.invalidScope.label": "No valid token for this actor on the canvas.",
     "DND5E.ACTIVITY.FIELDS.movement.moreTargets.label": "Select at least one target to teleport.",
     "DND5E.ACTIVITY.FIELDS.movement.lessTargets.label": "Select fewer targets to teleport.",
     "DND5E.ACTIVITY.FIELDS.movement.outOfBounds.label": "Clicked point is outside of permitted radius.",
@@ -89,5 +92,7 @@
     "DND5E.ACTIVITY.FIELDS.movement.movementType.hint": "The direction in which tokens are forcibly moved",
     "DND5E.ACTIVITY.FIELDS.movement.originToken.label": "Origin Token",
     "DND5E.ACTIVITY.FIELDS.movement.dragAndDrop.label": "Drag tokens to the canvas to teleport them.",
-    "DND5E.ACTIVITY.FIELDS.movement.dragCompleted.label": "All tokens have been placed!"
+    "DND5E.ACTIVITY.FIELDS.movement.dragCompleted.label": "All tokens have been placed!",
+    "DND5E.ACTIVITY.FIELDS.movement.appliedEffects.label": "Effects",
+    "DND5E.ACTIVITY.FIELDS.movement.appliedEffects.hint": "Effects to apply to forcibly moved tokens"
 }

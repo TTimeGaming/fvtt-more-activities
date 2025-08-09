@@ -1,6 +1,7 @@
 import { MessageData } from '../utils/message.js';
 import { CanvasData } from '../utils/canvas.js';
 import { DomData } from '../utils/dom.js';
+import { EffectsData } from '../utils/effects.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_NAME = `teleport`;
@@ -78,6 +79,14 @@ export class TeleportActivityData extends dnd5e.dataModels.activity.BaseActivity
             min: 0,
         });
 
+        schema.appliedEffects = new fields.ArrayField(new fields.StringField({
+            required: false,
+            blank: true
+        }), {
+            required: false,
+            initial: [],
+        });
+
         return schema;
     }
 }
@@ -112,6 +121,13 @@ export class TeleportActivitySheet extends dnd5e.applications.activity.ActivityS
         context.manualRadius = this.activity?.manualRadius ?? 10;
         context.keepArrangement = this.activity?.keepArrangement ?? true;
         context.clusterRadius = this.activity?.clusterRadius ?? 5;
+        context.appliedEffects = this.activity?.appliedEffects || [];
+
+        context.availableEffects = this.item?.effects?.map(effect => ({
+            id: effect.id,
+            name: effect.name,
+            icon: effect.img
+        })) || [];
 
         return context;
     }
@@ -565,6 +581,7 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.openTarget = false;
         this.close();
 
+        await EffectsData.apply(this.activity, this.selectedTargets.map(target => target.token.actor));
         ui.notifications.info(`${updates.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`)}`);
     }
     
@@ -825,6 +842,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.destinationTarget = null;
         }
         
+        await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.token.actor));
         ui.notifications.info(`${this.placedTokens.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`)}`);
 
         this.isFinished = true;

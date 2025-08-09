@@ -1,5 +1,6 @@
 import { MessageData } from '../utils/message.js';
 import { CanvasData } from '../utils/canvas.js';
+import { EffectsData } from '../utils/effects.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_NAME = `movement`;
@@ -70,6 +71,14 @@ export class MovementActivityData extends dnd5e.dataModels.activity.BaseActivity
             options: [ `push`, `pull`, `either`, `free` ],
         });
 
+        schema.appliedEffects = new fields.ArrayField(new fields.StringField({
+            required: false,
+            blank: true
+        }), {
+            required: false,
+            initial: [],
+        });
+
         return schema;
     }
 }
@@ -99,6 +108,13 @@ export class MovementActivitySheet extends dnd5e.applications.activity.ActivityS
         context.targetRange = this.activity?.targetRange ?? 30;
         context.movementDistance = this.activity?.movementDistance ?? 10;
         context.movementType = this.activity?.movementType ?? `push`;
+        context.appliedEffects = this.activity?.appliedEffects || [];
+
+        context.availableEffects = this.item?.effects?.map(effect => ({
+            id: effect.id,
+            name: effect.name,
+            icon: effect.img
+        })) || [];
 
         context.movementTypeOptions = [
             { value: `push`, label: `Push (Away)`, selected: context.movementType === `push` },
@@ -141,6 +157,13 @@ export class MovementActivity extends dnd5e.documents.activity.ActivityMixin(Mov
      */
     async use(config, dialog, message) {
         const results = await super.use(config, dialog, message);
+
+        const token = CanvasData.getOriginToken(this.actor);
+        if (!token) {
+            ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.invalidScope.label`));
+            return results;
+        }
+
         new MovementTargetApp(this).render(true);
         return results;
     }
@@ -358,6 +381,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (updates.length === 0) return;
 
         await game.canvas.scene.updateEmbeddedDocuments(`Token`, updates);
+        await EffectsData.apply(this.activity, this.selectedTargets.map(target => target.token.actor));
         ui.notifications.info(`${updates.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.success.label`)}`);
     }
 
@@ -642,7 +666,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         const oldPosition = await this._executeSingleTokenMovement(this.currentDragData.token.token.actor, snapped.x, snapped.y);
         const placedToken = this.tokensToPlace.splice(this.currentDragData.index, 1)[0];
         this.placedTokens.push({
-            actor: placedToken.token.actor,
+            token: placedToken.token,
             position: oldPosition,
         });
 
@@ -670,6 +694,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.destinationTargets[i] = null;
         }
         
+        await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.token.actor));
         ui.notifications.info(`${this.placedTokens.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.success.label`)}`);
 
         this.isFinished = true;
@@ -683,7 +708,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
     async _onCancelPlacement() {
         for (const placedToken of this.placedTokens) {
             await this._executeSingleTokenMovement(
-                placedToken.actor,
+                placedToken.token.actor,
                 placedToken.position.x,
                 placedToken.position.y
             );
