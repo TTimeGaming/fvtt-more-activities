@@ -479,7 +479,7 @@ export class ContestedActivitySheet extends dnd5e.applications.activity.Activity
         context.availableEffects = this.item?.effects?.map(effect => ({
             id: effect.id,
             name: effect.name,
-            icon: effect.icon
+            icon: effect.img
         })) || [];
 
         context.attackerLabel = this.activity?.attackerLabel || `Attacker`;
