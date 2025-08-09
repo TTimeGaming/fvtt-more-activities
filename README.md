@@ -1,6 +1,6 @@
 ## More Activities
 
-![Latest](https://img.shields.io/badge/Module%20Version:%201.5.1-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)  
+![Latest](https://img.shields.io/badge/Module%20Version:%201.5.2-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)  
 
 An extension to the D&D 5E system for FoundryVTT v13+ that provides additional activity types.
 
