@@ -72,10 +72,31 @@ export class HookData {
             if (activity.type != TEMPLATE_NAME) continue;
             if (hookName != activity.activeHook) continue;
             
+            let combatRoundTurnDuplicate = false;
             switch (hookName) {
                 case `createItem`:
                 case `deleteItem`:
                     if (item !== localArgs[0]) continue;
+                    break;
+                case `combatStart`:
+                case `combatRound`:
+                case `deleteCombat`:
+                    let isCombatant = false;
+                    for (const combatant of localArgs[0].combatants) {
+                        if (combatant.actorId !== item.parent.id) continue;
+                        isCombatant = true; break;
+                    }
+                    if (!isCombatant) continue;
+
+                    if (hookName === `combatRound`) {
+                        const currentCombatant = localArgs[0].combatants.get(localArgs[0].current.combatantId);
+                        if (currentCombatant.actorId !== item.parent.id) continue;
+                        combatRoundTurnDuplicate = true;
+                    }
+                    break;
+                case `combatTurn`:
+                    const currentCombatant = localArgs[0].combatants.get(localArgs[0].current.combatantId);
+                    if (currentCombatant.actorId !== item.parent.id) continue;
                     break;
                 case `dnd5e.shortRest`:
                 case `dnd5e.longRest`:
@@ -98,6 +119,10 @@ export class HookData {
             }
             
             activity.use(undefined, undefined, undefined, hookName, args);
+
+            // A hacky override as `combatTurn` doesn't trigger for the last player when `combatRound` fires
+            if (combatRoundTurnDuplicate)
+                activity.use(undefined, undefined, undefined, `combatTurn`, args);
         }
     }
 }
