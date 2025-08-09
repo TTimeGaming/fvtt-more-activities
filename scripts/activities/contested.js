@@ -1,5 +1,6 @@
 import { MessageData } from '../utils/message.js';
 import { DomData } from '../utils/dom.js';
+import { EffectsData } from '../utils/effects.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_NAME = `contested`;
@@ -279,6 +280,8 @@ class ContestedManager {
     static async _applyContestEffects(contest, activity, templateData) {
         if (activity.appliedEffects.length === 0) return;
 
+        const targetedActors = [];
+
         const attackerActor = contest.initiator;
         for (const defender of templateData.defenderRolls) {
             const defenderActor = defender.actor;
@@ -314,26 +317,10 @@ class ContestedManager {
                 return;
             }
 
-            const item = activity?.item;
-            for (const effectId of activity.appliedEffects) {
-                const effect = item?.effects?.get(effectId);
-                if (!effect) {
-                    console.warn(`Effect ${effectId} not found on item ${item?.name}`);
-                    continue;
-                }
-                
-                try {
-                    const effectData = effect.toObject();
-                    effectData.origin = item?.uuid;
-                    await targetActor.createEmbeddedDocuments(`ActiveEffect`, [ effectData ]);
-                    ui.notifications.info(`Applied ${effect.name} to ${targetActor.name}`);
-                }
-                catch (error) {
-                    console.error(`Failed to apply effect ${effect.name} to ${targetActor.name}:`, error);
-                    ui.notifications.error(`Failed to apply effect ${effect.name} to ${targetActor.name}`);
-                }
-            }
+            targetedActors.push(targetActor);
         }
+
+        await EffectsData.apply(activity, targetedActors);
     }
 
     static _getUserForActor(actorId) {
@@ -400,7 +387,7 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
             required: false,
             initial: false,
         });
-
+        
         schema.appliedEffects = new fields.ArrayField(new fields.StringField({
             required: false,
             blank: true
