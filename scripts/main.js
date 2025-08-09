@@ -4,6 +4,7 @@ import { ContestedActivityData, ContestedActivitySheet, ContestedActivity, Conte
 import { ChainActivityData, ChainActivitySheet, ChainActivity, ChainData } from './activities/chain.js';
 import { TeleportActivityData, TeleportActivitySheet, TeleportActivity, TeleportData } from './activities/teleport.js';
 import { MovementActivityData, MovementActivitySheet, MovementActivity, MovementData } from './activities/movement.js';
+import { SoundActivityData, SoundActivitySheet, SoundActivity, SoundData } from './activities/sound.js';
 import { Compat } from './compat.js';
 import { HandlebarsData } from './utils/handlebars.js';
 
@@ -14,6 +15,7 @@ Hooks.once(`init`, async() => {
     await Compat.init();
     await HookData.init();
     await ContestedData.init();
+    await SoundData.init();
 
     CONFIG.DND5E.activityTypes.macro = {
         documentClass: MacroActivity,
@@ -57,7 +59,14 @@ Hooks.once(`init`, async() => {
         typeLabel: `DND5E.ACTIVITY.Type.movement`,
     };
 
-    console.log(`More Activities | Registered (6) Activity Types`);
+    CONFIG.DND5E.activityTypes.sound = {
+        documentClass: SoundActivity,
+        dataModel: SoundActivityData,
+        sheetClass: SoundActivitySheet,
+        typeLabel: `DND5E.ACTIVITY.Type.sound`,
+    };
+
+    console.log(`More Activities | Registered (7) Activity Types`);
 });
 
 Hooks.on(`renderChatMessageHTML`, (message, html) => {

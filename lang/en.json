@@ -94,5 +94,13 @@
     "DND5E.ACTIVITY.FIELDS.movement.dragAndDrop.label": "Drag tokens to the canvas to teleport them.",
     "DND5E.ACTIVITY.FIELDS.movement.dragCompleted.label": "All tokens have been placed!",
     "DND5E.ACTIVITY.FIELDS.movement.appliedEffects.label": "Effects",
-    "DND5E.ACTIVITY.FIELDS.movement.appliedEffects.hint": "Effects to apply to forcibly moved tokens"
+    "DND5E.ACTIVITY.FIELDS.movement.appliedEffects.hint": "Effects to apply to forcibly moved tokens",
+
+    "DND5E.ACTIVITY.Type.sound": "Sound",
+    "DND5E.ACTIVITY.FIELDS.sound.soundFile.label": "Sound File",
+    "DND5E.ACTIVITY.FIELDS.sound.soundFile.hint": "The sound file to play when using this activity.",
+    "DND5E.ACTIVITY.FIELDS.sound.playForAll.label": "Play for All",
+    "DND5E.ACTIVITY.FIELDS.sound.playForAll.hint": "Transmit the sound to all active players?",
+    "DND5E.ACTIVITY.FIELDS.sound.volume.label": "Volume",
+    "DND5E.ACTIVITY.FIELDS.sound.volume.hint": "The volume to play the sound file at (0 - 1)"
 }
