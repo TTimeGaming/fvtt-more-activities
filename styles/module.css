@@ -300,7 +300,8 @@
     justify-content: center;
 }
 
-.dnd5e2.activity.chained-activity .activation-tab {
+.dnd5e2.activity.chained-activity .disabled-tab,
+.dnd5e2.activity.teleport-activity .disabled-tab {
     opacity: 0.6;
     pointer-events: none;
 }
@@ -617,11 +618,6 @@
     padding: 1.25rem;
     background: var(--dnd5e-color-secondary);
     color: white;
-}
-
-.dnd5e2.activity.teleport-activity .targeting-tab {
-    opacity: 0.6;
-    pointer-events: none;
 }
 
 .manual-placement-container {

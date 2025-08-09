@@ -1,41 +1,16 @@
+import { MessageData } from './utils/message.js';
+import { CanvasData } from './utils/canvas.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_NAME = `movement`;
 
 export class MovementData {
     static applyListeners(message, html) {
-        if (message.flags?.dnd5e?.activity?.type !== `movement`) return;
-
-        const button = $(`
-            <button type="button">
-                <dnd5e-icon src="modules/more-activities/icons/movement.svg" style="--icon-fill: var(--button-text-color)"></dnd5e-icon>
-                <span>Force Movement</span>
-            </button>`
+        MessageData.addActivityButton(message, html, true,
+            `movement`, `Force Movement`, (activity) => {
+                new MovementTargetApp(activity).render(true);
+            }
         );
-
-        let buttons = $(html).find(`.card-buttons`);
-        if (buttons.length === 0) {
-            buttons = $(`<div class="card-buttons"></div>`);
-            $(html).find(`.card-header`).after(buttons);
-        }
-
-        button.on(`click`, () => {
-            const actor = game.actors.get(message.speaker.actor);
-            if (!actor.testUserPermission(game.user, `OWNER`)) return;
-
-            const item = actor.items.get(message.flags.dnd5e.item.id);
-            if (!item) return;
-
-            const activity = item.system.activities.get(message.flags.dnd5e.activity.id);
-            if (!activity) return;
-
-            const token = MovementData.getOriginToken(actor);
-            if (!token) return;
-
-            new MovementTargetApp(activity).render(true);
-        });
-
-        buttons.prepend(button);
     }
 
     static calculateMovementDestinations(origin, target, distance, movementType) {
@@ -63,71 +38,6 @@ export class MovementData {
         }
 
         return destinations;
-    }
-
-    static getAngleBetween(origin, target) {
-        const dx = target.x - origin.x;
-        const dy = target.y - origin.y;
-        return Math.atan2(dy, dx);
-    }
-
-    static calculateDistanceSqr(token1, token2) {
-        if (!token1 || !token2) return Infinity;
-        if (token1._destroyed || token2._destroyed) return Infinity;
-
-        const dx = (token1.x + (token1.w / 2)) - (token2.x + (token2.w / 2));
-        const dy = (token1.y + (token1.w / 2)) - (token2.y + (token2.w / 2));
-        const distance = dx * dx + dy * dy;
-        return distance / (game.canvas.grid.size * game.canvas.grid.size);
-    }
-
-    static getTokensInRange(originToken, range) {
-        if (!originToken) return [];
-
-        return game.canvas.tokens.placeables
-            .filter(token => token !== originToken)
-            .map(token => {
-                const distance = this.calculateDistanceSqr(originToken, token);
-                const calcDistance = game.canvas.grid.distance * Math.round(Math.sqrt(distance) * 10) / 10;
-
-                return {
-                    token: token,
-                    actor: token.actor,
-                    distance: calcDistance,
-                    inRange: calcDistance <= range,
-                };
-            })
-            .filter(token => token.inRange)
-            .sort((a, b) => a.distance - b.distance)
-        ;
-    }
-
-    static getOriginToken(actor) {
-        return actor != null ? game.canvas.tokens.placeables.find(token => token.actor?.id === actor.id) : null;
-    }
-
-    static createMeasuredTemplate({ x, y, distance, t = `circle`, borderColor = `#ffffff`, fillColor = `#ffffff` }) {
-        const data = {
-            t: t,
-            user: game.user.id,
-            x: x,
-            y: y,
-            distance: distance,
-            borderColor: borderColor,
-            fillColor: fillColor,
-        };
-        const document = new CONFIG.MeasuredTemplate.documentClass(data, { parent: game.canvas.scene });
-
-        const object = new CONFIG.MeasuredTemplate.objectClass(document);
-        object.draw();
-        game.canvas.templates.addChild(object);
-        return object;
-    }
-
-    static removeMeasuredTemplate(measuredTemplate) {
-        game.canvas.templates.removeChild(measuredTemplate);
-        measuredTemplate.clear();
-        measuredTemplate.destroy();
     }
 }
 
@@ -289,7 +199,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             targetRange: this.activity.targetRange,
             movementDistance: this.activity.movementDistance,
             movementType: this.activity.movementType,
-            originToken: MovementData.getOriginToken(this.actor),
+            originToken: CanvasData.getOriginToken(this.actor),
         };
     }
 
@@ -297,11 +207,11 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
     async _onRender(context, options) {
         this.isSelecting = false;
 
-        const originToken = MovementData.getOriginToken(this.actor);
+        const originToken = CanvasData.getOriginToken(this.actor);
 
         if (!this.selectionTarget)
         {
-            this.selectionTarget = MovementData.createMeasuredTemplate({
+            this.selectionTarget = CanvasData.createMeasuredTemplate({
                 x: originToken.x + (originToken.w / 2),
                 y: originToken.y + (originToken.h / 2),
                 distance: this.activity.targetRange,
@@ -332,7 +242,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 return;
             }
 
-            const distance = originToken ? MovementData.calculateDistanceSqr(originToken, token) : 0;
+            const distance = originToken ? CanvasData.calculateDistanceSqr(originToken, token) : 0;
             this.selectedTargets.push({
                 id: tokenId,
                 name: token.name,
@@ -380,7 +290,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         if (this.selectionTarget)
         {
-            MovementData.removeMeasuredTemplate(this.selectionTarget);
+            CanvasData.removeMeasuredTemplate(this.selectionTarget);
             this.selectionTarget = null;
         }
 
@@ -422,7 +332,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
     async _executeMovement(direction) {
         const updates = [];
 
-        const originToken = MovementData.getOriginToken(this.actor);
+        const originToken = CanvasData.getOriginToken(this.actor);
         for (const target of this.selectedTargets) {
             const destinations = MovementData.calculateMovementDestinations(
                 originToken,
@@ -472,12 +382,12 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
      * @private
      */
     async _getAvailableTokens() {
-        const originToken = MovementData.getOriginToken(this.actor);
+        const originToken = CanvasData.getOriginToken(this.actor);
 
         const tokens = [];
         const selectedIds = this.selectedTargets.map(t => t.id);
 
-        const otherTokens = MovementData.getTokensInRange(originToken, this.activity.targetRange)
+        const otherTokens = CanvasData.getTokensInRange(originToken, this.activity.targetRange)
             .filter(data => !selectedIds.includes(data.token.id))
             .map(data => ({
                 ...data,
@@ -497,8 +407,8 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
         for (const token of Array.from(game.user.targets)) {
             let distance = Infinity;
             if (this.activity.targetRange > 0) {
-                const originToken = MovementData.getOriginToken(this.actor);
-                distance = originToken ? MovementData.calculateDistanceSqr(originToken, token) : 0;
+                const originToken = CanvasData.getOriginToken(this.actor);
+                distance = originToken ? CanvasData.calculateDistanceSqr(originToken, token) : 0;
                 if (distance > this.activity.targetRange * this.activity.targetRange) continue;
             }
             
@@ -610,7 +520,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             ...options,
         });
 
-        const token = MovementData.getOriginToken(actor);
+        const token = CanvasData.getOriginToken(actor);
 
         const snapped = game.canvas.grid.getCenterPoint({
             x: Math.round(token.x * 10) / 10,
@@ -675,7 +585,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     _renderDestination() {
         for (let i = 0; i < this.tokensToPlace.length; i++) {
-            this.destinationTargets[i] = MovementData.createMeasuredTemplate({
+            this.destinationTargets[i] = CanvasData.createMeasuredTemplate({
                 x: this.tokensToPlace[i].token.x + (this.tokensToPlace[i].token.w / 2),
                 y: this.tokensToPlace[i].token.y + (this.tokensToPlace[i].token.h / 2),
                 distance: this.placementRadius,
@@ -737,7 +647,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         });
 
         if (this.destinationTargets[this.currentDragData.index]) {
-            MovementData.removeMeasuredTemplate(this.destinationTargets[this.currentDragData.index]);
+            CanvasData.removeMeasuredTemplate(this.destinationTargets[this.currentDragData.index]);
             this.destinationTargets[this.currentDragData.index] = null;
         }
 
@@ -756,7 +666,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         
         for (let i = 0; i < this.destinationTargets.length; i++) {
             if (!this.destinationTargets[i]) continue;
-            MovementData.removeMeasuredTemplate(this.destinationTargets[i]);
+            CanvasData.removeMeasuredTemplate(this.destinationTargets[i]);
             this.destinationTargets[i] = null;
         }
         
@@ -781,7 +691,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         for (let i = 0; i < this.destinationTargets.length; i++) {
             if (!this.destinationTargets[i]) continue;
-            MovementData.removeMeasuredTemplate(this.destinationTargets[i]);
+            CanvasData.removeMeasuredTemplate(this.destinationTargets[i]);
             this.destinationTargets[i] = null;
         }
         
@@ -791,7 +701,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     async _executeSingleTokenMovement(actor, x, y) {
-        const originalToken = MovementData.getOriginToken(actor);
+        const originalToken = CanvasData.getOriginToken(actor);
         if (!originalToken) return;
 
         const oldPosition = {

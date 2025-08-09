@@ -1,3 +1,5 @@
+import { DomData } from './utils/dom.js';
+
 export class ChainData {
     static async init() {
         Handlebars.registerHelper(`subtract`, function(a, b) {
@@ -5,26 +7,13 @@ export class ChainData {
         });
     }
 
-    static disableChained(sheet, html) {
-        const activity = sheet.activity;
-        const item = activity?.item;
-        if (!item || !activity) return;
-
-        const isChained = ChainData.isActivityChained(item, activity.id);
-        if (!isChained) return;
+    static adjustActivitySheet(sheet, html) {
+        if (!ChainData.isActivityChained(sheet?.activity?.item, sheet?.activity?.id))
+            return;
 
         sheet.element.classList.add(`chained-activity`);
         sheet.element.querySelector(`.window-header .window-icon`).classList.add(`fa-link`);
-
-        const activationTab = html.querySelector(`.sheet-tabs a[data-tab="activation"]`);
-        if (activationTab) {
-            activationTab.classList.add(`activation-tab`);
-
-            const warning = document.createElement(`abbr`);
-            warning.setAttribute(`title`, game.i18n.localize(`DND5E.ACTIVITY.FIELDS.chain.blockedActivity.label`));
-            warning.innerHTML = `<i class="fa-solid fa-warning" style="pointer-events: all;"></i>`;
-            activationTab.appendChild(warning);
-        }
+        DomData.disableTab(html, `activation`, game.i18n.localize(`DND5E.ACTIVITY.FIELDS.chain.blockedActivity.label`));
     }
 
     static applyListeners(message, html) {
@@ -51,17 +40,9 @@ export class ChainData {
     }
 
     static async removeActivities(item, html) {
-        const removedActivities = [];
-        for (const activity of item.system.activities) {
-            if (ChainData.isActivityChained(item, activity.id))
-                removedActivities.push(activity.id);
-        }
-
-        for (const activity of removedActivities) {
-            const button = html.querySelector(`button[data-activity-id="${activity}"]`);
-            const li = button?.parentElement;
-            if (li) li.remove();
-        }
+        DomData.disableDialogActivities(item, html, (activity) => {
+            return !ChainData.isActivityChained(item, activity.id);
+        });
     }
     
     static isActivityChained(item, activityId) {

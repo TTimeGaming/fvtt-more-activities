@@ -1,3 +1,5 @@
+import { DomData } from './utils/dom.js';
+
 export class HookData {
     static async init() {
         for (const hookName of this.getSupportedHooks()) {
@@ -16,18 +18,9 @@ export class HookData {
     }
     
     static async removeActivities(item, html) {
-        const removedActivities = [];
-        for (const activity of item.system.activities) {
-            if (activity.type !== `hook`) continue;
-            if (activity.manualTrigger) continue;
-            removedActivities.push(activity.id);
-        }
-
-        for (const activity of removedActivities) {
-            const button = html.querySelector(`button[data-activity-id="${activity}"]`);
-            const li = button?.parentElement;
-            if (li) li.remove();
-        }
+        DomData.disableDialogActivities(item, html, (activity) => {
+            return activity.type !== `hook` || activity.manualTrigger;
+        });
     }
     
     /**

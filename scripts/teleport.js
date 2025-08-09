@@ -1,130 +1,23 @@
+import { MessageData } from './utils/message.js';
+import { CanvasData } from './utils/canvas.js';
+import { DomData } from './utils/dom.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 export class TeleportData {
-    static disableTargeting(sheet, html) {
-        const activity = sheet.activity;
-        const item = activity?.item;
-        if (!item || !activity) return;
-        if (activity.type !== `teleport`) return;
+    static adjustActivitySheet(sheet, html) {
+        if (!sheet?.activity?.item || sheet?.activity?.type !== `teleport`) return;
 
         sheet.element.classList.add(`teleport-activity`);
-
-        const measuredTemplatePrompt = html.querySelector(`.tab[data-tab="identity"] dnd5e-checkbox[name="target.prompt"]`);
-        measuredTemplatePrompt.setAttribute(`disabled`, `disabled`);
-
-        const warning = document.createElement(`abbr`);
-        warning.setAttribute(`title`, game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.blockedPrompt.label`));
-        warning.setAttribute(`style`, `max-width: 15px;`);
-        warning.innerHTML = `<i class="fa-solid fa-warning"></i>`;
-        measuredTemplatePrompt.insertAdjacentElement(`afterend`, warning);
-
-        const targetingTab = html.querySelector(`.sheet-tabs a[data-tab="activation-targeting"]`);
-        if (targetingTab) {
-            targetingTab.classList.add(`targeting-tab`);
-
-            const warning = document.createElement(`abbr`);
-            warning.setAttribute(`title`, game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.blockedTargeting.label`));
-            warning.innerHTML = `<i class="fa-solid fa-warning" style="pointer-events: all;"></i>`;
-            targetingTab.appendChild(warning);
-        }
+        DomData.disableTab(html, `activation-targeting`, game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.blockedTargeting.label`));
+        DomData.disableInputElement(html, `.tab[data-tab="identity"] dnd5e-checkbox[name="target.prompt"]`, game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.blockedPrompt.label`));
     }
 
     static applyListeners(message, html) {
-        if (message.flags?.dnd5e?.activity?.type !== `teleport`) return;
-
-        const placeTemplate = html.querySelector(`.card-buttons button[data-action="placeTemplate"]`);
-        if (placeTemplate)
-            placeTemplate.remove();
-
-        const button = $(`
-            <button type="button">
-                <dnd5e-icon src="modules/more-activities/icons/teleport.svg" style="--icon-fill: var(--button-text-color)"></dnd5e-icon>
-                <span>Teleport</span>
-            </button>`
+        MessageData.addActivityButton(message, html, true,
+            `teleport`, `Teleport`, (activity) => {
+                new TeleportTargetApp(activity).render(true);
+            }
         );
-
-        let buttons = $(html).find(`.card-buttons`);
-        if (buttons.length === 0) {
-            buttons = $(`<div class="card-buttons"></div>`);
-            $(html).find(`.card-header`).after(buttons);
-        }
-
-        button.on(`click`, () => {
-            const actor = game.actors.get(message.speaker.actor);
-            if (!actor.testUserPermission(game.user, `OWNER`)) return;
-
-            const item = actor.items.get(message.flags.dnd5e.item.id);
-            if (!item) return;
-
-            const activity = item.system.activities.get(message.flags.dnd5e.activity.id);
-            if (!activity) return;
-
-            const token = TeleportData.getOriginToken(actor);
-            if (!token) return;
-
-            new TeleportTargetApp(activity).render(true);
-        });
-
-        buttons.prepend(button);
-    }
-
-    static calculateDistanceSqr(token1, token2) {
-        if (!token1 || !token2) return Infinity;
-        if (token1._destroyed || token2._destroyed) return Infinity;
-
-        const dx = (token1.x + (token1.w / 2)) - (token2.x + (token2.w / 2));
-        const dy = (token1.y + (token1.w / 2)) - (token2.y + (token2.w / 2));
-        const distance = dx * dx + dy * dy;
-        return distance / (game.canvas.grid.size * game.canvas.grid.size);
-    }
-
-    static getTokensInRange(originToken, range) {
-        if (!originToken) return [];
-
-        return game.canvas.tokens.placeables
-            .filter(token => token !== originToken)
-            .map(token => {
-                const distance = this.calculateDistanceSqr(originToken, token);
-                const calcDistance = game.canvas.grid.distance * Math.round(Math.sqrt(distance) * 10) / 10;
-
-                return {
-                    token: token,
-                    actor: token.actor,
-                    distance: calcDistance,
-                    inRange: calcDistance <= range,
-                };
-            })
-            .filter(token => token.inRange)
-            .sort((a, b) => a.distance - b.distance)
-        ;
-    }
-
-    static getOriginToken(actor) {
-        return actor != null ? game.canvas.tokens.placeables.find(token => token.actor?.id === actor.id) : null;
-    }
-
-    static createMeasuredTemplate({ x, y, distance, t = `circle`, borderColor = `#ffffff`, fillColor = `#ffffff` }) {
-        const data = {
-            t: t,
-            user: game.user.id,
-            x: x,
-            y: y,
-            distance: distance,
-            borderColor: borderColor,
-            fillColor: fillColor,
-        };
-        const document = new CONFIG.MeasuredTemplate.documentClass(data, { parent: game.canvas.scene });
-
-        const object = new CONFIG.MeasuredTemplate.objectClass(document);
-        object.draw();
-        game.canvas.templates.addChild(object);
-        return object;
-    }
-
-    static removeMeasuredTemplate(measuredTemplate) {
-        game.canvas.templates.removeChild(measuredTemplate);
-        measuredTemplate.clear();
-        measuredTemplate.destroy();
     }
 }
 
@@ -249,7 +142,7 @@ export class TeleportActivity extends dnd5e.documents.activity.ActivityMixin(Tel
     async use(config, dialog, message) {
         const results = await super.use(config, dialog, message);
         
-        const token = TeleportData.getOriginToken(this.actor);
+        const token = CanvasData.getOriginToken(this.actor);
         if (!token) {
             ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.invalidScope.label`));
             return results;
@@ -313,7 +206,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             canTargetSelf: this.activity.targetSelf,
             maxTargets: this.activity.maxTargets,
             targetRange: this.activity.targetRadius,
-            originToken: TeleportData.getOriginToken(this.actor),
+            originToken: CanvasData.getOriginToken(this.actor),
         };
     }
 
@@ -321,7 +214,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
     async _onRender(context, options) {
         this.isSelecting = false;
 
-        const originToken = TeleportData.getOriginToken(this.actor);
+        const originToken = CanvasData.getOriginToken(this.actor);
 
         if (this.activity?.maxTargets === 1 && this.activity?.onlyTargetSelf) {
             this._skipToDestination();
@@ -330,7 +223,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         if (!this.selectionTarget)
         {
-            this.selectionTarget = TeleportData.createMeasuredTemplate({
+            this.selectionTarget = CanvasData.createMeasuredTemplate({
                 x: originToken.x + (originToken.w / 2),
                 y: originToken.y + (originToken.h / 2),
                 distance: this.activity.targetRadius,
@@ -361,7 +254,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 return;
             }
 
-            const distance = originToken ? TeleportData.calculateDistanceSqr(originToken, token) : 0;
+            const distance = originToken ? CanvasData.calculateDistanceSqr(originToken, token) : 0;
             this.selectedTargets.push({
                 id: tokenId,
                 name: token.name,
@@ -410,7 +303,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
         
         if (this.selectionTarget)
         {
-            TeleportData.removeMeasuredTemplate(this.selectionTarget);
+            CanvasData.removeMeasuredTemplate(this.selectionTarget);
             this.selectionTarget = null;
         }
 
@@ -427,7 +320,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
      * @private
      */
     async _skipToDestination() {
-        const originToken = TeleportData.getOriginToken(this.actor);
+        const originToken = CanvasData.getOriginToken(this.actor);
 
         this.selectedTargets = [];
         this.selectedTargets.push({
@@ -466,7 +359,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
      * @private
      */
     async _getAvailableTokens() {
-        const originToken = TeleportData.getOriginToken(this.actor);
+        const originToken = CanvasData.getOriginToken(this.actor);
 
         const tokens = [];
         const selectedIds = this.selectedTargets.map(t => t.id);
@@ -481,7 +374,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             });
         }
 
-        const otherTokens = TeleportData.getTokensInRange(originToken, this.activity.targetRadius)
+        const otherTokens = CanvasData.getTokensInRange(originToken, this.activity.targetRadius)
             .filter(data => !selectedIds.includes(data.token.id))
             .map(data => ({
                 ...data,
@@ -501,8 +394,8 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
         for (const token of Array.from(game.user.targets)) {
             let distance = Infinity;
             if (this.activity.targetRadius > 0) {
-                const originToken = TeleportData.getOriginToken(this.actor);
-                distance = originToken ? TeleportData.calculateDistanceSqr(originToken, token) : 0;
+                const originToken = CanvasData.getOriginToken(this.actor);
+                distance = originToken ? CanvasData.calculateDistanceSqr(originToken, token) : 0;
                 if (distance > this.activity.targetRadius * this.activity.targetRadius) continue;
             }
             
@@ -577,7 +470,7 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         if (this.destinationTarget)
         {
-            TeleportData.removeMeasuredTemplate(this.destinationTarget);
+            CanvasData.removeMeasuredTemplate(this.destinationTarget);
             this.destinationTarget = null;
         }
 
@@ -608,8 +501,8 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
         game.canvas.stage.on('mousedown', handler);
 
         
-        const originToken = TeleportData.getOriginToken(this.actor);
-        this.destinationTarget = TeleportData.createMeasuredTemplate({
+        const originToken = CanvasData.getOriginToken(this.actor);
+        this.destinationTarget = CanvasData.createMeasuredTemplate({
             x: originToken.x + (originToken.w / 2),
             y: originToken.y + (originToken.h / 2),
             distance: this.activity.teleportDistance,
@@ -664,7 +557,7 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
         }
         await this._executeTokenMove(selectedTokensData);
 
-        TeleportData.removeMeasuredTemplate(this.destinationTarget);
+        CanvasData.removeMeasuredTemplate(this.destinationTarget);
         this.destinationTarget = null;
 
         this.openTarget = false;
@@ -726,7 +619,7 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
         const clusterRadius = this.activity.clusterRadius * gridSize;
         const clusterRadiusPixels = clusterRadius / game.canvas.grid.distance;
 
-        const originToken = TeleportData.getOriginToken(this.actor);
+        const originToken = CanvasData.getOriginToken(this.actor);
         const originIndex = this.selectedTargets.findIndex(t => t.id === originToken?.id);
         const otherTargets = this.selectedTargets.filter((_, i) => i !== originIndex);
 
@@ -856,7 +749,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     _renderDestination() {
-        this.destinationTarget = TeleportData.createMeasuredTemplate({
+        this.destinationTarget = CanvasData.createMeasuredTemplate({
             x: this.destX,
             y: this.destY,
             distance: this.placementRadius,
@@ -926,7 +819,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         
         if (this.destinationTarget)
         {
-            TeleportData.removeMeasuredTemplate(this.destinationTarget);
+            CanvasData.removeMeasuredTemplate(this.destinationTarget);
             this.destinationTarget = null;
         }
         
@@ -951,7 +844,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         if (this.destinationTarget)
         {
-            TeleportData.removeMeasuredTemplate(this.destinationTarget);
+            CanvasData.removeMeasuredTemplate(this.destinationTarget);
             this.destinationTarget = null;
         }
         
@@ -961,7 +854,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     async _executeSingleTokenTeleport(actor, x, y) {
-        const originalToken = TeleportData.getOriginToken(actor);
+        const originalToken = CanvasData.getOriginToken(actor);
         if (!originalToken) return;
 
         const tokenData = foundry.utils.duplicate(game.canvas.scene.tokens.find((token) => token.id === originalToken.id));

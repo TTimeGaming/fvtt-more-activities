@@ -59,11 +59,6 @@ Hooks.once(`init`, async() => {
     console.log(`More Activities | Registered (6) Activity Types`);
 });
 
-Hooks.on(`renderActivityChoiceDialog`, (dialog, html) => {
-    HookData.removeActivities(dialog.item, html);
-    ChainData.removeActivities(dialog.item, html);
-});
-
 Hooks.on(`renderChatMessageHTML`, (message, html) => {
     MacroData.applyListeners(message, html);
     ContestedData.applyListeners(message, html);
@@ -73,6 +68,11 @@ Hooks.on(`renderChatMessageHTML`, (message, html) => {
 });
 
 Hooks.on(`renderActivitySheet`, (sheet, html) => {
-    ChainData.disableChained(sheet, html);
-    TeleportData.disableTargeting(sheet, html);
+    ChainData.adjustActivitySheet(sheet, html);
+    TeleportData.adjustActivitySheet(sheet, html);
+});
+
+Hooks.on(`renderActivityChoiceDialog`, (dialog, html) => {
+    HookData.removeActivities(dialog.item, html);
+    ChainData.removeActivities(dialog.item, html);
 });
