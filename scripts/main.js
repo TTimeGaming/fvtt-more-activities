@@ -1,18 +1,19 @@
-import { MacroActivityData, MacroActivitySheet, MacroActivity, MacroData } from './macro.js';
-import { HookActivityData, HookActivitySheet, HookActivity, HookData } from './hook.js';
-import { ContestedActivityData, ContestedActivitySheet, ContestedActivity, ContestedData } from './contested.js';
-import { ChainActivityData, ChainActivitySheet, ChainActivity, ChainData } from './chain.js';
-import { TeleportActivityData, TeleportActivitySheet, TeleportActivity, TeleportData } from './teleport.js';
-import { MovementActivityData, MovementActivitySheet, MovementActivity, MovementData } from './movement.js';
+import { MacroActivityData, MacroActivitySheet, MacroActivity, MacroData } from './activities/macro.js';
+import { HookActivityData, HookActivitySheet, HookActivity, HookData } from './activities/hook.js';
+import { ContestedActivityData, ContestedActivitySheet, ContestedActivity, ContestedData } from './activities/contested.js';
+import { ChainActivityData, ChainActivitySheet, ChainActivity, ChainData } from './activities/chain.js';
+import { TeleportActivityData, TeleportActivitySheet, TeleportActivity, TeleportData } from './activities/teleport.js';
+import { MovementActivityData, MovementActivitySheet, MovementActivity, MovementData } from './activities/movement.js';
 import { Compat } from './compat.js';
+import { HandlebarsData } from './utils/handlebars.js';
 
 Hooks.once(`init`, async() => {
     console.log(`More Activities | Initializing`);
 
+    await HandlebarsData.init();
     await Compat.init();
     await HookData.init();
     await ContestedData.init();
-    await ChainData.init();
 
     CONFIG.DND5E.activityTypes.macro = {
         documentClass: MacroActivity,
@@ -59,11 +60,6 @@ Hooks.once(`init`, async() => {
     console.log(`More Activities | Registered (6) Activity Types`);
 });
 
-Hooks.on(`renderActivityChoiceDialog`, (dialog, html) => {
-    HookData.removeActivities(dialog.item, html);
-    ChainData.removeActivities(dialog.item, html);
-});
-
 Hooks.on(`renderChatMessageHTML`, (message, html) => {
     MacroData.applyListeners(message, html);
     ContestedData.applyListeners(message, html);
@@ -73,6 +69,11 @@ Hooks.on(`renderChatMessageHTML`, (message, html) => {
 });
 
 Hooks.on(`renderActivitySheet`, (sheet, html) => {
-    ChainData.disableChained(sheet, html);
-    TeleportData.disableTargeting(sheet, html);
+    ChainData.adjustActivitySheet(sheet, html);
+    TeleportData.adjustActivitySheet(sheet, html);
+});
+
+Hooks.on(`renderActivityChoiceDialog`, (dialog, html) => {
+    HookData.removeActivities(dialog.item, html);
+    ChainData.removeActivities(dialog.item, html);
 });

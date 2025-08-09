@@ -1,48 +1,26 @@
+import { MessageData } from '../utils/message.js';
+import { DomData } from '../utils/dom.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+const TEMPLATE_NAME = `contested`;
 
 export class ContestedData {
     static async init() {
-        Handlebars.registerHelper(`includes`, function(array, value) {
-            return Array.isArray(array) && array.includes(value);
-        });
-
         await ContestedManager.init();
     }
 
     static applyListeners(message, html) {
-        $(html).find('.contested-results .result-summary').click(function() {
-            const row = $(this).closest('.contest-result-row');
-            row.toggleClass('expanded');
+        html.querySelectorAll(`.contested-results .result-summary`).forEach(btn => {
+            btn.addEventListener(`click`, () => {
+                DomData.toggleClass(btn.parentElement, `expanded`);
+            });
         });
 
-        if (message?.flags?.dnd5e?.activity?.type !== `contested`) return;
-        const button = $(`
-            <button type="button">
-                <dnd5e-icon src="modules/more-activities/icons/contested.svg" style="--icon-fill: var(--button-text-color)"></dnd5e-icon>
-                <span>Start Contest</span>
-            </button>`
+        MessageData.addActivityButton(message, html, false,
+            TEMPLATE_NAME, `Start Contest`, (activity) => {
+                new ContestedInitiatorApp(activity).render(true);
+            }
         );
-
-        let buttons = $(html).find(`.card-buttons`);
-        if (buttons.length === 0) {
-            buttons = $(`<div class="card-buttons"></div>`);
-            $(html).find(`.card-header`).after(buttons);
-        }
-
-        button.on(`click`, () => {
-            const actor = game.actors.get(message.speaker.actor);
-            if (!actor.testUserPermission(game.user, `OWNER`)) return;
-
-            const item = actor.items.get(message.flags.dnd5e.item.id);
-            if (!item) return;
-
-            const activity = item.system.activities.get(message.flags.dnd5e.activity.id);
-            if (!activity) return;
-
-            new ContestedInitiatorApp(activity).render(true);
-        });
-
-        buttons.prepend(button);
     }
 
     /**
@@ -444,14 +422,14 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
 export class ContestedActivitySheet extends dnd5e.applications.activity.ActivitySheet {
     /** @inheritdoc */
     static DEFAULT_OPTIONS = {
-        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-contested` ]
+        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-${TEMPLATE_NAME}` ]
     };
 
     /** @inheritdoc */
     static PARTS = {
         ...super.PARTS,
         effect: {
-            template: `modules/more-activities/templates/contested-effect.hbs`,
+            template: `modules/more-activities/templates/${TEMPLATE_NAME}-effect.hbs`,
             templates: [
                 ...super.PARTS.effect.templates,
             ],
@@ -501,7 +479,7 @@ export class ContestedActivitySheet extends dnd5e.applications.activity.Activity
         context.availableEffects = this.item?.effects?.map(effect => ({
             id: effect.id,
             name: effect.name,
-            icon: effect.icon
+            icon: effect.img
         })) || [];
 
         context.attackerLabel = this.activity?.attackerLabel || `Attacker`;
@@ -567,14 +545,14 @@ export class ContestedActivitySheet extends dnd5e.applications.activity.Activity
 }
 
 export class ContestedActivity extends dnd5e.documents.activity.ActivityMixin(ContestedActivityData) {
-    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, "DND5E.CONTESTED"];
+    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.${TEMPLATE_NAME.toUpperCase()}`];
 
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
-            type: `hook`,
-            img: `modules/more-activities/icons/contested.svg`,
-            title: `DND5E.ACTIVITY.Type.contested`,
-            hint: `DND5E.ACTIVITY.Hint.contested`,
+            type: TEMPLATE_NAME,
+            img: `modules/more-activities/icons/${TEMPLATE_NAME}.svg`,
+            title: `DND5E.ACTIVITY.Type.${TEMPLATE_NAME}`,
+            hint: `DND5E.ACTIVITY.Hint.${TEMPLATE_NAME}`,
             sheetClass: ContestedActivitySheet
         }, { inplace: false })
     );

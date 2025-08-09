@@ -1,3 +1,7 @@
+import { DomData } from '../utils/dom.js';
+
+const TEMPLATE_NAME = `hook`;
+
 export class HookData {
     static async init() {
         for (const hookName of this.getSupportedHooks()) {
@@ -7,6 +11,14 @@ export class HookData {
                 }
 
                 for (const actor of game.actors) {
+                    const user = this._getUserForActor(actor.id);
+                    if (!user) {
+                        console.warn(`Could not execute hook for ${actor.name} as no permitted user is present`);
+                        continue;
+                    }
+
+                    if (game.user != user) continue;
+
                     for (const item of actor.items) {
                         HookData._checkForHook(item, hookName, args);
                     }
@@ -16,18 +28,9 @@ export class HookData {
     }
     
     static async removeActivities(item, html) {
-        const removedActivities = [];
-        for (const activity of item.system.activities) {
-            if (activity.type !== `hook`) continue;
-            if (activity.manualTrigger) continue;
-            removedActivities.push(activity.id);
-        }
-
-        for (const activity of removedActivities) {
-            const button = html.querySelector(`button[data-activity-id="${activity}"]`);
-            const li = button?.parentElement;
-            if (li) li.remove();
-        }
+        DomData.disableDialogActivities(item, html, (activity) => {
+            return activity.type !== TEMPLATE_NAME || activity.manualTrigger;
+        });
     }
     
     /**
@@ -74,13 +77,34 @@ export class HookData {
         const localArgs = args.flat(Infinity);
 
         for (const activity of (item.system?.activities || [])) {
-            if (activity.type != `hook`) continue;
+            if (activity.type != TEMPLATE_NAME) continue;
             if (hookName != activity.activeHook) continue;
             
+            let combatRoundTurnDuplicate = false;
             switch (hookName) {
                 case `createItem`:
                 case `deleteItem`:
                     if (item !== localArgs[0]) continue;
+                    break;
+                case `combatStart`:
+                case `combatRound`:
+                case `deleteCombat`:
+                    let isCombatant = false;
+                    for (const combatant of localArgs[0].combatants) {
+                        if (combatant.actorId !== item.parent.id) continue;
+                        isCombatant = true; break;
+                    }
+                    if (!isCombatant) continue;
+
+                    if (hookName === `combatRound`) {
+                        const currentCombatant = localArgs[0].combatants.get(localArgs[0].current.combatantId);
+                        if (currentCombatant.actorId !== item.parent.id) continue;
+                        combatRoundTurnDuplicate = true;
+                    }
+                    break;
+                case `combatTurn`:
+                    const currentCombatant = localArgs[0].combatants.get(localArgs[0].current.combatantId);
+                    if (currentCombatant.actorId !== item.parent.id) continue;
                     break;
                 case `dnd5e.shortRest`:
                 case `dnd5e.longRest`:
@@ -103,7 +127,19 @@ export class HookData {
             }
             
             activity.use(undefined, undefined, undefined, hookName, args);
+
+            // A hacky override as `combatTurn` doesn't trigger for the last player when `combatRound` fires
+            if (combatRoundTurnDuplicate)
+                activity.use(undefined, undefined, undefined, `combatTurn`, args);
         }
+    }
+
+    static _getUserForActor(actorId) {
+        const actor = game.actors.find(a => a.id === actorId);
+        const validUsers = game.users.filter(u => actor.testUserPermission(u, `OWNER`) && u.active);
+        const validUser = validUsers.find(u => !u.isGM);
+        const gmUser = validUsers.find(u => u.isGM);
+        return validUser ? validUser : gmUser;
     }
 }
 
@@ -136,14 +172,14 @@ export class HookActivityData extends dnd5e.dataModels.activity.BaseActivityData
 export class HookActivitySheet extends dnd5e.applications.activity.ActivitySheet {
     /** @inheritdoc */
     static DEFAULT_OPTIONS = {
-        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-hook` ]
+        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-${TEMPLATE_NAME}` ]
     };
 
     /** @inheritdoc */
     static PARTS = {
         ...super.PARTS,
         effect: {
-            template: `modules/more-activities/templates/hook-effect.hbs`,
+            template: `modules/more-activities/templates/${TEMPLATE_NAME}-effect.hbs`,
             templates: [
                 ...super.PARTS.effect.templates,
             ],
@@ -198,14 +234,14 @@ export class HookActivitySheet extends dnd5e.applications.activity.ActivitySheet
 }
 
 export class HookActivity extends dnd5e.documents.activity.ActivityMixin(HookActivityData) {
-    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.HOOK`];
+    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.${TEMPLATE_NAME.toUpperCase()}`];
     
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
-            type: `hook`,
-            img: `modules/more-activities/icons/hook.svg`,
-            title: `DND5E.ACTIVITY.Type.hook`,
-            hint: `DND5E.ACTIVITY.Hint.hook`,
+            type: TEMPLATE_NAME,
+            img: `modules/more-activities/icons/${TEMPLATE_NAME}.svg`,
+            title: `DND5E.ACTIVITY.Type.${TEMPLATE_NAME}`,
+            hint: `DND5E.ACTIVITY.Hint.${TEMPLATE_NAME}`,
             sheetClass: HookActivitySheet
         }, { inplace: false })
     );

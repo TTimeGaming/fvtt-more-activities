@@ -1,34 +1,14 @@
+import { MessageData } from '../utils/message.js';
+
+const TEMPLATE_NAME = `macro`;
+
 export class MacroData {
     static applyListeners(message, html) {
-        if (message?.flags?.dnd5e?.activity?.type !== `macro`) return;
-
-        const button = $(`
-            <button type="button">
-                <dnd5e-icon src="modules/more-activities/icons/macro.svg" style="--icon-fill: var(--button-text-color)"></dnd5e-icon>
-                <span>Run Macro</span>
-            </button>`
+        MessageData.addActivityButton(message, html, false,
+            TEMPLATE_NAME, `Run Macro`, (activity) => {
+                activity.executeMacro();
+            }
         );
-
-        let buttons = $(html).find(`.card-buttons`);
-        if (buttons.length === 0) {
-            buttons = $(`<div class="card-buttons"></div>`);
-            $(html).find(`.card-header`).after(buttons);
-        }
-
-        button.on(`click`, async() => {
-            const actor = game.actors.get(message.speaker.actor);
-            if (!actor.testUserPermission(game.user, `OWNER`)) return;
-
-            const item = actor.items.get(message.flags.dnd5e.item.id);
-            if (!item) return;
-
-            const activity = item.system.activities.get(message.flags.dnd5e.activity.id);
-            if (!activity) return;
-
-            await activity.executeMacro();
-        });
-
-        buttons.prepend(button);
     }
 }
 
@@ -50,14 +30,14 @@ export class MacroActivityData extends dnd5e.dataModels.activity.BaseActivityDat
 export class MacroActivitySheet extends dnd5e.applications.activity.ActivitySheet {
     /** @inheritdoc */
     static DEFAULT_OPTIONS = {
-        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-macro` ],
+        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-${TEMPLATE_NAME}` ],
     };
 
     /** @inheritdoc */
     static PARTS = {
         ...super.PARTS,
         effect: {
-            template: `modules/more-activities/templates/macro-effect.hbs`,
+            template: `modules/more-activities/templates/${TEMPLATE_NAME}-effect.hbs`,
             templates: [
                 ...super.PARTS.effect.templates,
             ],
@@ -110,14 +90,14 @@ export class MacroActivitySheet extends dnd5e.applications.activity.ActivityShee
 }
 
 export class MacroActivity extends dnd5e.documents.activity.ActivityMixin(MacroActivityData) {
-    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.MACRO`];
+    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.${TEMPLATE_NAME.toUpperCase()}`];
 
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
-            type: `macro`,
-            img: `modules/more-activities/icons/macro.svg`,
-            title: `DND5E.ACTIVITY.Type.macro`,
-            hint: `DND5E.ACTIVITY.Hint.macro`,
+            type: TEMPLATE_NAME,
+            img: `modules/more-activities/icons/${TEMPLATE_NAME}.svg`,
+            title: `DND5E.ACTIVITY.Type.${TEMPLATE_NAME}`,
+            hint: `DND5E.ACTIVITY.Hint.${TEMPLATE_NAME}`,
             sheetClass: MacroActivitySheet
         }, { inplace: false })
     );
