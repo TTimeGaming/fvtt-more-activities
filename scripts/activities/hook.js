@@ -11,6 +11,14 @@ export class HookData {
                 }
 
                 for (const actor of game.actors) {
+                    const user = this._getUserForActor(actor.id);
+                    if (!user) {
+                        console.warn(`Could not execute hook for ${actor.name} as no permitted user is present`);
+                        continue;
+                    }
+
+                    if (game.user != user) continue;
+
                     for (const item of actor.items) {
                         HookData._checkForHook(item, hookName, args);
                     }
@@ -124,6 +132,14 @@ export class HookData {
             if (combatRoundTurnDuplicate)
                 activity.use(undefined, undefined, undefined, `combatTurn`, args);
         }
+    }
+
+    static _getUserForActor(actorId) {
+        const actor = game.actors.find(a => a.id === actorId);
+        const validUsers = game.users.filter(u => actor.testUserPermission(u, `OWNER`) && u.active);
+        const validUser = validUsers.find(u => !u.isGM);
+        const gmUser = validUsers.find(u => u.isGM);
+        return validUser ? validUser : gmUser;
     }
 }
 
