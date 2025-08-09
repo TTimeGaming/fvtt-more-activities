@@ -50,7 +50,7 @@ export class TemplateActivity extends dnd5e.documents.activity.ActivityMixin(Tem
 
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
-            type: `macro`,
+            type: TEMPLATE_NAME,
             img: `modules/more-activities/icons/${TEMPLATE_NAME}.svg`,
             title: `DND5E.ACTIVITY.Type.${TEMPLATE_NAME}`,
             hint: `DND5E.ACTIVITY.Hint.${TEMPLATE_NAME}`,

@@ -1,4 +1,6 @@
-import { DomData } from './utils/dom.js';
+import { DomData } from '../utils/dom.js';
+
+const TEMPLATE_NAME = `hook`;
 
 export class HookData {
     static async init() {
@@ -19,7 +21,7 @@ export class HookData {
     
     static async removeActivities(item, html) {
         DomData.disableDialogActivities(item, html, (activity) => {
-            return activity.type !== `hook` || activity.manualTrigger;
+            return activity.type !== TEMPLATE_NAME || activity.manualTrigger;
         });
     }
     
@@ -67,7 +69,7 @@ export class HookData {
         const localArgs = args.flat(Infinity);
 
         for (const activity of (item.system?.activities || [])) {
-            if (activity.type != `hook`) continue;
+            if (activity.type != TEMPLATE_NAME) continue;
             if (hookName != activity.activeHook) continue;
             
             switch (hookName) {
@@ -129,14 +131,14 @@ export class HookActivityData extends dnd5e.dataModels.activity.BaseActivityData
 export class HookActivitySheet extends dnd5e.applications.activity.ActivitySheet {
     /** @inheritdoc */
     static DEFAULT_OPTIONS = {
-        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-hook` ]
+        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-${TEMPLATE_NAME}` ]
     };
 
     /** @inheritdoc */
     static PARTS = {
         ...super.PARTS,
         effect: {
-            template: `modules/more-activities/templates/hook-effect.hbs`,
+            template: `modules/more-activities/templates/${TEMPLATE_NAME}-effect.hbs`,
             templates: [
                 ...super.PARTS.effect.templates,
             ],
@@ -191,14 +193,14 @@ export class HookActivitySheet extends dnd5e.applications.activity.ActivitySheet
 }
 
 export class HookActivity extends dnd5e.documents.activity.ActivityMixin(HookActivityData) {
-    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.HOOK`];
+    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.${TEMPLATE_NAME.toUpperCase()}`];
     
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
-            type: `hook`,
-            img: `modules/more-activities/icons/hook.svg`,
-            title: `DND5E.ACTIVITY.Type.hook`,
-            hint: `DND5E.ACTIVITY.Hint.hook`,
+            type: TEMPLATE_NAME,
+            img: `modules/more-activities/icons/${TEMPLATE_NAME}.svg`,
+            title: `DND5E.ACTIVITY.Type.${TEMPLATE_NAME}`,
+            hint: `DND5E.ACTIVITY.Hint.${TEMPLATE_NAME}`,
             sheetClass: HookActivitySheet
         }, { inplace: false })
     );

@@ -1,4 +1,4 @@
-import { ChainData } from './chain.js';
+import { ChainData } from './activities/chain.js';
 
 export class Compat {
     static async init() {

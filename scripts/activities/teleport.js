@@ -1,11 +1,13 @@
-import { MessageData } from './utils/message.js';
-import { CanvasData } from './utils/canvas.js';
-import { DomData } from './utils/dom.js';
+import { MessageData } from '../utils/message.js';
+import { CanvasData } from '../utils/canvas.js';
+import { DomData } from '../utils/dom.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+const TEMPLATE_NAME = `teleport`;
 
 export class TeleportData {
     static adjustActivitySheet(sheet, html) {
-        if (!sheet?.activity?.item || sheet?.activity?.type !== `teleport`) return;
+        if (!sheet?.activity?.item || sheet?.activity?.type !== TEMPLATE_NAME) return;
 
         sheet.element.classList.add(`teleport-activity`);
         DomData.disableTab(html, `activation-targeting`, game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.blockedTargeting.label`));
@@ -14,7 +16,7 @@ export class TeleportData {
 
     static applyListeners(message, html) {
         MessageData.addActivityButton(message, html, true,
-            `teleport`, `Teleport`, (activity) => {
+            TEMPLATE_NAME, `Teleport`, (activity) => {
                 new TeleportTargetApp(activity).render(true);
             }
         );
@@ -83,14 +85,14 @@ export class TeleportActivityData extends dnd5e.dataModels.activity.BaseActivity
 export class TeleportActivitySheet extends dnd5e.applications.activity.ActivitySheet {
     /** @inheritdoc */
     static DEFAULT_OPTIONS = {
-        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-teleport` ]
+        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-${TEMPLATE_NAME}` ]
     };
 
     /** @inheritdoc */
     static PARTS = {
         ...super.PARTS,
         effect: {
-            template: `modules/more-activities/templates/teleport-effect.hbs`,
+            template: `modules/more-activities/templates/${TEMPLATE_NAME}-effect.hbs`,
             templates: [
                 ...super.PARTS.effect.templates,
             ],
@@ -116,14 +118,14 @@ export class TeleportActivitySheet extends dnd5e.applications.activity.ActivityS
 }
 
 export class TeleportActivity extends dnd5e.documents.activity.ActivityMixin(TeleportActivityData) {
-    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.TELEPORT`];
+    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.${TEMPLATE_NAME.toUpperCase()}`];
 
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
-            type: `teleport`,
-            img: `modules/more-activities/icons/teleport.svg`,
-            title: `DND5E.ACTIVITY.Type.teleport`,
-            hint: `DND5E.ACTIVITY.Hint.teleport`,
+            type: TEMPLATE_NAME,
+            img: `modules/more-activities/icons/${TEMPLATE_NAME}.svg`,
+            title: `DND5E.ACTIVITY.Type.${TEMPLATE_NAME}`,
+            hint: `DND5E.ACTIVITY.Hint.${TEMPLATE_NAME}`,
             sheetClass: TeleportActivitySheet
         }, { inplace: false })
     );

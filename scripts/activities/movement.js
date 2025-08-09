@@ -1,5 +1,5 @@
-import { MessageData } from './utils/message.js';
-import { CanvasData } from './utils/canvas.js';
+import { MessageData } from '../utils/message.js';
+import { CanvasData } from '../utils/canvas.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_NAME = `movement`;
@@ -7,7 +7,7 @@ const TEMPLATE_NAME = `movement`;
 export class MovementData {
     static applyListeners(message, html) {
         MessageData.addActivityButton(message, html, true,
-            `movement`, `Force Movement`, (activity) => {
+            TEMPLATE_NAME, `Force Movement`, (activity) => {
                 new MovementTargetApp(activity).render(true);
             }
         );
@@ -120,7 +120,7 @@ export class MovementActivity extends dnd5e.documents.activity.ActivityMixin(Mov
 
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
-            type: `macro`,
+            type: TEMPLATE_NAME,
             img: `modules/more-activities/icons/${TEMPLATE_NAME}.svg`,
             title: `DND5E.ACTIVITY.Type.${TEMPLATE_NAME}`,
             hint: `DND5E.ACTIVITY.Hint.${TEMPLATE_NAME}`,

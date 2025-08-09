@@ -1,13 +1,11 @@
-import { MessageData } from './utils/message.js';
-import { DomData } from './utils/dom.js';
+import { MessageData } from '../utils/message.js';
+import { DomData } from '../utils/dom.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+const TEMPLATE_NAME = `contested`;
 
 export class ContestedData {
     static async init() {
-        Handlebars.registerHelper(`includes`, function(array, value) {
-            return Array.isArray(array) && array.includes(value);
-        });
-
         await ContestedManager.init();
     }
 
@@ -19,7 +17,7 @@ export class ContestedData {
         });
 
         MessageData.addActivityButton(message, html, false,
-            `contested`, `Start Contest`, (activity) => {
+            TEMPLATE_NAME, `Start Contest`, (activity) => {
                 new ContestedInitiatorApp(activity).render(true);
             }
         );
@@ -424,14 +422,14 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
 export class ContestedActivitySheet extends dnd5e.applications.activity.ActivitySheet {
     /** @inheritdoc */
     static DEFAULT_OPTIONS = {
-        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-contested` ]
+        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-${TEMPLATE_NAME}` ]
     };
 
     /** @inheritdoc */
     static PARTS = {
         ...super.PARTS,
         effect: {
-            template: `modules/more-activities/templates/contested-effect.hbs`,
+            template: `modules/more-activities/templates/${TEMPLATE_NAME}-effect.hbs`,
             templates: [
                 ...super.PARTS.effect.templates,
             ],
@@ -547,14 +545,14 @@ export class ContestedActivitySheet extends dnd5e.applications.activity.Activity
 }
 
 export class ContestedActivity extends dnd5e.documents.activity.ActivityMixin(ContestedActivityData) {
-    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, "DND5E.CONTESTED"];
+    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.${TEMPLATE_NAME.toUpperCase()}`];
 
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
-            type: `hook`,
-            img: `modules/more-activities/icons/contested.svg`,
-            title: `DND5E.ACTIVITY.Type.contested`,
-            hint: `DND5E.ACTIVITY.Hint.contested`,
+            type: TEMPLATE_NAME,
+            img: `modules/more-activities/icons/${TEMPLATE_NAME}.svg`,
+            title: `DND5E.ACTIVITY.Type.${TEMPLATE_NAME}`,
+            hint: `DND5E.ACTIVITY.Hint.${TEMPLATE_NAME}`,
             sheetClass: ContestedActivitySheet
         }, { inplace: false })
     );

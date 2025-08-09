@@ -1,12 +1,8 @@
-import { DomData } from './utils/dom.js';
+import { DomData } from '../utils/dom.js';
+
+const TEMPLATE_NAME = `chain`;
 
 export class ChainData {
-    static async init() {
-        Handlebars.registerHelper(`subtract`, function(a, b) {
-            return a - b;
-        });
-    }
-
     static adjustActivitySheet(sheet, html) {
         if (!ChainData.isActivityChained(sheet?.activity?.item, sheet?.activity?.id))
             return;
@@ -17,8 +13,8 @@ export class ChainData {
     }
 
     static applyListeners(message, html) {
-        html.querySelectorAll('.chain-trigger-btn').forEach(btn => {
-            btn.addEventListener('click', async(event) => {
+        html.querySelectorAll(`.chain-trigger-btn`).forEach(btn => {
+            btn.addEventListener(`click`, async(event) => {
                 const itemId = event.target.dataset.itemId;
                 const activityIndex = parseInt(event.target.dataset.activityIndex);
                 const triggerLabel = event.target.dataset.triggerLabel;
@@ -28,10 +24,10 @@ export class ChainData {
                     .find(i => i.id === itemId);
                 if (!item) return;
 
-                const chainActivity = item.system.activities.find(a => a.type === `chain`);
+                const chainActivity = item.system.activities.find(a => a.type === TEMPLATE_NAME);
                 if (!chainActivity) return;
 
-                const triggerContainer = event.target.closest('.chain-triggers');
+                const triggerContainer = event.target.closest(`.chain-triggers`);
                 if (triggerContainer) triggerContainer.remove();
 
                 await chainActivity.continueChainFrom(activityIndex, triggerLabel);
@@ -49,7 +45,7 @@ export class ChainData {
         if (!item?.system?.activities) return false;
         
         for (const activity of item.system.activities) {
-            if (activity.type === `chain` && activity.chainedActivityIds) {
+            if (activity.type === TEMPLATE_NAME && activity.chainedActivityIds) {
                 if (activity.chainedActivityIds.includes(activityId)) {
                     return true;
                 }
@@ -114,14 +110,14 @@ export class ChainActivityData extends dnd5e.dataModels.activity.BaseActivityDat
 export class ChainActivitySheet extends dnd5e.applications.activity.ActivitySheet {
     /** @inheritdoc */
     static DEFAULT_OPTIONS = {
-        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-chain` ]
+        classes: [ `dnd5e2`, `sheet`, `activity-sheet`, `activity-${TEMPLATE_NAME}` ]
     };
 
     /** @inheritdoc */
     static PARTS = {
         ...super.PARTS,
         effect: {
-            template: `modules/more-activities/templates/chain-effect.hbs`,
+            template: `modules/more-activities/templates/${TEMPLATE_NAME}-effect.hbs`,
             templates: [
                 ...super.PARTS.effect.templates,
             ],
@@ -520,14 +516,14 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
 }
 
 export class ChainActivity extends dnd5e.documents.activity.ActivityMixin(ChainActivityData) {
-    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.CHAIN`];
+    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, `DND5E.${TEMPLATE_NAME.toUpperCase()}`];
 
     static metadata = Object.freeze(
         foundry.utils.mergeObject(super.metadata, {
-            type: `hook`,
-            img: `modules/more-activities/icons/chain.svg`,
-            title: `DND5E.ACTIVITY.Type.chain`,
-            hint: `DND5E.ACTIVITY.Hint.chain`,
+            type: TEMPLATE_NAME,
+            img: `modules/more-activities/icons/${TEMPLATE_NAME}.svg`,
+            title: `DND5E.ACTIVITY.Type.${TEMPLATE_NAME}`,
+            hint: `DND5E.ACTIVITY.Hint.${TEMPLATE_NAME}`,
             sheetClass: ChainActivitySheet
         }, { inplace: false })
     );
