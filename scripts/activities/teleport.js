@@ -853,7 +853,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.destinationTarget = null;
         }
         
-        await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.token.actor));
+        await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.actor));
         ui.notifications.info(`${this.placedTokens.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`)}`);
 
         this.isFinished = true;
