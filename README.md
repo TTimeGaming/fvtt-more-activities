@@ -1,8 +1,8 @@
-## More Activities
+## More Activities - Now with V12 Support!
 
-![Latest](https://img.shields.io/badge/Module%20Version:%201.5.4-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)  
+![Latest](https://img.shields.io/badge/Module%20Version:%201.6.0-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)  
 
-An extension to the D&D 5E system for FoundryVTT v13+ that provides additional activity types.
+An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides additional activity types.
 
 ## 🌟 Features
 
@@ -16,14 +16,9 @@ An extension to the D&D 5E system for FoundryVTT v13+ that provides additional a
 - **Movement Activity:** Adds the ability to force tokens to move on the canvas
 - **Sound Activity:** Adds the ability to play sounds directly from the activity
 
-### ⚠️ Current Limitations
+### 🍾 Versioning
 
-- **Versioning:** This module only supports v13 of FoundryVTT and will not be backported.
-
-### 🚧 Coming Soon
-*There is no ETA for these features. This is a passion project and I cannot currently commit that much time to development.*
-
-- There are currently no planned additional activities.
+**More Activities** now supports Foundry Version 12 and D&D 5E Version 4.4.4 🎉
 
 ## 👏 Huge Thanks
 
@@ -32,7 +27,7 @@ An extension to the D&D 5E system for FoundryVTT v13+ that provides additional a
 
 ## 🚫 Breaking Changes
 
-- **Version 1.5.0:**
+- **Version 1.4.0 ➡️ 1.5.0:**
     - *Hook Activity:*
         - `dnd5e.rollAbilitySave` replaced with (correct) `dnd5e.rollSavingThrow` hook
         - `dnd5e.rollAbilityTest` replaced with (correct) `dnd5e.rollAbilityCheck` hook
@@ -58,8 +53,8 @@ An extension to the D&D 5E system for FoundryVTT v13+ that provides additional a
 
 ## 📋 Requirements
 
-![Foundry](https://img.shields.io/badge/Foundry%20Version%2013%20(Verified%2013.346)-ee9b3a?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
-![D&D](https://img.shields.io/badge/DND%20Version%205%20(Verified%205.0.4)-e50712?style=for-the-badge&logo=dungeonsanddragons&logoColor=white)
+![Foundry](https://img.shields.io/badge/Foundry%20Version%2012%2B%20(Verified%2013.346)-ee9b3a?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
+![D&D](https://img.shields.io/badge/DND%20Version%204%2B%20(Verified%205.0.4)-e50712?style=for-the-badge&logo=dungeonsanddragons&logoColor=white)
 
 ## 📄 License
 

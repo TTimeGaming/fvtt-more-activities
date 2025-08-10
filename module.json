@@ -2,9 +2,9 @@
   "id": "more-activities",
   "title": "More Activities",
   "description": "Expands the activity types for the dnd5e system",
-  "version": "1.5.4",
+  "version": "1.6.0",
   "compatibility": {
-    "minimum": "13",
+    "minimum": "12",
     "verified": "13.346"
   },
   "authors": [
@@ -28,7 +28,7 @@
         "type": "system",
         "manifest": "https://raw.githubusercontent.com/foundryvtt/dnd5e/master/system.json",
         "compatibility": {
-            "minimum": "5",
+            "minimum": "4.4.4",
             "verified": "5.0.4"
         }
     }]
@@ -36,5 +36,5 @@
   "socket": true,
   "url": "https://github.com/TTimeGaming/fvtt-more-activities",
   "manifest": "https://raw.githubusercontent.com/TTimeGaming/fvtt-more-activities/master/module.json",
-  "download": "https://github.com/TTimeGaming/fvtt-more-activities/releases/download/release-1.5.4/module.zip"
+  "download": "https://github.com/TTimeGaming/fvtt-more-activities/releases/download/release-1.6.0/module.zip"
 }
