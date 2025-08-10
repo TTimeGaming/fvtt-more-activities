@@ -47,6 +47,7 @@ export class MacroActivitySheet extends dnd5e.applications.activity.ActivityShee
     /** @inheritdoc */
     async _prepareEffectContext(context) {
         context = await super._prepareEffectContext(context);
+        context.version = game.version.startsWith(`12`) ? 12 : 13;
         context.macroCode = this.activity?.macroCode || ``;
         return context;
     }

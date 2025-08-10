@@ -21,7 +21,7 @@
         <div class="form-group indented">
             <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.onlyTargetSelf.label"}}</label>
             <div class="form-fields">
-                {{#if (and targetSelf (eq maxTargets 1))}}
+                {{#if (and targetSelf (eq maxTargets "1"))}}
                 <dnd5e-checkbox name="onlyTargetSelf" {{#if onlyTargetSelf}}checked{{/if}}></dnd5e-checkbox>
                 {{else}}
                 <dnd5e-checkbox name="onlyTargetSelf" disabled></dnd5e-checkbox>
@@ -52,7 +52,7 @@
         <div class="form-group">
             <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualPlacement.label"}}</label>
             <div class="form-fields">
-                {{#if (or keepArrangement (eq maxTargets 1))}}
+                {{#if (or keepArrangement (eq maxTargets "1"))}}
                 <dnd5e-checkbox name="manualPlacement" disabled></dnd5e-checkbox>
                 {{else}}
                 <dnd5e-checkbox name="manualPlacement" {{#if manualPlacement}}checked{{/if}}></dnd5e-checkbox>

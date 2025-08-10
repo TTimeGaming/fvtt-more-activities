@@ -20,7 +20,7 @@ export class MovementData {
         const destinations = [];
 
         if (movementType === `push`) {
-            const angle = this.getAngleBetween(origin, target);
+            const angle = CanvasData.getAngleBetween(origin, target);
             const newX = target.x + Math.cos(angle) * moveDistance;
             const newY = target.y + Math.sin(angle) * moveDistance;
             const snapped = game.canvas.grid.getTopLeftPoint({
@@ -29,7 +29,7 @@ export class MovementData {
             });
             destinations.push({ x: snapped.x, y: snapped.y, type: `automatic` });
         } else if (movementType === `pull`) {
-            const angle = this.getAngleBetween(target, origin);
+            const angle = CanvasData.getAngleBetween(target, origin);
             const newX = target.x + Math.cos(angle) * moveDistance;
             const newY = target.y + Math.sin(angle) * moveDistance;
             const snapped = game.canvas.grid.getTopLeftPoint({
@@ -210,8 +210,6 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
     async _prepareContext() {
         const tokensData = this._getAvailableTokens();
 
-        console.log(this.activity.item.getRollData());
-
         return {
             activity: this.activity,
             tokensData: tokensData,
@@ -268,7 +266,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 return;
             }
 
-            const distance = originToken ? CanvasData.calculateTokenDistanceSqr(originToken, token) : 0;
+            const distance = originToken ? CanvasData.calculateTokenDistance(originToken, token) : 0;
             this.selectedTargets.push({
                 id: tokenId,
                 name: token.name,
@@ -436,7 +434,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             let distance = Infinity;
             if (targetRange > 0) {
                 const originToken = CanvasData.getOriginToken(this.actor);
-                distance = originToken ? CanvasData.calculateTokenDistanceSqr(originToken, token) : 0;
+                distance = originToken ? CanvasData.calculateTokenDistance(originToken, token) : 0;
                 if (distance > targetRange) continue;
             }
             
@@ -649,7 +647,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!this.currentDragData) return;
 
         const pos = game.canvas.canvasCoordinatesFromClient(event);
-        const distance = CanvasData.calculateCoordDistanceSqr(pos.x, pos.y, this.destX, this.destY);
+        const distance = CanvasData.calculateCoordDistance(pos.x, pos.y, this.destX, this.destY);
         if (distance > this.placementRadius) {
             ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.outOfBounds.label`));
             event.target.style.opacity = '1';

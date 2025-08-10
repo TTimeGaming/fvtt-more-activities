@@ -268,7 +268,11 @@ class ContestedManager {
             defenderRolls: defenderRolls
         };
         
-        const content = await foundry.applications.handlebars.renderTemplate(`modules/more-activities/templates/contested-results.hbs`, templateData);
+        const content = game.version.startsWith(`12`) ?
+            await renderTemplate(`modules/more-activities/templates/contested-results.hbs`, templateData) :
+            await foundry.applications.handlebars.renderTemplate(`modules/more-activities/templates/contested-results.hbs`, templateData)
+        ;
+        
         ChatMessage.create({
             content: content,
             speaker: ChatMessage.getSpeaker({ actor: initiator })

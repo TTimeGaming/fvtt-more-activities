@@ -9,7 +9,11 @@
         
         <div class="form-group macro-editor-container">
             <div class="code-editor-wrapper">
+                {{#if (eq version 12)}}
+                <textarea name="macroCode" aria-label="Macro Code">{{ macroCode }}</textarea>
+                {{else}}
                 <code-mirror name="macroCode" language="javascript" indent="2" aria-label="Macro Code">{{ macroCode }}</code-mirror>
+                {{/if}}
             </div>
         </div>
     </fieldset>

@@ -5,7 +5,7 @@ export class CanvasData {
         return Math.atan2(dy, dx);
     }
 
-    static calculateTokenDistanceSqr(token1, token2) {
+    static calculateTokenDistance(token1, token2) {
         if (!token1 || !token2) return Infinity;
         if (token1._destroyed || token2._destroyed) return Infinity;
 
@@ -15,7 +15,7 @@ export class CanvasData {
         ]).cost;
     }
 
-    static calculateCoordDistanceSqr(xPos1, yPos1, xPos2, yPos2) {
+    static calculateCoordDistance(xPos1, yPos1, xPos2, yPos2) {
         return game.canvas.grid.measurePath([
             { x: xPos1, y: yPos1 },
             { x: xPos2, y: yPos2 }
@@ -32,7 +32,7 @@ export class CanvasData {
         return game.canvas.tokens.placeables
             .filter(token => token !== originToken)
             .map(token => {
-                const distance = this.calculateTokenDistanceSqr(originToken, token);
+                const distance = this.calculateTokenDistance(originToken, token);
                 return {
                     token: token,
                     actor: token.actor,

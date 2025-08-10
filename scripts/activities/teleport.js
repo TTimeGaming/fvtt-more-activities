@@ -270,7 +270,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 return;
             }
 
-            const distance = originToken ? CanvasData.calculateTokenDistanceSqr(originToken, token) : 0;
+            const distance = originToken ? CanvasData.calculateTokenDistance(originToken, token) : 0;
             this.selectedTargets.push({
                 id: tokenId,
                 name: token.name,
@@ -412,7 +412,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             let distance = Infinity;
             if (targetRadius > 0) {
                 const originToken = CanvasData.getOriginToken(this.actor);
-                distance = originToken ? CanvasData.calculateTokenDistanceSqr(originToken, token) : 0;
+                distance = originToken ? CanvasData.calculateTokenDistance(originToken, token) : 0;
                 if (distance > targetRadius) continue;
             }
             
@@ -501,12 +501,27 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
      */
     async _selectDestination() {
         if (this.destinationTarget) return;
+
+        const originToken = CanvasData.getOriginToken(this.actor);
+        const originX = originToken.x + (originToken.w / 2);
+        const originY = originToken.y + (originToken.h / 2);
+        const radius = FieldsData.resolveFormula(this.activity.teleportDistance, this.activity.item);
+
+        this.destinationTarget = CanvasData.createMeasuredTemplate({
+            x: originX,
+            y: originY,
+            w: originToken.w,
+            h: originToken.h,
+            distance: radius,
+            fillColor: `#50B849`,
+        });
         
         const handler = async (event) => {
             if (!this.destinationTarget) return;
 
             const pos = game.canvas.canvasCoordinatesFromClient(event.data.originalEvent);
-            if (!this.destinationTarget.testPoint(pos)) {
+            const distance = CanvasData.calculateCoordDistance(pos.x, pos.y, originX, originY);
+            if (distance > radius) {
                 ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.outOfBounds.label`));
                 return;
             }
@@ -516,17 +531,6 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.close();
         };
         game.canvas.stage.on('mousedown', handler);
-
-        
-        const originToken = CanvasData.getOriginToken(this.actor);
-        this.destinationTarget = CanvasData.createMeasuredTemplate({
-            x: originToken.x + (originToken.w / 2),
-            y: originToken.y + (originToken.h / 2),
-            w: originToken.w,
-            h: originToken.h,
-            distance: FieldsData.resolveFormula(this.activity.teleportDistance, this.activity.item),
-            fillColor: `#50B849`,
-        });
     }
 
     /**
@@ -680,9 +684,14 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     async _executeTokenMove(tokenData) {
+        const embeddedName = game.version.startsWith(`12`) ?
+            Token.embeddedName :
+            foundry.canvas.placeables.Token.embeddedName
+        ;
+
         const tokenIds = tokenData.map(t => t._id);
-        await game.canvas.scene.deleteEmbeddedDocuments(foundry.canvas.placeables.Token.embeddedName, tokenIds, { isUndo: true });
-        await game.canvas.scene.createEmbeddedDocuments(foundry.canvas.placeables.Token.embeddedName, tokenData, { isUndo: true });
+        await game.canvas.scene.deleteEmbeddedDocuments(embeddedName, tokenIds, { isUndo: true });
+        await game.canvas.scene.createEmbeddedDocuments(embeddedName, tokenData, { isUndo: true });
     }
 }
 
@@ -805,7 +814,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!this.currentDragData) return;
         
         const pos = game.canvas.canvasCoordinatesFromClient(event);
-        const distance = CanvasData.calculateCoordDistanceSqr(pos.x, pos.y, this.destX, this.destY);
+        const distance = CanvasData.calculateCoordDistance(pos.x, pos.y, this.destX, this.destY);
         if (distance > this.placementRadius) {
             ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.outOfBounds.label`));
             event.target.style.opacity = '1';
@@ -887,8 +896,14 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         tokenData.x = x;
         tokenData.y = y;
 
-        await game.canvas.scene.deleteEmbeddedDocuments(foundry.canvas.placeables.Token.embeddedName, [originalToken.id], { isUndo: true });
-        await game.canvas.scene.createEmbeddedDocuments(foundry.canvas.placeables.Token.embeddedName, [tokenData], { isUndo: true });
+        
+        const embeddedName = game.version.startsWith(`12`) ?
+            Token.embeddedName :
+            foundry.canvas.placeables.Token.embeddedName
+        ;
+
+        await game.canvas.scene.deleteEmbeddedDocuments(embeddedName, [originalToken.id], { isUndo: true });
+        await game.canvas.scene.createEmbeddedDocuments(embeddedName, [tokenData], { isUndo: true });
 
         return oldPosition;
     }

@@ -4,10 +4,34 @@ const TEMPLATE_NAME = `hook`;
 
 export class HookData {
     static async init() {
-        for (const hookName of this.getSupportedHooks()) {
-            foundry.helpers.Hooks.on(hookName, (...args) => {
-                if (hookName === `deleteItem`) {
-                    HookData._checkForHook(args[0], hookName, args);
+        const supportedHooks = this.getSupportedHooks();
+        const defaultHook = supportedHooks[0];
+
+        const hookListeners = [];
+        for (const hook of supportedHooks) {
+            hookListeners.push({ external: hook, internal: hook });
+        }
+        
+        if (game.version.startsWith(`12`)) {
+            const internalRemapping = {
+                'dnd5e.rollSkill': `dnd5e.rollSkillV2`,
+            };
+            for (const key of Object.keys(internalRemapping)) {
+                hookListeners.push({ external: key, internal: internalRemapping[key] });
+            }
+        }
+
+        const registerHook = (hookName, callback) => {
+            if (game.version.startsWith(`12`))
+                Hooks.on(hookName, callback);
+            else
+                foundry.helpers.Hooks.on(hookName, callback); 
+        };
+
+        for (const listener of hookListeners) {
+            registerHook(listener.internal, (...args) => {
+                if (listener.external === `deleteItem`) {
+                    HookData._checkForHook(args[0], listener.external, defaultHook, args);
                 }
 
                 for (const actor of game.actors) {
@@ -18,9 +42,8 @@ export class HookData {
                     }
 
                     if (game.user != user) continue;
-
                     for (const item of actor.items) {
-                        HookData._checkForHook(item, hookName, args);
+                        HookData._checkForHook(item, listener.external, defaultHook, args);
                     }
                 }
             });
@@ -73,12 +96,18 @@ export class HookData {
         return options;
     }
 
-    static _checkForHook(item, hookName, ...args) {
+    static _checkForHook(item, hookName, defaultHookName, ...args) {
         const localArgs = args.flat(Infinity);
 
         for (const activity of (item.system?.activities || [])) {
             if (activity.type != TEMPLATE_NAME) continue;
-            if (hookName != activity.activeHook) continue;
+
+            if (activity.activeHook === ``) {
+                if (hookName !== defaultHookName) continue;
+            }
+            else {
+                if (hookName != activity.activeHook) continue;
+            }
             
             let combatRoundTurnDuplicate = false;
             switch (hookName) {
@@ -98,7 +127,7 @@ export class HookData {
 
                     if (hookName === `combatRound`) {
                         const currentCombatant = localArgs[0].combatants.get(localArgs[0].current.combatantId);
-                        if (currentCombatant.actorId !== item.parent.id) continue;
+                        if (currentCombatant.actorId !== item.parent.id) break;
                         combatRoundTurnDuplicate = true;
                     }
                     break;
@@ -119,7 +148,12 @@ export class HookData {
                     break;
                 case `dnd5e.rollAttack`:
                 case `dnd5e.rollDamage`:
-                    if (item.parent != localArgs[1].subject.parent.parent.parent) continue;
+                    if (game.version.startsWith(`12`)) {
+                        if (item.parent != localArgs[0].parent) continue;
+                    }
+                    else {
+                        if (item.parent != localArgs[1].subject.parent.parent.parent) continue;
+                    }
                     break;
                 default:
                     console.log(...localArgs);
@@ -189,6 +223,7 @@ export class HookActivitySheet extends dnd5e.applications.activity.ActivitySheet
     /** @inheritdoc */
     async _prepareEffectContext(context) {
         context = await super._prepareEffectContext(context);
+        context.version = game.version.startsWith(`12`) ? 12 : 13;
         context.manualTrigger = this.activity?.manualTrigger || false;
         context.availableHooks = HookData.getSupportedHooks(this.activity?.activeHook || ``);
         context.macroCode = this.activity?.macroCode || ``;

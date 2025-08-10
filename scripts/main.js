@@ -67,22 +67,33 @@ Hooks.once(`init`, async() => {
     };
 
     console.log(`More Activities | Registered (7) Activity Types`);
-});
 
-Hooks.on(`renderChatMessageHTML`, (message, html) => {
-    MacroData.applyListeners(message, html);
-    ContestedData.applyListeners(message, html);
-    ChainData.applyListeners(message, html);
-    TeleportData.applyListeners(message, html);
-    MovementData.applyListeners(message, html);
-});
+    if (game.version.startsWith(`12`)) {
+        Hooks.on(`renderChatMessage`, (message, html) => {
+            MacroData.applyListeners(message, html[0]);
+            ContestedData.applyListeners(message, html[0]);
+            ChainData.applyListeners(message, html[0]);
+            TeleportData.applyListeners(message, html[0]);
+            MovementData.applyListeners(message, html[0]);
+        });
+    }
+    else {
+        Hooks.on(`renderChatMessageHTML`, (message, html) => {
+            MacroData.applyListeners(message, html);
+            ContestedData.applyListeners(message, html);
+            ChainData.applyListeners(message, html);
+            TeleportData.applyListeners(message, html);
+            MovementData.applyListeners(message, html);
+        });
+    }
 
-Hooks.on(`renderActivitySheet`, (sheet, html) => {
-    ChainData.adjustActivitySheet(sheet, html);
-    TeleportData.adjustActivitySheet(sheet, html);
-});
+    Hooks.on(`renderActivitySheet`, (sheet, html) => {
+        ChainData.adjustActivitySheet(sheet, html);
+        TeleportData.adjustActivitySheet(sheet, html);
+    });
 
-Hooks.on(`renderActivityChoiceDialog`, (dialog, html) => {
-    HookData.removeActivities(dialog.item, html);
-    ChainData.removeActivities(dialog.item, html);
+    Hooks.on(`renderActivityChoiceDialog`, (dialog, html) => {
+        HookData.removeActivities(dialog.item, html);
+        ChainData.removeActivities(dialog.item, html);
+    });
 });
