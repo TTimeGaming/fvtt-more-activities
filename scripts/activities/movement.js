@@ -237,6 +237,8 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.selectionTarget = CanvasData.createMeasuredTemplate({
                 x: originToken.x + (originToken.w / 2),
                 y: originToken.y + (originToken.h / 2),
+                w: originToken.w,
+                h: originToken.h,
                 distance: this.activity.targetRange,
                 fillColor: `#6192B1`,
             });
@@ -612,6 +614,8 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.destinationTargets[i] = CanvasData.createMeasuredTemplate({
                 x: this.tokensToPlace[i].token.x + (this.tokensToPlace[i].token.w / 2),
                 y: this.tokensToPlace[i].token.y + (this.tokensToPlace[i].token.h / 2),
+                w: this.tokensToPlace[i].token.w,
+                h: this.tokensToPlace[i].token.h,
                 distance: this.placementRadius,
                 fillColor: `#D2D3D5`,
             });

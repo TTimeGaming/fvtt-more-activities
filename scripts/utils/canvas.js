@@ -40,13 +40,14 @@ export class CanvasData {
         ;
     }
 
-    static createMeasuredTemplate({ x, y, distance, t = `circle`, borderColor = `#ffffff`, fillColor = `#ffffff` }) {
+    static createMeasuredTemplate({ x, y, w, h, distance, t = `circle`, borderColor = `#ffffff`, fillColor = `#ffffff` }) {
+        const maxDim = Math.max(w / game.canvas.grid.sizeX, h / game.canvas.grid.sizeY) * game.canvas.grid.distance;
         const data = {
             t: t,
             user: game.user.id,
             x: x,
             y: y,
-            distance: distance,
+            distance: distance + (maxDim / 2),
             borderColor: borderColor,
             fillColor: fillColor,
         };

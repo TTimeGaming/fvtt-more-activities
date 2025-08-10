@@ -244,6 +244,8 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.selectionTarget = CanvasData.createMeasuredTemplate({
                 x: originToken.x + (originToken.w / 2),
                 y: originToken.y + (originToken.h / 2),
+                w: originToken.w,
+                h: originToken.h,
                 distance: this.activity.targetRadius,
                 fillColor: `#6192B1`,
             });
@@ -523,6 +525,8 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.destinationTarget = CanvasData.createMeasuredTemplate({
             x: originToken.x + (originToken.w / 2),
             y: originToken.y + (originToken.h / 2),
+            w: originToken.w,
+            h: originToken.h,
             distance: this.activity.teleportDistance,
             fillColor: `#50B849`,
         });
@@ -768,9 +772,12 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     _renderDestination() {
+        const originToken = CanvasData.getOriginToken(this.targetApp.actor);
         this.destinationTarget = CanvasData.createMeasuredTemplate({
             x: this.destX,
             y: this.destY,
+            w: originToken.w,
+            h: originToken.h,
             distance: this.placementRadius,
             fillColor: `#D2D3D5`,
         });
