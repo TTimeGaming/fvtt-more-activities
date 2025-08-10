@@ -267,11 +267,11 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 return;
             }
 
-            const distance = originToken ? CanvasData.calculateDistanceSqr(originToken, token) : 0;
+            const distance = originToken ? CanvasData.calculateTokenDistanceSqr(originToken, token) : 0;
             this.selectedTargets.push({
                 id: tokenId,
                 name: token.name,
-                distance: game.canvas.grid.distance * Math.round(Math.sqrt(distance) * 10) / 10,
+                distance: distance,
                 token: token
             });
 
@@ -434,8 +434,8 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             let distance = Infinity;
             if (this.activity.targetRange > 0) {
                 const originToken = CanvasData.getOriginToken(this.actor);
-                distance = originToken ? CanvasData.calculateDistanceSqr(originToken, token) : 0;
-                if (distance > this.activity.targetRange * this.activity.targetRange) continue;
+                distance = originToken ? CanvasData.calculateTokenDistanceSqr(originToken, token) : 0;
+                if (distance > this.activity.targetRange) continue;
             }
             
             this.selectedTargets.push({
@@ -653,9 +653,8 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         });
 
         const pos = game.canvas.canvasCoordinatesFromClient(event);
-        const distance = Math.sqrt(Math.pow(pos.x - origin.x, 2) + Math.pow(pos.y - origin.y, 2));
-
-        if (distance > (this.placementRadius * game.canvas.grid.size) / game.canvas.grid.distance) {
+        const distance = CanvasData.calculateCoordDistanceSqr(pos.x, pos.y, this.destX, this.destY);
+        if (distance > this.placementRadius) {
             ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.outOfBounds.label`));
             event.target.style.opacity = '1';
             this.currentDragData = null;

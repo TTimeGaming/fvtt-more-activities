@@ -274,11 +274,11 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 return;
             }
 
-            const distance = originToken ? CanvasData.calculateDistanceSqr(originToken, token) : 0;
+            const distance = originToken ? CanvasData.calculateTokenDistanceSqr(originToken, token) : 0;
             this.selectedTargets.push({
                 id: tokenId,
                 name: token.name,
-                distance: game.canvas.grid.distance * Math.round(Math.sqrt(distance) * 10) / 10,
+                distance: distance,
                 token: token
             });
 
@@ -415,8 +415,8 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             let distance = Infinity;
             if (this.activity.targetRadius > 0) {
                 const originToken = CanvasData.getOriginToken(this.actor);
-                distance = originToken ? CanvasData.calculateDistanceSqr(originToken, token) : 0;
-                if (distance > this.activity.targetRadius * this.activity.targetRadius) continue;
+                distance = originToken ? CanvasData.calculateTokenDistanceSqr(originToken, token) : 0;
+                if (distance > this.activity.targetRadius) continue;
             }
             
             this.selectedTargets.push({
@@ -808,10 +808,8 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!this.currentDragData) return;
         
         const pos = game.canvas.canvasCoordinatesFromClient(event);
-        
-        const distance = Math.sqrt(Math.pow(pos.x - this.destX, 2) + Math.pow(pos.y - this.destY, 2));
-
-        if (distance > (this.placementRadius * game.canvas.grid.size) / game.canvas.grid.distance) {
+        const distance = CanvasData.calculateCoordDistanceSqr(pos.x, pos.y, this.destX, this.destY);
+        if (distance > this.placementRadius) {
             ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.outOfBounds.label`));
             event.target.style.opacity = '1';
             this.currentDragData = null;
