@@ -5,9 +5,9 @@
         <div class="form-group stacked">
             <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.maxTargets.label"}}</label>
             <div class="form-fields">
-                <input type="number" name="maxTargets" min="0" value="{{ maxTargets }}" placeholder="Max Targets">
+                <input type="text" name="maxTargets" value="{{ maxTargets }}" placeholder="Max Targets">
             </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.maxTargets.hint"}}</p>
+            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.maxTargets.hint"}}</p>
         </div>
 
         <div class="form-group">
@@ -33,17 +33,17 @@
         <div class="form-group stacked">
             <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetRadius.label"}}</label>
             <div class="form-fields">
-                <input type="number" name="targetRadius" min="0" value="{{ targetRadius }}" placeholder="Target Radius">
+                <input type="text" name="targetRadius" value="{{ targetRadius }}" placeholder="Target Radius">
             </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetRadius.hint"}}</p>
+            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetRadius.hint"}}</p>
         </div>
 
         <div class="form-group stacked">
             <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.teleportDistance.label"}}</label>
             <div class="form-fields">
-                <input type="number" name="teleportDistance" min="0" value="{{ teleportDistance }}" placeholder="Teleport Distance">
+                <input type="text" name="teleportDistance" value="{{ teleportDistance }}" placeholder="Teleport Distance">
             </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.teleportDistance.hint"}}</p>
+            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.teleportDistance.hint"}}</p>
         </div>
     </fieldset>
     <fieldset>
@@ -65,12 +65,12 @@
             <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualRadius.label"}}</label>
             <div class="form-fields">
                 {{#if manualPlacement}}
-                <input type="number" name="manualRadius" min="0" value="{{ manualRadius }}" placeholder="Placement Radius">
+                <input type="text" name="manualRadius" value="{{ manualRadius }}" placeholder="Placement Radius">
                 {{else}}
-                <input type="number" name="manualRadius" value="0" placeholder="Placement Radius" disabled>
+                <input type="text" name="manualRadius" value="0" placeholder="Placement Radius" disabled>
                 {{/if}}
             </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualRadius.hint"}}</p>
+            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualRadius.hint"}}</p>
         </div>
 
         <div class="form-group">
@@ -89,12 +89,12 @@
             <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.clusterRadius.label"}}</label>
             <div class="form-fields">
                 {{#if (or manualPlacement keepArrangement (eq maxTargets 1))}}
-                <input type="number" name="clusterRadius" value="0" placeholder="Cluster Radius" disabled>
+                <input type="text" name="clusterRadius" value="0" placeholder="Cluster Radius" disabled>
                 {{else}}
-                <input type="number" name="clusterRadius" min="0" value="{{ clusterRadius }}" placeholder="Cluster Radius">
+                <input type="text" name="clusterRadius" value="{{ clusterRadius }}" placeholder="Cluster Radius">
                 {{/if}}
             </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.clusterRadius.hint"}}</p>
+            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.clusterRadius.hint"}}</p>
         </div>
     </fieldset>
 

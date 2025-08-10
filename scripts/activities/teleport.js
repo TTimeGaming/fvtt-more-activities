@@ -2,6 +2,7 @@ import { MessageData } from '../utils/message.js';
 import { CanvasData } from '../utils/canvas.js';
 import { DomData } from '../utils/dom.js';
 import { EffectsData } from '../utils/effects.js';
+import { FieldsData } from '../utils/fields.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_NAME = `teleport`;
@@ -29,10 +30,9 @@ export class TeleportActivityData extends dnd5e.dataModels.activity.BaseActivity
         const fields = foundry.data.fields;
         const schema = super.defineSchema();
 
-        schema.maxTargets = new fields.NumberField({
+        schema.maxTargets = new fields.StringField({
             required: false,
-            initial: 1,
-            min: 1,
+            initial: `1`,
         });
 
         schema.targetSelf = new fields.BooleanField({
@@ -45,16 +45,14 @@ export class TeleportActivityData extends dnd5e.dataModels.activity.BaseActivity
             initial: false,
         });
 
-        schema.targetRadius = new fields.NumberField({
+        schema.targetRadius = new fields.StringField({
             required: false,
-            initial: 15,
-            min: 0,
+            initial: `15`,
         });
 
-        schema.teleportDistance = new fields.NumberField({
+        schema.teleportDistance = new fields.StringField({
             required: false,
-            initial: 30,
-            min: 0,
+            initial: `30`,
         });
 
         schema.manualPlacement = new fields.BooleanField({
@@ -62,10 +60,9 @@ export class TeleportActivityData extends dnd5e.dataModels.activity.BaseActivity
             initial: false,
         });
 
-        schema.manualRadius = new fields.NumberField({
+        schema.manualRadius = new fields.StringField({
             required: false,
-            initial: 10,
-            min: 0,
+            initial: `10`,
         });
 
         schema.keepArrangement = new fields.BooleanField({
@@ -73,10 +70,9 @@ export class TeleportActivityData extends dnd5e.dataModels.activity.BaseActivity
             initial: false,
         });
 
-        schema.clusterRadius = new fields.NumberField({
+        schema.clusterRadius = new fields.StringField({
             required: false,
-            initial: 5,
-            min: 0,
+            initial: `5`,
         });
 
         schema.appliedEffects = new fields.ArrayField(new fields.StringField({
@@ -213,7 +209,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     /** @inheritdoc */
     async _prepareContext() {
-        const tokensData = await this._getAvailableTokens();
+        const tokensData = this._getAvailableTokens();
         return {
             activity: this.activity,
             tokensData: tokensData,
@@ -222,8 +218,8 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 index: index
             })),
             canTargetSelf: this.activity.targetSelf,
-            maxTargets: this.activity.maxTargets,
-            targetRange: this.activity.targetRadius,
+            maxTargets: FieldsData.resolveFormula(this.activity.maxTargets, this.activity.item),
+            targetRange: FieldsData.resolveFormula(this.activity.targetRadius, this.activity.item),
             originToken: CanvasData.getOriginToken(this.actor),
         };
     }
@@ -234,7 +230,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         const originToken = CanvasData.getOriginToken(this.actor);
 
-        if (this.activity?.maxTargets === 1 && this.activity?.onlyTargetSelf) {
+        if (FieldsData.resolveFormula(this.activity?.maxTargets, this.activity.item) === 1 && this.activity?.onlyTargetSelf) {
             this._skipToDestination();
             return;
         }
@@ -246,7 +242,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 y: originToken.y + (originToken.h / 2),
                 w: originToken.w,
                 h: originToken.h,
-                distance: this.activity.targetRadius,
+                distance: FieldsData.resolveFormula(this.activity.targetRadius, this.activity.item),
                 fillColor: `#6192B1`,
             });
         }
@@ -268,8 +264,8 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             const token = game.canvas.tokens.get(tokenId);
             if (!token) return;
 
-            if (this.selectedTargets.length >= this.activity.maxTargets) {
-                ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.maximumTargets.label`, { count: this.activity.maxTargets }));
+            if (this.selectedTargets.length >= FieldsData.resolveFormula(this.activity.maxTargets, this.activity.item)) {
+                ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.maximumTargets.label`));
                 selectElement.value = ``;
                 return;
             }
@@ -305,7 +301,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 return;
             }
 
-            if (this.selectedTargets.length > this.activity.maxTargets) {
+            if (this.selectedTargets.length > FieldsData.resolveFormula(this.activity.maxTargets, this.activity.item)) {
                 ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.lessTargets.label`));
                 return;
             }
@@ -378,7 +374,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
      * @returns {Array}
      * @private
      */
-    async _getAvailableTokens() {
+    _getAvailableTokens() {
         const originToken = CanvasData.getOriginToken(this.actor);
 
         const tokens = [];
@@ -394,7 +390,7 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             });
         }
 
-        const otherTokens = CanvasData.getTokensInRange(originToken, this.activity.targetRadius)
+        const otherTokens = CanvasData.getTokensInRange(originToken, FieldsData.resolveFormula(this.activity.targetRadius, this.activity.item))
             .filter(data => !selectedIds.includes(data.token.id))
             .map(data => ({
                 ...data,
@@ -411,18 +407,19 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     _prepopulateTargets() {
+        const targetRadius = FieldsData.resolveFormula(this.activity.targetRadius, this.activity.item);
         for (const token of Array.from(game.user.targets)) {
             let distance = Infinity;
-            if (this.activity.targetRadius > 0) {
+            if (targetRadius > 0) {
                 const originToken = CanvasData.getOriginToken(this.actor);
                 distance = originToken ? CanvasData.calculateTokenDistanceSqr(originToken, token) : 0;
-                if (distance > this.activity.targetRadius) continue;
+                if (distance > targetRadius) continue;
             }
             
             this.selectedTargets.push({
                 id: token.id,
                 name: token.name,
-                distance: game.canvas.grid.distance * Math.round(Math.sqrt(distance) * 10) / 10,
+                distance: distance,
                 token: token
             });
         }
@@ -527,7 +524,7 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
             y: originToken.y + (originToken.h / 2),
             w: originToken.w,
             h: originToken.h,
-            distance: this.activity.teleportDistance,
+            distance: FieldsData.resolveFormula(this.activity.teleportDistance, this.activity.item),
             fillColor: `#50B849`,
         });
     }
@@ -639,7 +636,7 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
      */
     async _clusterTeleport(destX, destY, updates) {
         const gridSize = game.canvas.grid.size;
-        const clusterRadius = this.activity.clusterRadius * gridSize;
+        const clusterRadius = FieldsData.resolveFormula(this.activity.clusterRadius, this.activity.item) * gridSize;
         const clusterRadiusPixels = clusterRadius / game.canvas.grid.distance;
 
         const originToken = CanvasData.getOriginToken(this.actor);
@@ -721,7 +718,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.targetApp = targetApp;
         this.destX = snapped.x;
         this.destY = snapped.y;
-        this.placementRadius = targetApp.activity.manualRadius;
+        this.placementRadius = FieldsData.resolveFormula(targetApp.activity.manualRadius, targetApp.activity.item);
         this.tokensToPlace = [...targetApp.selectedTargets];
         this.placedTokens = [];
         this.currentDragData = null;

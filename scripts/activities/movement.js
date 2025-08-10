@@ -1,6 +1,7 @@
 import { MessageData } from '../utils/message.js';
 import { CanvasData } from '../utils/canvas.js';
 import { EffectsData } from '../utils/effects.js';
+import { FieldsData } from '../utils/fields.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_NAME = `movement`;
@@ -47,22 +48,19 @@ export class MovementActivityData extends dnd5e.dataModels.activity.BaseActivity
         const fields = foundry.data.fields;
         const schema = super.defineSchema();
 
-        schema.maxTargets = new fields.NumberField({
+        schema.maxTargets = new fields.StringField({
             required: false,
-            initial: 1,
-            min: 1,
+            initial: `1`,
         });
 
-        schema.targetRange = new fields.NumberField({
+        schema.targetRange = new fields.StringField({
             required: false,
-            initial: 30,
-            min: 0,
+            initial: `30`,
         });
 
-        schema.movementDistance = new fields.NumberField({
+        schema.movementDistance = new fields.StringField({
             required: false,
-            initial: 10,
-            min: 0,
+            initial: `10`,
         });
 
         schema.movementType = new fields.StringField({
@@ -210,7 +208,10 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     /** @inheritdoc */
     async _prepareContext() {
-        const tokensData = await this._getAvailableTokens();
+        const tokensData = this._getAvailableTokens();
+
+        console.log(this.activity.item.getRollData());
+
         return {
             activity: this.activity,
             tokensData: tokensData,
@@ -218,9 +219,9 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 ...element,
                 index: index
             })),
-            maxTargets: this.activity.maxTargets,
-            targetRange: this.activity.targetRange,
-            movementDistance: this.activity.movementDistance,
+            maxTargets: FieldsData.resolveFormula(this.activity.maxTargets, this.activity.item),
+            targetRange: FieldsData.resolveFormula(this.activity.targetRange, this.activity.item),
+            movementDistance: FieldsData.resolveFormula(this.activity.movementDistance, this.activity.item),
             movementType: this.activity.movementType,
             originToken: CanvasData.getOriginToken(this.actor),
         };
@@ -239,7 +240,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 y: originToken.y + (originToken.h / 2),
                 w: originToken.w,
                 h: originToken.h,
-                distance: this.activity.targetRange,
+                distance: FieldsData.resolveFormula(this.activity.targetRange, this.activity.item),
                 fillColor: `#6192B1`,
             });
         }
@@ -261,7 +262,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             const token = game.canvas.tokens.get(tokenId);
             if (!token) return;
 
-            if (this.selectedTargets.length >= this.activity.maxTargets) {
+            if (this.selectedTargets.length >= FieldsData.resolveFormula(this.activity.maxTargets, this.activity.item)) {
                 ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.maximumTargets.label`));
                 selectElement.value = ``;
                 return;
@@ -298,7 +299,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 return;
             }
 
-            if (this.selectedTargets.length > this.activity.maxTargets) {
+            if (this.selectedTargets.length > FieldsData.resolveFormula(this.activity.maxTargets, this.activity.item)) {
                 ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.lessTargets.label`));
                 return;
             }
@@ -362,7 +363,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             const destinations = MovementData.calculateMovementDestinations(
                 originToken,
                 target.token,
-                this.activity.movementDistance,
+                FieldsData.resolveFormula(this.activity.movementDistance, this.activity.item),
                 direction,
             );
 
@@ -407,13 +408,13 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
      * @returns {Array}
      * @private
      */
-    async _getAvailableTokens() {
+    _getAvailableTokens() {
         const originToken = CanvasData.getOriginToken(this.actor);
 
         const tokens = [];
         const selectedIds = this.selectedTargets.map(t => t.id);
 
-        const otherTokens = CanvasData.getTokensInRange(originToken, this.activity.targetRange)
+        const otherTokens = CanvasData.getTokensInRange(originToken, FieldsData.resolveFormula(this.activity.targetRange, this.activity.item))
             .filter(data => !selectedIds.includes(data.token.id))
             .map(data => ({
                 ...data,
@@ -430,18 +431,19 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     _prepopulateTargets() {
+        const targetRange = FieldsData.resolveFormula(this.activity.targetRange, this.activity.item);
         for (const token of Array.from(game.user.targets)) {
             let distance = Infinity;
-            if (this.activity.targetRange > 0) {
+            if (targetRange > 0) {
                 const originToken = CanvasData.getOriginToken(this.actor);
                 distance = originToken ? CanvasData.calculateTokenDistanceSqr(originToken, token) : 0;
-                if (distance > this.activity.targetRange) continue;
+                if (distance > targetRange) continue;
             }
             
             this.selectedTargets.push({
                 id: token.id,
                 name: token.name,
-                distance: game.canvas.grid.distance * Math.round(Math.sqrt(distance) * 10) / 10,
+                distance: distance,
                 token: token
             });
         }
@@ -558,7 +560,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.destY = snapped.y;
         this.tokensToPlace = [...targetApp.selectedTargets];
         this.destinationTargets = [];
-        this.placementRadius = targetApp.activity.movementDistance;
+        this.placementRadius = FieldsData.resolveFormula(targetApp.activity.movementDistance, targetApp.activity.item);
         this.placedTokens = [];
         this.currentDragData = null;
         this.isFinished = false;
@@ -645,12 +647,6 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
      */
     async _onDragEnd(event) {
         if (!this.currentDragData) return;
-        
-        const token = this.tokensToPlace[this.currentDragData.index].token;
-        const origin = game.canvas.grid.getCenterPoint({
-            x: Math.round((token.x + (token.w / 2)) * 10) / 10,
-            y: Math.round((token.y + (token.h / 2)) * 10) / 10,
-        });
 
         const pos = game.canvas.canvasCoordinatesFromClient(event);
         const distance = CanvasData.calculateCoordDistanceSqr(pos.x, pos.y, this.destX, this.destY);
