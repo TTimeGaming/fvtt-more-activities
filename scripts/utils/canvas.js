@@ -45,6 +45,18 @@ export class CanvasData {
         ;
     }
 
+    static async updateCombatants(oldTokens, newTokens) {
+        for (var i = 0; i < oldTokens.length; i++) {
+            const combatant = game.combat.combatants.find(c => c.tokenId === oldTokens[i]);
+            if (!combatant) continue;
+            
+            await combatant.update({
+                _id: combatant.id,
+                tokenId: newTokens[i]
+            });
+        }
+    }
+
     static createMeasuredTemplate({ x, y, w, h, distance, t = `circle`, borderColor = `#ffffff`, fillColor = `#ffffff` }) {
         const maxDim = Math.max(w / game.canvas.grid.sizeX, h / game.canvas.grid.sizeY) * game.canvas.grid.distance;
         const data = {

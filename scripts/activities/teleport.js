@@ -520,13 +520,18 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
             if (!this.destinationTarget) return;
 
             const pos = game.canvas.canvasCoordinatesFromClient(event.data.originalEvent);
-            const distance = CanvasData.calculateCoordDistance(pos.x, pos.y, originX, originY);
+            const snappedPos = game.canvas.grid.getCenterPoint({
+                x: Math.round(pos.x * 10) / 10,
+                y: Math.round(pos.y * 10) / 10,
+            });
+
+            const distance = CanvasData.calculateCoordDistance(snappedPos.x, snappedPos.y, originX, originY);
             if (distance > radius) {
                 ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.outOfBounds.label`));
                 return;
             }
 
-            await this._executeTeleport(pos.x, pos.y);
+            await this._executeTeleport(snappedPos.x, snappedPos.y);
             game.canvas.stage.off('mousedown', handler);
             this.close();
         };
@@ -690,8 +695,9 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
         ;
 
         const tokenIds = tokenData.map(t => t._id);
+        const newTokens = await game.canvas.scene.createEmbeddedDocuments(embeddedName, tokenData, { isUndo: true });
+        await CanvasData.updateCombatants(tokenIds, newTokens.map(token => token.id));
         await game.canvas.scene.deleteEmbeddedDocuments(embeddedName, tokenIds, { isUndo: true });
-        await game.canvas.scene.createEmbeddedDocuments(embeddedName, tokenData, { isUndo: true });
     }
 }
 
@@ -719,14 +725,9 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             ...options,
         });
 
-        const snapped = game.canvas.grid.getCenterPoint({
-            x: Math.round(destX * 10) / 10,
-            y: Math.round(destY * 10) / 10,
-        });
-
         this.targetApp = targetApp;
-        this.destX = snapped.x;
-        this.destY = snapped.y;
+        this.destX = destX;
+        this.destY = destY;
         this.placementRadius = FieldsData.resolveFormula(targetApp.activity.manualRadius, targetApp.activity.item);
         this.tokensToPlace = [...targetApp.selectedTargets];
         this.placedTokens = [];
@@ -814,7 +815,12 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!this.currentDragData) return;
         
         const pos = game.canvas.canvasCoordinatesFromClient(event);
-        const distance = CanvasData.calculateCoordDistance(pos.x, pos.y, this.destX, this.destY);
+        const snappedPos = game.canvas.grid.getCenterPoint({
+            x: Math.round(pos.x * 10) / 10,
+            y: Math.round(pos.y * 10) / 10,
+        });
+
+        const distance = CanvasData.calculateCoordDistance(snappedPos.x, snappedPos.y, this.destX, this.destY);
         if (distance > this.placementRadius) {
             ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.outOfBounds.label`));
             event.target.style.opacity = '1';
@@ -852,7 +858,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             CanvasData.removeMeasuredTemplate(this.destinationTarget);
             this.destinationTarget = null;
         }
-        
+
         await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.actor));
         ui.notifications.info(`${this.placedTokens.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`)}`);
 
@@ -895,15 +901,15 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         };
         tokenData.x = x;
         tokenData.y = y;
-
         
         const embeddedName = game.version.startsWith(`12`) ?
             Token.embeddedName :
             foundry.canvas.placeables.Token.embeddedName
         ;
 
+        const newTokens = await game.canvas.scene.createEmbeddedDocuments(embeddedName, [tokenData], { isUndo: true });
+        await CanvasData.updateCombatants([ originalToken.id ], newTokens.map(token => token.id));
         await game.canvas.scene.deleteEmbeddedDocuments(embeddedName, [originalToken.id], { isUndo: true });
-        await game.canvas.scene.createEmbeddedDocuments(embeddedName, [tokenData], { isUndo: true });
 
         return oldPosition;
     }
