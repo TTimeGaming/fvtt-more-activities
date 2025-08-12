@@ -1,4 +1,5 @@
 import { DomData } from '../utils/dom.js';
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_NAME = `chain`;
 
@@ -27,8 +28,8 @@ export class ChainData {
                 const chainActivity = item.system.activities.find(a => a.type === TEMPLATE_NAME);
                 if (!chainActivity) return;
 
-                const triggerContainer = event.target.closest(`.chain-triggers`);
-                if (triggerContainer) triggerContainer.remove();
+                // const triggerContainer = event.target.closest(`.chain-triggers`);
+                // if (triggerContainer) triggerContainer.remove();
 
                 await chainActivity.continueChainFrom(activityIndex, triggerLabel);
             });
@@ -143,6 +144,7 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
         const chainedActivityNames = this.activity?.chainedActivityNames || [];
         const chainTriggers = this.activity?.chainTriggers || [];
         const chainListeners = this.activity?.chainListeners || [];
+        const triggerConflicts = this._getTriggerConflicts();
 
         const chainedActivities = [];
         for (let i = 0; i < chainedActivityIds.length; i++) {
@@ -178,7 +180,7 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
                 const triggerLabel = sourceTriggers[sourceTriggerIndex] || `Unknown Trigger`;
 
                 return {
-                    mappingKey: listenerKey,
+                    value: listenerKey,
                     label: triggerLabel,
                     sourceActivityName: sourceName,
                     sourceActivityIndex: sourceActivityIndex,
@@ -186,13 +188,21 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
                 };
             });
 
+            const triggerDetails = [];
+            for (let j = 0; j < triggers.length; j++) {
+                triggerDetails.push({
+                    name: triggers[j],
+                    branch: triggerConflicts[`${i}:${j}`],
+                });
+            }
+
             chainedActivities.push({
                 id: chainedActivityIds[i],
                 name: chainedActivityNames[i],
                 resolvedName: activity?.name || chainedActivityNames[i] || activity?.type,
                 activityType: activity?.type || `unknown`,
                 icon: activity?.img || null,
-                triggers: triggers,
+                triggers: triggerDetails,
                 listeners: listeners,
                 enrichedListeners: enrichedListeners,
                 availableListeners: availableListeners,
@@ -221,6 +231,29 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
     _isActivityChained(activityId) {
         const currentIds = this.activity?.chainedActivityIds || [];
         return currentIds.includes(activityId);
+    }
+
+    _getTriggerConflicts() {
+        const chainTriggers = this.activity?.chainTriggers || [];
+        const chainListeners = this.activity?.chainListeners || [];
+
+        const conflicts = {};
+        for (let i = 0; i < chainTriggers.length; i++) {
+            const triggers = chainTriggers[i];
+            for (let j = 0; j < triggers.length; j++) {
+                const key = `${i}:${j}`;
+                const count = chainListeners.slice(i + 1).filter(listeners => listeners && listeners.includes(key)).length;
+                if (count <= 1) continue;
+
+                conflicts[key] = {
+                    activityIndex: i,
+                    triggerIndex: j,
+                    trigger: triggers[j],
+                    count,
+                };
+            }
+        }
+        return conflicts;
     }
 
     /**
@@ -306,6 +339,7 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
             btn.addEventListener(`click`, async(event) => {
                 const activityIndex = parseInt(event.target.dataset.activityIndex);
                 const listenerKey = event.target.dataset.listenerKey;
+
                 await this._removeListener(activityIndex, listenerKey);
             });
         });
@@ -572,9 +606,13 @@ export class ChainActivity extends dnd5e.documents.activity.ActivityMixin(ChainA
                 activities.push(i);
         }
 
-        for (const activityIndex of activities) {
-            await this._executeChainedActivity(activityIndex, {}, {}, {});
+        if (activities.length === 0) return;
+        if (activities.length === 1) {
+            await this.executeChainedActivity(activities[0]);
+            return;
         }
+
+        new ChainBranchApp(this, trigger, activities).render(true);
     }
 
     /**
@@ -586,7 +624,7 @@ export class ChainActivity extends dnd5e.documents.activity.ActivityMixin(ChainA
      * @private
      */
     async _executeChain(config, dialog, message) {
-        await this._executeChainedActivity(0, config, dialog, message);
+        await this.executeChainedActivity(0, config, dialog, message);
     }
     
     /**
@@ -627,7 +665,7 @@ export class ChainActivity extends dnd5e.documents.activity.ActivityMixin(ChainA
         await lastMessage.update({ content });
     }
 
-    async _executeChainedActivity(index, config, dialog, message) {
+    async executeChainedActivity(index, config = {}, dialog = {}, message = {}) {
         const chainedActivityIds = this.chainedActivityIds || [];
         const chainTriggers = this.chainTriggers || [];
 
@@ -668,5 +706,88 @@ export class ChainActivity extends dnd5e.documents.activity.ActivityMixin(ChainA
      */
     get actor() {
         return this.item?.actor || null;
+    }
+}
+
+class ChainBranchApp extends HandlebarsApplicationMixin(ApplicationV2) {
+    static DEFAULT_OPTIONS = {
+        classes: [ `dnd5e2`, `chain-branch-app` ],
+        tag: `form`,
+        position: {
+            width: 400,
+            height: `auto`,
+        },
+    };
+
+    static PARTS = {
+        form: {
+            template: `modules/more-activities/templates/chain-branch.hbs`,
+        },
+    };
+
+    constructor(activity, trigger, activities, options = {}) {
+        super({
+            window: {
+                title: `Select Activity`,
+            },
+            ...options,
+        });
+        this.activity = activity;
+        this.trigger = trigger;
+        this.activities = activities;
+        this.selectedId = undefined;
+        this.executeAll = false;
+    }
+
+    /** @inheritdoc */
+    async _prepareContext() {
+        const activities = this.activities.map(activityIndex => {
+            const activityId = this.activity.chainedActivityIds[activityIndex];
+            const activity = this.activity.item?.system.activities.get(activityId);
+            const activityName = this.activity.chainedActivityNames[activityIndex] || activity?.name || activity?.type || `Activity ${activityIndex + 1}`;
+            
+            return {
+                index: activityIndex,
+                id: activityId,
+                name: activityName,
+                type: activity?.type || `unknown`,
+                icon: activity?.img || `icons/svg/mystery-man.svg`,
+            };
+        });
+
+        return {
+            activities,
+            trigger: this.trigger,
+            executeAll: this.executeAll,
+            selectedId: this.selectedId,
+            hasMultiple: false,
+        };
+    }
+
+    /** @inheritdoc */
+    async _onRender(context, options) {
+        this.element.querySelectorAll(`.item-choice`).forEach(checkbox => {
+            checkbox.addEventListener(`change`, () => {
+                this.selectedId = checkbox.checked ? checkbox.dataset.item : undefined;
+                this.render();
+            });
+        });
+
+        // this.element.querySelector(`.execute-all`).addEventListener(`change`, (event) => {
+        //     this.executeAll = event.currentTarget.checked;
+        //     this.render();
+        // });
+
+        this.element.querySelector(`.finish-branch-btn`).addEventListener(`click`, () => {
+            if (this.selectedId === undefined) return;
+
+            const activityIndex = this.activity.chainedActivityIds.indexOf(this.selectedId);
+            this.activity.executeChainedActivity(activityIndex);
+            this.close();
+        });
+
+        this.element.querySelector(`.cancel-branch-btn`).addEventListener(`click`, () => {
+            this.close();
+        });
     }
 }

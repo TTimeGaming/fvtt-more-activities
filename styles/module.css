@@ -368,6 +368,14 @@
     font-size: 0.7rem;
 }
 
+.dnd5e2.activity-chain .trigger-label-input.branching {
+    border-color: var(--dnd5e-color-gold);
+}
+
+.dnd5e2.activity-chain .branch-indicator {
+    color: var(--dnd5e-color-gold);
+}
+
 .dnd5e2.activity-chain .trigger-label-input:focus {
     border-color: var(--dnd5e-color-primary);
     box-shadow: 0 0 0 2px rgba(var(--dnd5e-color-primary-rgb), 0.2);
@@ -555,7 +563,8 @@
 .teleport-targets .selected-targets,
 .movement-targets .selected-targets,
 .dnd5e2.activity-grant .granted-items,
-.grant-selection .granted-items {
+.grant-selection .granted-items,
+.chain-branch .branched-items {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -564,7 +573,8 @@
 .teleport-targets .target-item,
 .movement-targets .target-item,
 .dnd5e2.activity-grant .granted-item,
-.grant-selection .granted-item {
+.grant-selection .granted-item,
+.chain-branch .branched-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -581,7 +591,8 @@
 }
 
 .dnd5e2.activity-grant .item-info,
-.grant-selection .item-info {
+.grant-selection .item-info,
+.chain-branch .item-info {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -589,7 +600,8 @@
 }
 
 .dnd5e2.activity-grant .item-img,
-.grant-selection .item-img {
+.grant-selection .item-img,
+.chain-branch .item-img {
     width: 32px;
     height: 32px;
 }
@@ -597,7 +609,8 @@
 .teleport-targets .target-name,
 .movement-targets .target-name,
 .dnd5e2.activity-grant .item-name,
-.grant-selection .item-name {
+.grant-selection .item-name,
+.chain-branch .item-name {
     font-size: 0.8rem;
     font-weight: bold;
 }
@@ -605,7 +618,8 @@
 .teleport-targets .target-controls,
 .movement-targets .target-controls,
 .dnd5e2.activity-grant .item-controls,
-.grant-selection .item-controls {
+.grant-selection .item-controls,
+.chain-branch .item-controls {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -721,18 +735,21 @@
 }
 
 .placement-buttons,
-.grant-buttons {
+.grant-buttons,
+.branch-buttons {
    display: flex;
    gap: 0.5rem;
    justify-content: center;
 }
 
-.grant-buttons {
+.grant-buttons,
+.branch-buttons {
     margin-top: 0.5rem;
 }
 
 .finish-placement-btn,
-.finish-grant-btn {
+.finish-grant-btn,
+.finish-branch-btn {
    background: var(--button-hover-background-color);
    padding: 1.25rem;
    border-radius: 4px;
@@ -744,7 +761,8 @@
 }
 
 .cancel-placement-btn,
-.cancel-grant-btn {
+.cancel-grant-btn,
+.cancel-branch-btn {
    background: var(--color-button-secondary);
    padding: 1.25rem;
    border-radius: 4px;

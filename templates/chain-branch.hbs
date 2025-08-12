@@ -1,0 +1,43 @@
+<div class="chain-branch">
+    <fieldset>
+        <legend><label> Options </label></legend>
+
+        <div class="branched-items">
+            {{#each activities as |item|}}
+            <div class="branched-item">
+                <div class="item-info">
+                    <img class="gold-icon item-img" src="{{item.icon}}" alt="{{item.name}}">
+                    <a class="item-name">{{item.name}}</a>
+                </div>
+                <div class="item-controls">
+                    {{#if ../executeAll}}
+                    <dnd5e-checkbox class="item-choice" disabled></dnd5e-checkbox>
+                    {{else}}
+                    <dnd5e-checkbox class="item-choice" data-item="{{item.id}}" {{#if (eq item.id ../selectedId)}}checked{{/if}}></dnd5e-checkbox>
+                    {{/if}}
+                </div>
+            </div>
+            {{/each}}
+
+            {{#if hasMultiple}}
+            <div class="branched-item">
+                <div class="item-info">
+                    <a class="item-name">Execute All Activities</a>
+                </div>
+                <div class="item-controls">
+                    <dnd5e-checkbox class="execute-all" {{#if executeAll}}checked{{/if}}></dnd5e-checkbox>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </fieldset>
+
+    <div class="branch-buttons">
+        <button type="button" class="finish-branch-btn">
+            <i class="fas fa-play"></i> Execute
+        </button>
+        <button type="button" class="cancel-branch-btn">
+            <i class="fas fa-times"></i> Cancel
+        </button>
+    </div>
+</div>

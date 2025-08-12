@@ -124,7 +124,8 @@
                         {{#each chainedActivity.triggers as |trigger triggerIndex|}}
                         <div class="trigger-item" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}">
                             <div class="trigger-controls">
-                                <input type="text" class="trigger-label-input" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}" value="{{ trigger }}" placeholder="Trigger Label">
+                                <input type="text" class="trigger-label-input {{#if trigger.branch}}branching{{/if}}" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}" value="{{ trigger.name }}" placeholder="Trigger Label">
+                                {{#if trigger.branch}}<i class="branch-indicator fas fa-code-branch"></i>{{/if}}
                                 <button type="button" class="remove-trigger-btn" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}" title="Remove Trigger">
                                     <i class="fas fa-times"></i>
                                 </button>
