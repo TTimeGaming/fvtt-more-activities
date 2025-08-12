@@ -30,6 +30,10 @@
     flex-direction: column;
 }
 
+.dnd5e2.activity-grant .activity-effect button {
+    width: 21px;
+}
+
 .contested-initiator {
     padding: 1rem;
     display: flex;
@@ -498,7 +502,8 @@
     transform: translateY(0);
 }
 
-.dnd5e2.activity-teleport .form-group.indented {
+.dnd5e2.activity-teleport .form-group.indented,
+.dnd5e2.activity-grant .form-group.indented {
     margin-left: 1rem;
 }
 
@@ -548,14 +553,18 @@
 }
 
 .teleport-targets .selected-targets,
-.movement-targets .selected-targets {
+.movement-targets .selected-targets,
+.dnd5e2.activity-grant .granted-items,
+.grant-selection .granted-items {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
 .teleport-targets .target-item,
-.movement-targets .target-item {
+.movement-targets .target-item,
+.dnd5e2.activity-grant .granted-item,
+.grant-selection .granted-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -571,27 +580,47 @@
     gap: 0.25rem;
 }
 
+.dnd5e2.activity-grant .item-info,
+.grant-selection .item-info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dnd5e2.activity-grant .item-img,
+.grant-selection .item-img {
+    width: 32px;
+    height: 32px;
+}
+
 .teleport-targets .target-name,
-.movement-targets .target-name {
+.movement-targets .target-name,
+.dnd5e2.activity-grant .item-name,
+.grant-selection .item-name {
     font-size: 0.8rem;
     font-weight: bold;
 }
 
-.teleport-targets .target-distance,
-.movement-targets .target-distance {
-    font-size: 0.7rem;
-    color: var(--dnd5e-color-text-light);
-}
-
 .teleport-targets .target-controls,
-.movement-targets .target-controls {
+.movement-targets .target-controls,
+.dnd5e2.activity-grant .item-controls,
+.grant-selection .item-controls {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
+.teleport-targets .target-distance,
+.movement-targets .target-distance,
+.dnd5e2.activity-grant .item-type {
+    font-size: 0.7rem;
+    color: var(--dnd5e-color-text-light);
+}
+
 .teleport-targets .target-delete-btn,
-.movement-targets .target-delete-btn {
+.movement-targets .target-delete-btn,
+.dnd5e2.activity-grant .item-delete-btn {
     width: 1.5rem;
     height: 1.5rem;
     font-size: 0.7rem;
@@ -683,20 +712,27 @@
    font-size: 0.75rem;
 }
 
-.no-tokens {
+.no-tokens,
+.no-items {
    text-align: center;
    color: var(--color-text-dark-secondary);
    font-weight: bold;
    font-style: italic;
 }
 
-.placement-buttons {
+.placement-buttons,
+.grant-buttons {
    display: flex;
    gap: 0.5rem;
    justify-content: center;
 }
 
-.finish-placement-btn {
+.grant-buttons {
+    margin-top: 0.5rem;
+}
+
+.finish-placement-btn,
+.finish-grant-btn {
    background: var(--button-hover-background-color);
    padding: 1.25rem;
    border-radius: 4px;
@@ -707,7 +743,8 @@
    gap: 0.5rem;
 }
 
-.cancel-placement-btn {
+.cancel-placement-btn,
+.cancel-grant-btn {
    background: var(--color-button-secondary);
    padding: 1.25rem;
    border-radius: 4px;

@@ -5,6 +5,7 @@ import { ChainActivityData, ChainActivitySheet, ChainActivity, ChainData } from 
 import { TeleportActivityData, TeleportActivitySheet, TeleportActivity, TeleportData } from './activities/teleport.js';
 import { MovementActivityData, MovementActivitySheet, MovementActivity, MovementData } from './activities/movement.js';
 import { SoundActivityData, SoundActivitySheet, SoundActivity, SoundData } from './activities/sound.js';
+import { GrantActivityData, GrantActivitySheet, GrantActivity, GrantData } from './activities/grant.js';
 import { Compat } from './compat.js';
 import { HandlebarsData } from './utils/handlebars.js';
 
@@ -66,7 +67,14 @@ Hooks.once(`init`, async() => {
         typeLabel: `DND5E.ACTIVITY.Type.sound`,
     };
 
-    console.log(`More Activities | Registered (7) Activity Types`);
+    CONFIG.DND5E.activityTypes.grant = {
+        documentClass: GrantActivity,
+        dataModel: GrantActivityData,
+        sheetClass: GrantActivitySheet,
+        typeLabel: `DND5E.ACTIVITY.Type.grant`,
+    };
+
+    console.log(`More Activities | Registered (8) Activity Types`);
 
     if (game.version.startsWith(`12`)) {
         Hooks.on(`renderChatMessage`, (message, html) => {
@@ -75,6 +83,7 @@ Hooks.once(`init`, async() => {
             ChainData.applyListeners(message, html[0]);
             TeleportData.applyListeners(message, html[0]);
             MovementData.applyListeners(message, html[0]);
+            GrantData.applyListeners(message, html[0]);
         });
     }
     else {
@@ -84,6 +93,7 @@ Hooks.once(`init`, async() => {
             ChainData.applyListeners(message, html);
             TeleportData.applyListeners(message, html);
             MovementData.applyListeners(message, html);
+            GrantData.applyListeners(message, html);
         });
     }
 

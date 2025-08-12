@@ -104,5 +104,17 @@
     "DND5E.ACTIVITY.FIELDS.sound.playForAll.label": "Play for All",
     "DND5E.ACTIVITY.FIELDS.sound.playForAll.hint": "Transmit the sound to all active players?",
     "DND5E.ACTIVITY.FIELDS.sound.volume.label": "Volume",
-    "DND5E.ACTIVITY.FIELDS.sound.volume.hint": "The volume to play the sound file at (0 - 1)"
+    "DND5E.ACTIVITY.FIELDS.sound.volume.hint": "The volume to play the sound file at (0 - 1)",
+    
+    "DND5E.ACTIVITY.Type.grant": "Grant",
+    "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label": "Can use roll formulas using @",
+    "DND5E.ACTIVITY.FIELDS.grant.grantAll.label": "Grant All?",
+    "DND5E.ACTIVITY.FIELDS.grant.grantAll.hint": "Whether to give the player all items configured in this list.",
+    "DND5E.ACTIVITY.FIELDS.grant.count.label": "Amount to Grant",
+    "DND5E.ACTIVITY.FIELDS.grant.count.hint": "The number of items permitted from the list.",
+    "DND5E.ACTIVITY.FIELDS.grant.swappable.label": "Swap Items?",
+    "DND5E.ACTIVITY.FIELDS.grant.swappable.hint": "Whether granted items should be swapped when using this activity more than once.",
+    "DND5E.ACTIVITY.FIELDS.grant.uuid.label": "UUID",
+    "DND5E.ACTIVITY.FIELDS.grant.uuid.hint": "You can drag items from the sidebar or compendium directly into the input field.",
+    "DND5E.ACTIVITY.FIELDS.grant.none.hint": "No items added yet. Add items above to grant them when this activity is used."
 }

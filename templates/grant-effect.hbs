@@ -1,0 +1,66 @@
+<section class="tab activity-{{ tab.id }} {{ tab.cssClass }}" data-tab="{{ tab.id }}" data-group="{{ tab.group }}">
+    <fieldset>
+        <legend><label> Configuration </label></legend>
+
+        <div class="form-group stacked">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.grant.grantAll.label"}}</label>
+            <div class="form-fields">
+                <dnd5e-checkbox name="grantAll" {{#if grantAll}}checked{{/if}}></dnd5e-checkbox>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.grant.grantAll.hint"}}</p>
+        </div>
+
+        <div class="form-group stacked indented">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.grant.count.label"}}</label>
+            <div class="form-fields">
+                <input type="text" name="count" value="{{ count }}" placeholder="Amount to Grant" {{#if grantAll}}disabled{{/if}}>
+            </div>
+            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.grant.count.hint"}}</p>
+        </div>
+
+        <div class="form-group stacked indented">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.grant.swappable.label"}}</label>
+            <div class="form-fields">
+                <dnd5e-checkbox name="swappable" {{#if swappable}}checked{{/if}} {{#if grantAll}}disabled{{/if}}></dnd5e-checkbox>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.grant.swappable.hint"}}</p>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend><label> Items </label></legend>
+
+        <div class="form-group stacked">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.grant.uuid.label"}}</label>
+            <div class="form-fields">
+                <input type="text" name="current" value="{{ current }}" placeholder="UUID or drag & drop item here">
+                <button type="button" class="add-item-btn"><i class="fas fa-plus"></i></button>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.grant.uuid.hint"}}</p>
+        </div>
+
+        <div class="form-group stacked">
+            <label>Items ({{grants.length}}):</label>
+            {{#if grants.length}}
+            <div class="granted-items">
+                {{#each grants as |item|}}
+                <div class="granted-item">
+                    <div class="item-info">
+                        <img class="gold-icon item-img" src="{{item.img}}" alt="{{item.name}}">
+                        <a data-uuid="{{item.uuid}}" class="item-name">{{item.name}}</a>
+                    </div>
+                    <div class="item-controls">
+                        <div class="item-type">{{item.type}}</div>
+                        <button type="button" class="item-delete-btn" data-index="{{item.index}}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+            {{else}}
+            <div class="no-items">{{localize "DND5E.ACTIVITY.FIELDS.grant.none.hint"}}</div>
+            {{/if}}
+        </div>
+    </fieldset>
+</section>
