@@ -47,7 +47,7 @@ export class CanvasData {
 
     static async updateCombatants(oldTokens, newTokens) {
         for (var i = 0; i < oldTokens.length; i++) {
-            const combatant = game.combat.combatants.find(c => c.tokenId === oldTokens[i]);
+            const combatant = game.combat?.combatants?.find(c => c.tokenId === oldTokens[i]);
             if (!combatant) continue;
             
             await combatant.update({

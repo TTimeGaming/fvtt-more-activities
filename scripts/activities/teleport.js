@@ -836,7 +836,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         const oldPosition = await this._executeSingleTokenTeleport(this.currentDragData.token.token.actor, snapped.x, snapped.y);
         const placedToken = this.tokensToPlace.splice(this.currentDragData.index, 1)[0];
         this.placedTokens.push({
-            actor: placedToken.token.actor,
+            token: placedToken.token,
             position: oldPosition,
         });
 
@@ -859,7 +859,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.destinationTarget = null;
         }
 
-        await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.actor));
+        await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.token?.actor));
         ui.notifications.info(`${this.placedTokens.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`)}`);
 
         this.isFinished = true;
@@ -873,7 +873,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
     async _onCancelPlacement() {
         for (const placedToken of this.placedTokens) {
             await this._executeSingleTokenTeleport(
-                placedToken.actor,
+                placedToken.token?.actor,
                 placedToken.position.x,
                 placedToken.position.y
             );
