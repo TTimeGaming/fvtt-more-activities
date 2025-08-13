@@ -1,6 +1,6 @@
 ## More Activities - Now with V12 Support!
 
-![Latest](https://img.shields.io/badge/Module%20Version:%201.6.1-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)  
+![Latest](https://img.shields.io/badge/Module%20Version:%201.7.0-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)  
 
 An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides additional activity types.
 
@@ -8,13 +8,14 @@ An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides
 
 ### ✅ Available Now
 
-- **Macro Activity:** Adds inline macro activities that execute automatically when the Activity is used.
-- **Hook Activity:** Adds inline macro activities that execute on a specified hook, with support for manual usage.
-- **Contested Activity:** Adds chat cards that allow for configurable contested rolls
-- **Chain Activity:** Adds the ability to chain multiple activities together with a confirmation to proceed
-- **Teleport Activity:** Adds the ability to teleport tokens on the canvas
-- **Movement Activity:** Adds the ability to force tokens to move on the canvas
-- **Sound Activity:** Adds the ability to play sounds directly from the activity
+- **Macro Activity:** Inline macro code that execute when used
+- **Hook Activity:** Inline macro code that execute on a specified hook
+- **Contested Activity:** Dialogs that allow for configurable contested rolls
+- **Chain Activity:** Chain multiple activities together with triggers
+- **Teleport Activity:** Teleport tokens on the canvas
+- **Movement Activity:** Force tokens to move on the canvas
+- **Sound Activity:** Play sounds directly from the activity
+- **Grant Activity:** Grant items or create Pact-style selections
 
 ### 🍾 Versioning
 
@@ -23,7 +24,8 @@ An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides
 ## 👏 Huge Thanks
 
 - **TogaParty:** Suggestion for *Contested* Activity
-- **darkanx:** Suggestion for *Chain*, *Teleport* and *Forced Movement* Activities
+- **darkanx:** Suggestion for *Chain*, *Teleport*, *Movement* and *Grant* Activities
+- **TPNils:** Improvement for *Grant* Activity
 - **darkanx, alterNERDtive, WelpM8:** Highlighting bugs in this module
 
 ## 🚫 Breaking Changes
@@ -104,6 +106,10 @@ Your support helps fund:
 
 ### Sound Activity
 <img src="./assets/sound-activity.png" width="700" />
+
+### Grant Activity
+<img src="./assets/grant-activity.png" width="700" />
+<img src="./assets/grant-selection.png" width="350" />
 
 ---
 
