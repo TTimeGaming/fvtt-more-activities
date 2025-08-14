@@ -70,8 +70,8 @@
     "DND5E.ACTIVITY.FIELDS.teleport.clusterRadius.hint": "The radius to cluster teleported tokens at the destination (in feet)",
     "DND5E.ACTIVITY.FIELDS.teleport.originToken.label": "Origin Token",
     "DND5E.ACTIVITY.FIELDS.teleport.destination.label": "Click a point within range to set as the destination.",
-    "DND5E.ACTIVITY.FIELDS.teleport.dragAndDrop.label": "Drag tokens to the canvas to teleport them.",
-    "DND5E.ACTIVITY.FIELDS.teleport.dragCompleted.label": "All tokens have been placed!",
+    "DND5E.ACTIVITY.FIELDS.teleport.clickToPlace.label": "Select a token and click on the canvas to teleport them.",
+    "DND5E.ACTIVITY.FIELDS.teleport.allTokensPlaced.label": "All tokens have been placed!",
     "DND5E.ACTIVITY.FIELDS.teleport.appliedEffects.label": "Effects",
     "DND5E.ACTIVITY.FIELDS.teleport.appliedEffects.hint": "Effects to apply to teleported tokens",
 
