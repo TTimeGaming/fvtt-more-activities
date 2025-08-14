@@ -57,7 +57,7 @@ export class CanvasData {
         }
     }
 
-    static createMeasuredTemplate({ x, y, w, h, distance, t = `circle`, borderColor = `#ffffff`, fillColor = `#ffffff` }) {
+    static async createMeasuredTemplate({ x, y, w, h, distance, t = `circle`, borderColor = `#ffffff`, fillColor = `#ffffff` }) {
         const maxDim = Math.max(w / game.canvas.grid.sizeX, h / game.canvas.grid.sizeY) * game.canvas.grid.distance;
         const data = {
             t: t,
@@ -68,17 +68,23 @@ export class CanvasData {
             borderColor: borderColor,
             fillColor: fillColor,
         };
-        const document = new CONFIG.MeasuredTemplate.documentClass(data, { parent: game.canvas.scene });
 
-        const object = new CONFIG.MeasuredTemplate.objectClass(document);
-        object.draw();
-        game.canvas.templates.addChild(object);
+        const [template] = await game.canvas.scene.createEmbeddedDocuments(`MeasuredTemplate`, [data]);
+        const object = game.canvas.templates.get(template.id);
+        object.controlIcon.visible = false;
         return object;
     }
 
-    static removeMeasuredTemplate(measuredTemplate) {
-        game.canvas.templates.removeChild(measuredTemplate);
-        measuredTemplate.clear();
-        measuredTemplate.destroy();
+    static async removeMeasuredTemplate(measuredTemplate) {
+        if (!measuredTemplate || measuredTemplate.destroyed) return;
+
+        if (measuredTemplate.document) {
+            await game.canvas.scene.deleteEmbeddedDocuments(`MeasuredTemplate`, [measuredTemplate.document.id]);
+        }
+        else {
+            game.canvas.templates.removeChild(measuredTemplate);
+            measuredTemplate.clear();
+            measuredTemplate.destroy();
+        }
     }
 }

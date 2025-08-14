@@ -235,9 +235,8 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             return;
         }
 
-        if (!this.selectionTarget)
-        {
-            this.selectionTarget = CanvasData.createMeasuredTemplate({
+        if (!this.selectionTarget) {
+            this.selectionTarget = await CanvasData.createMeasuredTemplate({
                 x: originToken.x + (originToken.w / 2),
                 y: originToken.y + (originToken.h / 2),
                 w: originToken.w,
@@ -317,14 +316,12 @@ class TeleportTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
     async close(options = {}) {
         await super.close(options);
         
-        if (this.selectionTarget)
-        {
-            CanvasData.removeMeasuredTemplate(this.selectionTarget);
+        if (this.selectionTarget) {
+            await CanvasData.removeMeasuredTemplate(this.selectionTarget);
             this.selectionTarget = null;
         }
 
-        if (!this.isSelecting)
-        {
+        if (!this.isSelecting) {
             this.selectedTargets.forEach(target => {
                 target.token.setTarget(false, { releaseOthers: true, groupSelection: true });
             });
@@ -485,9 +482,8 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
             target.token.setTarget(false, { releaseOthers: false, groupSelection: true });
         });
 
-        if (this.destinationTarget)
-        {
-            CanvasData.removeMeasuredTemplate(this.destinationTarget);
+        if (this.destinationTarget) {
+            await CanvasData.removeMeasuredTemplate(this.destinationTarget);
             this.destinationTarget = null;
         }
 
@@ -507,7 +503,7 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
         const originY = originToken.y + (originToken.h / 2);
         const radius = FieldsData.resolveFormula(this.activity.teleportDistance, this.activity.item);
 
-        this.destinationTarget = CanvasData.createMeasuredTemplate({
+        this.destinationTarget = await CanvasData.createMeasuredTemplate({
             x: originX,
             y: originY,
             w: originToken.w,
@@ -585,8 +581,10 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
         }
         await this._executeTokenMove(selectedTokensData);
 
-        CanvasData.removeMeasuredTemplate(this.destinationTarget);
-        this.destinationTarget = null;
+        if (this.destinationTarget) {
+            await CanvasData.removeMeasuredTemplate(this.destinationTarget);
+            this.destinationTarget = null;
+        }
 
         this.openTarget = false;
         this.close();
@@ -603,6 +601,11 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
      */
     async _manualTeleport(destX, destY) {
         new TeleportPlacementApp(this.targetApp, destX, destY).render(true);
+
+        if (this.destinationTarget) {
+            await CanvasData.removeMeasuredTemplate(this.destinationTarget);
+            this.destinationTarget = null;
+        }
 
         this.openTarget = false;
         this.close();
@@ -788,9 +791,9 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this._onCancelPlacement();
     }
 
-    _renderDestination() {
+    async _renderDestination() {
         const originToken = CanvasData.getOriginToken(this.targetApp.actor);
-        this.destinationTarget = CanvasData.createMeasuredTemplate({
+        this.destinationTarget = await CanvasData.createMeasuredTemplate({
             x: this.destX,
             y: this.destY,
             w: originToken.w,
@@ -880,9 +883,8 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             return;
         }
         
-        if (this.destinationTarget)
-        {
-            CanvasData.removeMeasuredTemplate(this.destinationTarget);
+        if (this.destinationTarget) {
+            await CanvasData.removeMeasuredTemplate(this.destinationTarget);
             this.destinationTarget = null;
         }
 
@@ -906,9 +908,8 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             );
         }
 
-        if (this.destinationTarget)
-        {
-            CanvasData.removeMeasuredTemplate(this.destinationTarget);
+        if (this.destinationTarget) {
+            await CanvasData.removeMeasuredTemplate(this.destinationTarget);
             this.destinationTarget = null;
         }
         

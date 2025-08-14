@@ -235,7 +235,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         if (!this.selectionTarget)
         {
-            this.selectionTarget = CanvasData.createMeasuredTemplate({
+            this.selectionTarget = await CanvasData.createMeasuredTemplate({
                 x: originToken.x + (originToken.w / 2),
                 y: originToken.y + (originToken.h / 2),
                 w: originToken.w,
@@ -314,14 +314,12 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
     async close(options = {}) {
         await super.close(options);
 
-        if (this.selectionTarget)
-        {
-            CanvasData.removeMeasuredTemplate(this.selectionTarget);
+        if (this.selectionTarget) {
+            await CanvasData.removeMeasuredTemplate(this.selectionTarget);
             this.selectionTarget = null;
         }
 
-        if (!this.isSelecting)
-        {
+        if (!this.isSelecting) {
             this.selectedTargets.forEach(target => {
                 target.token.setTarget(false, { releaseOthers: true, groupSelection: true });
             });
@@ -612,9 +610,9 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this._onCancelPlacement();
     }
 
-    _renderDestination() {
+    async _renderDestination() {
         for (let i = 0; i < this.tokensToPlace.length; i++) {
-            this.destinationTargets[i] = CanvasData.createMeasuredTemplate({
+            this.destinationTargets[i] = await CanvasData.createMeasuredTemplate({
                 x: this.tokensToPlace[i].token.x + (this.tokensToPlace[i].token.w / 2),
                 y: this.tokensToPlace[i].token.y + (this.tokensToPlace[i].token.h / 2),
                 w: this.tokensToPlace[i].token.w,
@@ -678,7 +676,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         if (this.destinationTargets[this.currentTokenIndex]) {
             const destination = this.destinationTargets.splice(this.currentTokenIndex, 1)[0];
-            CanvasData.removeMeasuredTemplate(destination);
+            await CanvasData.removeMeasuredTemplate(destination);
         }
 
         if (this.currentTokenIndex >= this.tokensToPlace.length && this.tokensToPlace.length > 0) {
@@ -714,7 +712,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         
         for (let i = 0; i < this.destinationTargets.length; i++) {
             if (!this.destinationTargets[i]) continue;
-            CanvasData.removeMeasuredTemplate(this.destinationTargets[i]);
+            await CanvasData.removeMeasuredTemplate(this.destinationTargets[i]);
             this.destinationTargets[i] = null;
         }
         
@@ -740,7 +738,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         for (let i = 0; i < this.destinationTargets.length; i++) {
             if (!this.destinationTargets[i]) continue;
-            CanvasData.removeMeasuredTemplate(this.destinationTargets[i]);
+            await CanvasData.removeMeasuredTemplate(this.destinationTargets[i]);
             this.destinationTargets[i] = null;
         }
         
