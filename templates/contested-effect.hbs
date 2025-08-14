@@ -41,11 +41,14 @@
                 <select name="attackerRollType">
                     <option value="ability" {{#if (eq attackerRollType "ability")}}selected{{/if}}>Ability Check</option>
                     <option value="skill" {{#if (eq attackerRollType "skill")}}selected{{/if}}>Skill Check</option>
+                    <option value="spellcasting" {{#if (eq attackerRollType "spellcasting")}}selected{{/if}}>Spellcasting</option>
+                    <option value="custom" {{#if (eq attackerRollType "custom")}}selected{{/if}}>Custom DC</option>
                 </select>
             </div>
         </div>
 
-        <div class="form-group stacked">
+        {{#if (or (eq attackerRollType "ability") (eq attackerRollType "skill"))}}
+        <div class="form-group stacked indented">
             <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.label"}}</label>
             <div class="form-fields">
                 <multi-select name="attackerOptions">
@@ -67,6 +70,17 @@
             </div>
             <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.hint"}}</p>
         </div>
+        {{/if}}
+
+        {{#if (eq attackerRollType "custom")}}
+        <div class="form-group stacked indented">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.customBonus.label"}}</label>
+            <div class="form-fields">
+                <input type="text" name="attackerCustom" value="{{ attackerCustom }}" placeholder="Custom Bonus">
+            </div>
+            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.contested.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.contested.customBonus.hint"}}</p>
+        </div>
+        {{/if}}
     </fieldset>
     </fieldset>
 
@@ -86,11 +100,13 @@
                 <select name="defenderRollType">
                     <option value="ability" {{#if (eq defenderRollType "ability")}}selected{{/if}}>Ability Check</option>
                     <option value="skill" {{#if (eq defenderRollType "skill")}}selected{{/if}}>Skill Check</option>
+                    <option value="spellcasting" {{#if (eq defenderRollType "spellcasting")}}selected{{/if}}>Spellcasting</option>
                 </select>
             </div>
         </div>
 
-        <div class="form-group stacked">
+        {{#if (or (eq defenderRollType "ability") (eq defenderRollType "skill"))}}
+        <div class="form-group stacked indented">
             <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.label"}}</label>
             <div class="form-fields">
                 <multi-select name="defenderOptions">
@@ -112,6 +128,7 @@
             </div>
             <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.hint"}}</p>
         </div>
+        {{/if}}
     </fieldset>
 
     <fieldset>

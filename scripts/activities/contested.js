@@ -1,6 +1,7 @@
 import { MessageData } from '../utils/message.js';
 import { DomData } from '../utils/dom.js';
 import { EffectsData } from '../utils/effects.js';
+import { FieldsData } from '../utils/fields.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_NAME = `contested`;
@@ -26,53 +27,69 @@ export class ContestedData {
 
     /**
      * Get human-readable labels for roll options with bonuses
-     * @param {string} rollType - The type of roll (ability, skill, tool)
+     * @param {string} rollType - The type of roll (ability, skill, spellcasting, custom)
      * @param {string[]} options - Array of option keys
+     * @param {Activity} activity - Activity to get bonuses for
      * @param {Actor5e} actor - Actor to get bonuses for (optional)
      * @returns {Object[]}
      * @private
      */
-    static getOptionLabels(rollType, options, actor = null) {
-        const config = {
-            ability: CONFIG.DND5E.abilities,
-            skill: CONFIG.DND5E.skills,
-        };
-
-        return options.map(option => {
-            const optionConfig = config[rollType][option];
-            let label = optionConfig?.label || optionConfig || option;
-
-            if (!actor) {
-                return {
-                    key: option,
-                    label: label
+    static getOptionLabels(rollType, options, activity, actor = null) {
+        switch (rollType) {
+            case `spellcasting`:
+                const spellcasting = actor?.system?.attributes?.spell?.mod ?? 0;
+                return [{
+                    key: `spellcasting`,
+                    label: `Spellcasting (${spellcasting >= 0 ? `+${spellcasting}` : `${spellcasting}`})`
+                }];
+            case `custom`:
+                const calculated = FieldsData.resolveFormula(activity.attackerCustom, activity.item);
+                return [{
+                    key: `custom`,
+                    label: `Custom (${calculated >= 0 ? `+${calculated}` : `${calculated}`})`,
+                }];
+            default:
+                const config = {
+                    ability: CONFIG.DND5E.abilities,
+                    skill: CONFIG.DND5E.skills,
                 };
-            }
 
-            try {
-                let bonus = null;
-                switch (rollType) {
-                    case `ability`:
-                        bonus = actor.system.abilities[option]?.mod;
-                        break;
-                    case `skill`:
-                        bonus = actor.system.skills[option]?.total;
-                        break;
-                }
+                return options.map(option => {
+                    const optionConfig = config[rollType][option];
+                    let label = optionConfig?.label || optionConfig || option;
 
-                if (bonus !== undefined && bonus != null) {
-                    const formatted = bonus >= 0 ? `+${bonus}` : `${bonus}`;
-                    label += ` (${formatted})`;
-                }
-            }
-            catch(error) {
-            }
+                    if (!actor) {
+                        return {
+                            key: option,
+                            label: label
+                        };
+                    }
 
-            return {
-                key: option,
-                label: label
-            };
-        });
+                    try {
+                        let bonus = null;
+                        switch (rollType) {
+                            case `ability`:
+                                bonus = actor.system.abilities[option]?.mod;
+                                break;
+                            case `skill`:
+                                bonus = actor.system.skills[option]?.total;
+                                break;
+                        }
+
+                        if (bonus !== undefined && bonus != null) {
+                            const formatted = bonus >= 0 ? `+${bonus}` : `${bonus}`;
+                            label += ` (${formatted})`;
+                        }
+                    }
+                    catch(error) {
+                    }
+
+                    return {
+                        key: option,
+                        label: label
+                    };
+                });
+        }
     }
 }
 
@@ -116,6 +133,7 @@ class ContestedManager {
                 defenderRollType: activity.defenderRollType,
                 attackerOptions: activity.attackerOptions,
                 defenderOptions: activity.defenderOptions,
+                attackerCustom: activity.attackerCustom,
             },
         };
 
@@ -350,7 +368,7 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
         schema.attackerRollType = new fields.StringField({
             required: false,
             initial: `ability`,
-            choices: [ `ability`, `skill` ],
+            choices: [ `ability`, `skill`, `spellcasting`, `custom` ],
         });
 
         schema.attackerOptions = new fields.ArrayField(new fields.StringField({
@@ -361,6 +379,11 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
             initial: [ `str` ],
         });
 
+        schema.attackerCustom = new fields.StringField({
+            required: false,
+            blank: true,
+        })
+
         schema.defenderLabel = new fields.StringField({
             required: false,
             blank: true,
@@ -370,7 +393,7 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
         schema.defenderRollType = new fields.StringField({
             required: false,
             initial: `ability`,
-            choices: [ `ability`, `skill` ],
+            choices: [ `ability`, `skill`, `spellcasting`, `custom` ],
         });
 
         schema.defenderOptions = new fields.ArrayField(new fields.StringField({
@@ -476,6 +499,7 @@ export class ContestedActivitySheet extends dnd5e.applications.activity.Activity
         context.attackerLabel = this.activity?.attackerLabel || `Attacker`;
         context.attackerRollType = this.activity?.attackerRollType || `ability`;
         context.attackerOptions = this.activity?.attackerOptions || [ `str` ];
+        context.attackerCustom = this.activity?.attackerCustom || ``;
         context.defenderLabel = this.activity?.defenderLabel || `Defender`;
         context.defenderRollType = this.activity?.defenderRollType || `ability`;
         context.defenderOptions = this.activity?.defenderOptions || [ `str` ];
@@ -618,6 +642,7 @@ class ContestedInitiatorApp extends HandlebarsApplicationMixin(ApplicationV2) {
             attackerOptions: ContestedData.getOptionLabels(
                 this.activity.attackerRollType, 
                 this.activity.attackerOptions, 
+                this.activity,
                 this.activity.actor
             )
         };
@@ -771,7 +796,7 @@ class ContestedDefenderApp extends HandlebarsApplicationMixin(ApplicationV2) {
             contest: this.contest,
             actor: this.actor,
             side: `${this.side[0].toUpperCase()}${this.side.substring(1)}`,
-            rollOptions: ContestedData.getOptionLabels(rollType, options, this.actor)
+            rollOptions: ContestedData.getOptionLabels(rollType, options, this.contest.activityData, this.actor)
         };
     }
 
@@ -805,6 +830,13 @@ class ContestedDefenderApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 break;
             case 'skill':
                 roll = await this.actor.rollSkill({ skill: option });
+                break;
+            case 'spellcasting':
+                roll = await this.actor.rollAbilityCheck({ ability: this.actor.system.attributes.spellcasting });
+                break;
+            case 'custom':
+                const custom = new Roll(`1d20 + ${this.contest.activityData.attackerCustom}`, this.actor.getRollData());
+                roll = [await custom.toMessage({ flavor: `Custom Contested Roll` })];
                 break;
         }
         
