@@ -836,7 +836,8 @@ class ContestedDefenderApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 break;
             case 'custom':
                 const custom = new Roll(`1d20 + ${this.contest.activityData.attackerCustom}`, this.actor.getRollData());
-                roll = [await custom.toMessage({ flavor: `Custom Contested Roll` })];
+                await custom.toMessage({ flavor: `Custom Contested Roll` });
+                roll = [custom];
                 break;
         }
         
