@@ -347,7 +347,7 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.element.querySelector(`.finish-grant-btn`)?.addEventListener(`click`, async() => {
             let newItems = this.selectedItems;
 
-            if (this.activity.swappable) {
+            if (this.activity.swappable && !this.activity.grantAll) {
                 newItems = this.selectedItems.filter(id => !this.startingItems.includes(id));
 
                 const removedItems = [];
