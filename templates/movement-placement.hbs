@@ -1,23 +1,36 @@
 <div class="manual-placement-container">
     <div class="placement-header">
-        <p>{{localize "DND5E.ACTIVITY.FIELDS.movement.dragAndDrop.label"}}</p>
+        <p>{{localize "DND5E.ACTIVITY.FIELDS.movement.clickToPlace.label"}}</p>
         <div class="placement-progress">
-            <span>Placed: {{placedCount}}/{{totalCount}}</span>
+            <span>Placed: {{placedCount}} / {{totalCount}}</span>
         </div>
     </div>
 
-    <div class="tokens-to-place">
-        {{#each tokensToPlace}}
-        <div class="token-drag-item" draggable="true" data-index="{{index}}">
-            <img src="{{imgSrc}}" alt="{{name}}" class="token-image">
-            <span class="token-name">{{name}}</span>
+    {{#if currentToken}}
+    <div class="current-token-section">
+        <div class="current-token-display">
+            <img src="{{currentToken.imgSrc}}" alt="{{currentToken.name}}" class="token-image">
+            <div class="token-info">
+                <span class="token-name">{{currentToken.name}}</span>
+                <span class="token-counter">Token {{add currentIndex 1}} of {{tokensRemaining}}</span>
+            </div>
         </div>
-        {{/each}}
         
-        {{#unless tokensToPlace.length}}
-        <div class="no-tokens">{{localize "DND5E.ACTIVITY.FIELDS.movement.dragCompleted.label"}}</div>
-        {{/unless}}
+        <div class="token-navigation">
+            <button type="button" class="prev-token-btn" {{#unless canNavigate}}disabled{{/unless}}>
+                <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            <button type="button" class="place-token-btn {{#if isPlacing}}placing{{/if}}">
+                <i class="fas fa-crosshairs"></i> {{#if isPlacing}}Placing{{else}}Place{{/if}}
+            </button>
+            <button type="button" class="next-token-btn" {{#unless canNavigate}}disabled{{/unless}}>
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
     </div>
+    {{else}}
+    <div class="no-tokens">{{localize "DND5E.ACTIVITY.FIELDS.movement.allTokensPlaced.label"}}</div>
+    {{/if}}
 
     <div class="placement-buttons">
         {{#if canFinish}}

@@ -1,3 +1,5 @@
+// should be the same as teleport!
+
 import { MessageData } from '../utils/message.js';
 import { CanvasData } from '../utils/canvas.js';
 import { EffectsData } from '../utils/effects.js';
@@ -545,22 +547,14 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             },
             ...options,
         });
-
-        const token = CanvasData.getOriginToken(actor);
-
-        const snapped = game.canvas.grid.getCenterPoint({
-            x: Math.round(token.x * 10) / 10,
-            y: Math.round(token.y * 10) / 10,
-        });
-
+        
         this.targetApp = targetApp;
-        this.destX = snapped.x;
-        this.destY = snapped.y;
         this.tokensToPlace = [...targetApp.selectedTargets];
         this.destinationTargets = [];
         this.placementRadius = FieldsData.resolveFormula(targetApp.activity.movementDistance, targetApp.activity.item);
         this.placedTokens = [];
-        this.currentDragData = null;
+        this.currentTokenIndex = 0;
+        this.canvasClickHandler = null;
         this.isFinished = false;
         this.isHardClose = false;
 
@@ -572,15 +566,20 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     /** @inheritdoc */
     async _prepareContext() {
+        const currentToken = this.tokensToPlace[this.currentTokenIndex];
+
         return {
-            tokensToPlace: this.tokensToPlace.map((token, index) => ({
-                ...token,
-                index: index,
-                imgSrc: token.token.document.texture.src
-            })),
+            currentToken: currentToken ? {
+                ...currentToken,
+                imgSrc: currentToken.token.document.texture.src,
+            } : null,
+            currentIndex: this.currentTokenIndex,
+            tokensRemaining: this.tokensToPlace.length,
             placedCount: this.placedTokens.length,
             totalCount: this.tokensToPlace.length + this.placedTokens.length,
-            canFinish: this.tokensToPlace.length === 0
+            canNavigate: this.tokensToPlace.length > 1,
+            canFinish: this.tokensToPlace.length === 0,
+            isPlacing: this.canvasClickHandler !== null,
         };
     }
 
@@ -593,11 +592,9 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
         }
 
-        this.element.querySelectorAll('.token-drag-item').forEach(tokenEl => {
-            tokenEl.addEventListener('dragstart', this._onDragStart.bind(this));
-            tokenEl.addEventListener('dragend', this._onDragEnd.bind(this));
-        });
-
+        this.element.querySelector('.prev-token-btn')?.addEventListener('click', this._onPrevToken.bind(this));
+        this.element.querySelector('.next-token-btn')?.addEventListener('click', this._onNextToken.bind(this));
+        this.element.querySelector('.place-token-btn')?.addEventListener('click', this._onStartPlacement.bind(this));
         this.element.querySelector('.finish-placement-btn')?.addEventListener('click', this._onFinishPlacement.bind(this));
         this.element.querySelector('.cancel-placement-btn')?.addEventListener('click', this._onCancelPlacement.bind(this));
     }
@@ -605,6 +602,12 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
     /** @inheritdoc */
     async close(options = {}) {
         await super.close(options);
+
+        if (this.canvasClickHandler) {
+            game.canvas.stage.off(`mouseup`, this.canvasClickHandler);
+            this.canvasClickHandler = null;
+        }
+
         if (!this.isFinished && !this.isHardClose)
             this._onCancelPlacement();
     }
@@ -622,59 +625,83 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         }
     }
 
-    /**
-     * Handle drag start
-     * @param {DragEvent} event 
-     * @private
-     */
-    _onDragStart(event) {
-        const index = parseInt(event.target.dataset.index);
-        const token = this.tokensToPlace[index];
-        
-        this.currentDragData = { index, token };
-        event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('text/plain', JSON.stringify({ type: 'movement-token', index }));
-
-        event.target.style.opacity = '0.5';
+    _onPrevToken() {
+        this.currentTokenIndex -= 1;
+        if (this.currentTokenIndex < 0)
+            this.currentTokenIndex = this.tokensToPlace.length - 1;
+        this.render();
     }
 
-    /**
-     * Handle drag end
-     * @param {DragEvent} event 
-     * @private
-     */
-    async _onDragEnd(event) {
-        if (!this.currentDragData) return;
+    _onNextToken() {
+        this.currentTokenIndex += 1;
+        if (this.currentTokenIndex >= this.tokensToPlace.length)
+            this.currentTokenIndex = 0;
+        this.render();
+    }
 
-        const pos = game.canvas.canvasCoordinatesFromClient(event);
-        const distance = CanvasData.calculateCoordDistance(pos.x, pos.y, this.destX, this.destY);
+    _startCanvasPlacement() {
+        if (this.canvasClickHandler)
+            game.canvas.stage.off(`mouseup`, this.canvasClickHandler);
+
+        this.canvasClickHandler = this._onCanvasClick.bind(this);
+        game.canvas.stage.on(`mouseup`, this.canvasClickHandler);
+    }
+
+    async _onCanvasClick(event) {
+        if (!this.tokensToPlace[this.currentTokenIndex]) return;
+
+        const tokenToPlace = this.tokensToPlace[this.currentTokenIndex];
+        console.log(tokenToPlace);
+
+        const pos = game.canvas.canvasCoordinatesFromClient(event.data.originalEvent);
+        const snappedPos = game.canvas.grid.getCenterPoint({
+            x: Math.round(pos.x * 10) / 10,
+            y: Math.round(pos.y * 10) / 10,
+        });
+        const distance = CanvasData.calculateCoordDistance(snappedPos.x, snappedPos.y, tokenToPlace.token.x, tokenToPlace.token.y);
         if (distance > this.placementRadius) {
             ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.outOfBounds.label`));
-            event.target.style.opacity = '1';
-            this.currentDragData = null;
             return;
         }
 
         const snapped = game.canvas.grid.getTopLeftPoint({
-            x: Math.round(pos.x * 10) / 10,
-            y: Math.round(pos.y * 10) / 10,
+            x: Math.round(snappedPos.x * 10) / 10,
+            y: Math.round(snappedPos.y * 10) / 10,
         });
 
-        const oldPosition = await this._executeSingleTokenMovement(this.currentDragData.token.token.actor, snapped.x, snapped.y);
-        const placedToken = this.tokensToPlace.splice(this.currentDragData.index, 1)[0];
+        const oldPosition = await this._executeSingleTokenMovement(tokenToPlace.token.actor, snapped.x, snapped.y);
+        const placedToken = this.tokensToPlace.splice(this.currentTokenIndex, 1)[0];
         this.placedTokens.push({
             token: placedToken.token,
             position: oldPosition,
         });
 
-        if (this.destinationTargets[this.currentDragData.index]) {
-            CanvasData.removeMeasuredTemplate(this.destinationTargets[this.currentDragData.index]);
-            this.destinationTargets[this.currentDragData.index] = null;
+        if (this.destinationTargets[this.currentTokenIndex]) {
+            const destination = this.destinationTargets.splice(this.currentTokenIndex, 1)[0];
+            CanvasData.removeMeasuredTemplate(destination);
         }
 
+        if (this.currentTokenIndex >= this.tokensToPlace.length && this.tokensToPlace.length > 0) {
+            this.currentTokenIndex = this.tokensToPlace.length - 1;
+        }
+        
+        game.canvas.stage.off(`mouseup`, this.canvasClickHandler);
+        this.canvasClickHandler = null;
         this.render();
-        this.currentDragData = null;
     }
+
+    _onStartPlacement() {
+        if (this.canvasClickHandler) {
+            game.canvas.stage.off(`mouseup`, this.canvasClickHandler);
+            this.canvasClickHandler = null;
+            this.render();
+            return;
+        }
+
+        this._startCanvasPlacement();
+        this.render();
+    }
+
     /**
      * Handle finish placement
      * @private

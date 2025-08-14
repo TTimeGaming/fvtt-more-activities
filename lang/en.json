@@ -96,8 +96,8 @@
     "DND5E.ACTIVITY.FIELDS.movement.movementType.label": "Movement Type",
     "DND5E.ACTIVITY.FIELDS.movement.movementType.hint": "The direction in which tokens are forcibly moved",
     "DND5E.ACTIVITY.FIELDS.movement.originToken.label": "Origin Token",
-    "DND5E.ACTIVITY.FIELDS.movement.dragAndDrop.label": "Drag tokens to the canvas to teleport them.",
-    "DND5E.ACTIVITY.FIELDS.movement.dragCompleted.label": "All tokens have been placed!",
+    "DND5E.ACTIVITY.FIELDS.movement.clickToPlace.label": "Select a token and click on the canvas to teleport them.",
+    "DND5E.ACTIVITY.FIELDS.movement.allTokensPlaced.label": "All tokens have been placed!",
     "DND5E.ACTIVITY.FIELDS.movement.appliedEffects.label": "Effects",
     "DND5E.ACTIVITY.FIELDS.movement.appliedEffects.hint": "Effects to apply to forcibly moved tokens",
 
