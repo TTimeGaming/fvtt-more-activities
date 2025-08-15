@@ -106,4 +106,69 @@ Hooks.once(`init`, async() => {
         HookData.removeActivities(dialog.item, html);
         ChainData.removeActivities(dialog.item, html);
     });
+
+    const moreActivities = [ `macro`, `hook`, `contested`, `chain`, `teleport`, `movement`, `sound`, `grant` ];
+    Hooks.on(`renderDialog`, (dialog, html) => {
+        if (!html.hasClass(`create-document`)) return;
+
+        const createElement = html.find(`#document-create`);
+        const macroRadio = createElement.find(`input[value="macro"]`);
+        if (macroRadio.length === 0) return;
+
+        html.css(`height`, `auto`);
+        const list = createElement.find(`ol.unlist`);
+
+        const baseTab = $(`
+            <a data-action="tab" data-group="sheet" data-tab="base" class="active">
+                <i class="fa-solid fa-database" inert=""></i>
+                <span>Base</span>
+            </a>
+        `);
+
+        const extraTab = $(`
+            <a data-action="tab" data-group="sheet" data-tab="extra">
+                <i class="fa-solid fa-cookie-bite" inert=""></i>
+                <span>More</span>
+            </a>
+        `);
+
+        const navbar = $(`<nav class="sheet-tabs tabs" aria-roledescription="Form Tab Navigation" data-application-part="tabs"></nav>`);
+        navbar.append(baseTab);
+        navbar.append(extraTab);
+
+        const header = createElement.find(`header`);
+        header.after(navbar);
+
+        const baseContent = $(`<section class="tab activity-base active" data-tab="base" data-group="sheet" data-application-part="base"></section>`);
+        const baseList = $(`<ol class="unlist card"></ol>`);
+        baseContent.append(baseList);
+        navbar.after(baseContent);
+
+        const extraContent = $(`<section class="tab activity-extra" data-tab="extra" data-group="sheet" data-application-part="extra"></section>`);
+        const extraList = $(`<ol class="unlist card"></ol>`);
+        extraContent.append(extraList);
+        baseContent.after(extraContent);
+
+        baseTab.on(`click`, () => {
+            baseTab.addClass(`active`);
+            baseContent.addClass(`active`);
+            extraTab.removeClass(`active`);
+            extraContent.removeClass(`active`);
+        });
+
+        extraTab.on(`click`, () => {
+            extraTab.addClass(`active`);
+            extraContent.addClass(`active`);
+            baseTab.removeClass(`active`);
+            baseContent.removeClass(`active`);
+        });
+
+        let targetList = null;
+        for (const element of list.find(`li`)) {
+            const type = $(element).find(`input`).attr(`value`);
+            targetList = moreActivities.includes(type) ? extraList : baseList;
+            targetList.append($(element));
+        }
+        list.remove();
+    });
 });
