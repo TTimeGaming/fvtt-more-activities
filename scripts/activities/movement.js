@@ -382,7 +382,7 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (updates.length === 0) return;
 
         await game.canvas.scene.updateEmbeddedDocuments(`Token`, updates);
-        await EffectsData.apply(this.activity, this.selectedTargets.map(target => target.token.actor));
+        await EffectsData.apply(this.activity, this.selectedTargets.map(target => target.token.actor), this.activity.appliedEffects);
         ui.notifications.info(`${updates.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.success.label`)}`);
     }
 
@@ -716,7 +716,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.destinationTargets[i] = null;
         }
         
-        await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.token.actor));
+        await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.token.actor), this.targetApp.activity.appliedEffects);
         ui.notifications.info(`${this.placedTokens.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.success.label`)}`);
 
         this.isFinished = true;

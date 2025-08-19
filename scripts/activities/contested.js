@@ -91,6 +91,25 @@ export class ContestedData {
                 });
         }
     }
+
+    /**
+     * Determine the degree of victory/defeat
+     * @param {Activity} activity
+     * @param {number} winnerTotal - Winner's roll total
+     * @param {number} loserTotal - Loser's roll total
+     * @returns {string} 'normal', 'minor', or 'major'
+     */
+    static determineVictoryDegree(activity, winnerTotal, loserTotal) {
+        if (!activity.allowMinorSuccess && !activity.allowMajorSuccess) return `normal`;
+
+        const minorMargin = activity.allowMinorSuccess ? activity.thresholdMinorSuccess ?? 5 : Infinity;
+        const majorMargin = activity.allowMajorSuccess ? activity.thresholdMajorSuccess ?? 10 : Infinity;
+
+        const margin = winnerTotal - loserTotal;
+        if (margin >= majorMargin) return `major`;
+        if (margin >= minorMargin) return `minor`;
+        return `normal`;
+    }
 }
 
 class ContestedManager {
@@ -243,11 +262,30 @@ class ContestedManager {
         const user = this._getUserForActor(contest.initiatorId);
         if (user?.id !== game.userId) return;
 
+        const initiator = game.actors.get(contest.initiatorId);
+        const item = initiator.items.get(contest.activityData.itemId);
+        const activity = item.system.activities.get(contest.activityData.id);
+
         const initiatorRoll = contest.rolls.get(contest.initiatorId);
         const defenderRolls = contest.defenders.map(defenderId => {
             const roll = contest.rolls.get(defenderId);
             const won = roll.total > initiatorRoll.total;
             const lost = roll.total < initiatorRoll.total;
+
+            let minorWin = false, majorWin = false, minorLoss = false, majorLoss = false;
+            if (activity.allowMinorSuccess || activity.allowMajorSuccess) {
+                const degree = ContestedData.determineVictoryDegree(activity, Math.max(roll.total, initiatorRoll.total), Math.min(roll.total, initiatorRoll.total));
+
+                if (won) {
+                    minorWin = degree === `minor`;
+                    majorWin = degree === `major`;
+                }
+
+                if (lost) {
+                    minorLoss = degree === `minor`;
+                    majorLoss = degree === `major`;
+                }
+            }
 
             const results = [];
             for (const term of roll.roll.terms) {
@@ -263,7 +301,11 @@ class ContestedManager {
                 roll: roll,
                 results: results,
                 won: won,
-                lost: lost
+                lost: lost,
+                majorWin: majorWin,
+                minorWin: minorWin,
+                majorLoss: majorLoss,
+                minorLoss: minorLoss,
             };
         });
 
@@ -274,10 +316,6 @@ class ContestedManager {
             for (const result of term.results)
                 results.push(result.result);
         }
-
-        const initiator = game.actors.get(contest.initiatorId);
-        const item = initiator.items.get(contest.activityData.itemId);
-        const activity = item.system.activities.get(contest.activityData.id);
     
         const templateData = {
             activity: activity,
@@ -300,9 +338,7 @@ class ContestedManager {
     }
     
     static async _applyContestEffects(contest, activity, templateData) {
-        if (activity.appliedEffects.length === 0) return;
-
-        const targetedActors = [];
+        if (activity.appliedEffects.length === 0 && activity.appliedEffectsMinor.length === 0 && activity.appliedEffectsMajor.length === 0) return;
 
         const attackerActor = contest.initiator;
         for (const defender of templateData.defenderRolls) {
@@ -312,37 +348,46 @@ class ContestedManager {
             const winner = defender.lost ? attackerActor : defenderActor;
             const loser = defender.lost ? defenderActor : attackerActor;
 
-            let targetActor = null;
-            switch (activity.applyEffectsTo) {
-                case `loserAttacker`:
-                    if (!defender.lost) targetActor = loser;
-                    break;
-                case `loserDefender`:
-                    if (defender.lost) targetActor = loser;
-                    break;
-                case `loser`:
-                    targetActor = loser;
-                    break;
-                case `winnerAttacker`:
-                    if (defender.lost) targetActor = winner;
-                    break;
-                case `winnerDefender`:
-                    if (!defender.lost) targetActor = winner;
-                    break;
-                case `winner`:
-                    targetActor = winner;
-                    break;
+            if (activity.appliedEffects.length > 0) {
+                const targetActor = this._getTargetActor(activity.applyEffectsTo, winner, loser, defender);
+                if (targetActor) {
+                    await EffectsData.apply(activity, [targetActor], activity.appliedEffects);
+                }
             }
 
-            if (targetActor == null) {
-                console.warn('Cannot apply effects: cannot identify target');
-                return;
+            if (activity.appliedEffectsMinor.length > 0 && (defender.minorWin || defender.minorLoss)) {
+                const targetActor = this._getTargetActor(activity.applyEffectsTo, winner, loser, defender);
+                if (targetActor) {
+                    await EffectsData.apply(activity, [targetActor], activity.appliedEffectsMinor);
+                }
             }
 
-            targetedActors.push(targetActor);
+            if (activity.appliedEffectsMajor.length > 0 && (defender.majorWin || defender.majorLoss)) {
+                const targetActor = this._getTargetActor(activity.applyEffectsTo, winner, loser, defender);
+                if (targetActor) {
+                    await EffectsData.apply(activity, [targetActor], activity.appliedEffectsMajor);
+                }
+            }
         }
+    }
 
-        await EffectsData.apply(activity, targetedActors);
+    static _getTargetActor(applyTo, winner, loser, defender) {
+        switch (applyTo) {
+            case `loserAttacker`:
+                return !defender.lost ? loser : null;
+            case `loserDefender`:
+                return defender.lost ? loser : null;
+            case `loser`:
+                return loser;
+            case `winnerAttacker`:
+                return defender.lost ? winner : null;
+            case `winnerDefender`:
+                return !defender.lost ? winner : null;
+            case `winner`:
+                return winner;
+            default:
+                return null;
+        }
     }
 
     static _getUserForActor(actorId) {
@@ -414,6 +459,36 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
             required: false,
             initial: false,
         });
+
+        schema.allowMinorSuccess = new fields.BooleanField({
+            reuired: false,
+            initial: false,
+        });
+
+        schema.thresholdMinorSuccess = new fields.NumberField({
+            reuired: false,
+            initial: 5,
+            min: 1,
+            max: 20,
+        });
+
+        schema.allowMajorSuccess = new fields.BooleanField({
+            reuired: false,
+            initial: false,
+        });
+
+        schema.thresholdMajorSuccess = new fields.NumberField({
+            reuired: false,
+            initial: 10,
+            min: 1,
+            max: 20,
+        });
+
+        schema.applyEffectsTo = new fields.StringField({
+            required: false,
+            initial: `loserDefender`,
+            choices: [ `loserAttacker`, `loserDefender`, `loserAny`, `winnerAttacker`, `winnerDefender`, `winnerAny`, ],
+        });
         
         schema.appliedEffects = new fields.ArrayField(new fields.StringField({
             required: false,
@@ -423,10 +498,20 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
             initial: [],
         });
 
-        schema.applyEffectsTo = new fields.StringField({
+        schema.appliedEffectsMinor = new fields.ArrayField(new fields.StringField({
             required: false,
-            initial: `loserDefender`,
-            choices: [ `loserAttacker`, `loserDefender`, `loserAny`, `winnerAttacker`, `winnerDefender`, `winnerAny`, ],
+            blank: true
+        }), {
+            required: false,
+            initial: [],
+        });
+
+        schema.appliedEffectsMajor = new fields.ArrayField(new fields.StringField({
+            required: false,
+            blank: true
+        }), {
+            required: false,
+            initial: [],
         });
 
         return schema;
@@ -505,8 +590,14 @@ export class ContestedActivitySheet extends dnd5e.applications.activity.Activity
         context.defenderOptions = this.activity?.defenderOptions || [ `str` ];
         context.tieCondition = this.activity?.tieCondition || `defender`;
         context.allowPlayerTargeting = this.activity?.allowPlayerTargeting || false;
-        context.appliedEffects = this.activity?.appliedEffects || [];
+        context.allowMinorSuccess = this.activity?.allowMinorSuccess || false;
+        context.thresholdMinorSuccess = this.activity?.thresholdMinorSuccess || 5;
+        context.allowMajorSuccess = this.activity?.allowMajorSuccess || false;
+        context.thresholdMajorSuccess = this.activity?.thresholdMajorSuccess || 10;
         context.applyEffectsTo = this.activity?.applyEffectsTo || `loserDefender`;
+        context.appliedEffects = this.activity?.appliedEffects || [];
+        context.appliedEffectsMinor = this.activity?.appliedEffectsMinor || [];
+        context.appliedEffectsMajor = this.activity?.appliedEffectsMajor || [];
 
         return context;
     }

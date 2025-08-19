@@ -26,6 +26,46 @@
     </fieldset>
 
     <fieldset>
+        <legend><label> Degrees of Success </label></legend>
+
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.allowMinorSuccess.label"}}</label>
+            <div class="form-fields">
+                <dnd5e-checkbox name="allowMinorSuccess" {{#if allowMinorSuccess}}checked{{/if}}></dnd5e-checkbox>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.allowMinorSuccess.hint"}}</p>
+        </div>
+
+        {{#if allowMinorSuccess}}
+        <div class="form-group stacked indented">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.thresholdMinorSuccess.label"}}</label>
+            <div class="form-fields">
+                <input type="number" name="thresholdMinorSuccess" value="{{ thresholdMinorSuccess }}" min="1" max="20">
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.thresholdMinorSuccess.hint"}}</p>
+        </div>
+        {{/if}}
+
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.allowMajorSuccess.label"}}</label>
+            <div class="form-fields">
+                <dnd5e-checkbox name="allowMajorSuccess" {{#if allowMajorSuccess}}checked{{/if}}></dnd5e-checkbox>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.allowMajorSuccess.hint"}}</p>
+        </div>
+
+        {{#if allowMajorSuccess}}
+        <div class="form-group stacked indented">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.thresholdMajorSuccess.label"}}</label>
+            <div class="form-fields">
+                <input type="number" name="thresholdMajorSuccess" value="{{ thresholdMajorSuccess }}" min="1" max="20">
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.thresholdMajorSuccess.hint"}}</p>
+        </div>
+        {{/if}}
+    </fieldset>
+
+    <fieldset>
         <legend><label> Attacker </label></legend>
 
         <div class="form-group stacked">
@@ -161,5 +201,37 @@
             </div>
             <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.hint"}}</p>
         </div>
+
+        {{#if allowMinorSuccess}}
+        <div class="form-group stacked">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMinor.label"}}</label>
+            <div class="form-fields">
+                <multi-select name="appliedEffectsMinor">
+                    {{#each availableEffects as |effect|}}
+                    <option value="{{ effect.id }}" {{#if (includes ../appliedEffectsMinor effect.id)}}selected{{/if}}>
+                        {{ effect.name }}
+                    </option>
+                    {{/each}}
+                </multi-select>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMinor.hint"}}</p>
+        </div>
+        {{/if}}
+
+        {{#if allowMajorSuccess}}
+        <div class="form-group stacked">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMajor.label"}}</label>
+            <div class="form-fields">
+                <multi-select name="appliedEffectsMajor">
+                    {{#each availableEffects as |effect|}}
+                    <option value="{{ effect.id }}" {{#if (includes ../appliedEffectsMajor effect.id)}}selected{{/if}}>
+                        {{ effect.name }}
+                    </option>
+                    {{/each}}
+                </multi-select>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMajor.hint"}}</p>
+        </div>      
+        {{/if}}
     </fieldset>
 </section>

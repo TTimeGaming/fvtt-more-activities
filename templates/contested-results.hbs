@@ -36,7 +36,13 @@
                         <div class="result-summary">
                             <span class="actor-name">{{ defenderRoll.actor.name }}:</span>
                             <span class="result-indicator {{#if defenderRoll.won}}win{{else if defenderRoll.lost}}loss{{else}}draw{{/if}}">
-                                {{#if defenderRoll.won}}(W){{else if defenderRoll.lost}}(L){{else}}(D){{/if}}
+                                {{#if defenderRoll.won}}
+                                    {{#if defenderRoll.majorWin}}(MW){{else if defenderRoll.minorWin}}(mW){{else}}(W){{/if}}
+                                {{else if defenderRoll.lost}}
+                                    {{#if defenderRoll.majorLoss}}(ML){{else if defenderRoll.minorLoss}}(mL){{else}}(L){{/if}}
+                                {{else}}
+                                    (D)
+                                {{/if}}
                             </span>
                             <span class="roll-total">{{ defenderRoll.roll.total }}</span>
                         </div>

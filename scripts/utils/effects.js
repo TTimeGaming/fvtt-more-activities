@@ -1,9 +1,9 @@
 export class EffectsData {
-    static async apply(activity, actors) {
-        if (activity?.appliedEffects?.length === 0) return;
+    static async apply(activity, actors, appliedEffects) {
+        if (appliedEffects?.length === 0) return;
 
         const item = activity?.item;
-        for (const effectId of activity.appliedEffects) {
+        for (const effectId of appliedEffects) {
             const effect = item?.effects?.get(effectId);
             if (!effect) {
                 console.warn(`Effect ${effectId} not found on item ${item?.name}`);

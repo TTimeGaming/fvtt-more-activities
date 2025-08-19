@@ -589,7 +589,7 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.openTarget = false;
         this.close();
 
-        await EffectsData.apply(this.activity, this.selectedTargets.map(target => target.token.actor));
+        await EffectsData.apply(this.activity, this.selectedTargets.map(target => target.token.actor), this.activity.appliedEffects);
         ui.notifications.info(`${updates.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`)}`);
     }
     
@@ -888,7 +888,7 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.destinationTarget = null;
         }
 
-        await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.token?.actor));
+        await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.token?.actor), this.targetApp.activity.appliedEffects);
         ui.notifications.info(`${this.placedTokens.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`)}`);
 
         this.isFinished = true;
