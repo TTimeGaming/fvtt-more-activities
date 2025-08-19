@@ -28,6 +28,44 @@
     </fieldset>
 
     <fieldset>
+        <legend><label> Global Settings </label></legend>
+
+        <div class="form-group stacked">
+            <label>Base Cost</label>
+            <div class="form-fields">
+                <input type="text" name="baseCost" value="{{ baseCost }}" placeholder="Base Cost">
+                <select name="baseCostCurrency">
+                    {{#each currencyOptions as |currency|}}
+                    <option value="{{ currency }}" {{#if (eq ../baseCostCurrency currency)}}selected{{/if}}>{{ currency }}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Base cost for all items (added to individual costs)</p>
+        </div>
+
+        <div class="form-group stacked">
+            <label>Spell Cost per Level</label>
+            <div class="form-fields">
+                <input type="text" name="spellCostPerLevel" value="{{ spellCostPerLevel }}" placeholder="Spell Cost per Level">
+                <select name="spellCostPerLevelCurrency">
+                    {{#each currencyOptions as |currency|}}
+                    <option value="{{ currency }}" {{#if (eq ../spellCostPerLevelCurrency currency)}}selected{{/if}}>{{ currency }}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Additional cost per spell level (spells only)</p>
+        </div>
+
+        <div class="form-group stacked">
+            <label>Convert Spells to Scrolls</label>
+            <div class="form-fields">
+                <dnd5e-checkbox name="spellsAsScrolls" {{#if spellsAsScrolls}}checked{{/if}}></dnd5e-checkbox>
+            </div>
+            <p class="hint">Grant spells as scrolls instead of adding to the spellbook</p>
+        </div>
+    </fieldset>
+
+    <fieldset>
         <legend><label> Items </label></legend>
 
         <div class="form-group stacked">
@@ -46,12 +84,16 @@
                 {{#each grants as |item|}}
                 <div class="granted-item">
                     <div class="item-info">
+                        {{#if item.isCustomized}}<abbr title="Customized"><i class="customized-indicator fas fa-star"></i></abbr>{{/if}}
                         <img class="gold-icon item-img" src="{{item.img}}" alt="{{item.name}}">
                         <a data-uuid="{{item.uuid}}" class="item-name">{{item.name}}</a>
                     </div>
                     <div class="item-controls">
                         <div class="item-type">{{item.type}}</div>
-                        <button type="button" class="item-delete-btn" data-index="{{item.index}}">
+                        <button type="button" class="item-customize-btn" data-index="{{item.index}}" data-uuid="{{item.uuid}}">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <button type="button" class="item-delete-btn" data-index="{{item.index}}" data-uuid="{{item.uuid}}">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>

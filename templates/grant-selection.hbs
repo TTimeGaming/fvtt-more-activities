@@ -1,19 +1,96 @@
 <div class="grant-selection">
     <fieldset>
+        <legend><label> Available Funds </label></legend>
+
+        <div class="available-funds">
+            <div class="currency-container">
+                <label class="currency-item">
+                    <i class="currency pp" aria-label="pp"></i>
+                    <span class="item-cost">{{ actorFunds.pp }}</span>
+                </label>
+                <label class="currency-item">
+                    <i class="currency gp" aria-label="gp"></i>
+                    <span class="item-cost">{{ actorFunds.gp }}</span>
+                </label>
+                <label class="currency-item">
+                    <i class="currency ep" aria-label="ep"></i>
+                    <span class="item-cost">{{ actorFunds.ep }}</span>
+                </label>
+                <label class="currency-item">
+                    <i class="currency sp" aria-label="sp"></i>
+                    <span class="item-cost">{{ actorFunds.sp }}</span>
+                </label>
+                <label class="currency-item">
+                    <i class="currency cp" aria-label="cp"></i>
+                    <span class="item-cost">{{ actorFunds.cp }}</span>
+                </label>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
         <legend><label> Selection ({{ count }} / {{ available }}) </label></legend>
 
         <div class="granted-items">
             {{#each items as |item|}}
-            <div class="granted-item">
+            <div class="granted-item {{#if item.disabled}}disabled{{/if}}">
                 <div class="item-info">
-                    <img class="gold-icon item-img" src="{{item.img}}" alt="{{item.name}}">
-                    <a data-uuid="{{item.uuid}}" class="item-name">{{item.name}}</a>
-                </div>
-                <div class="item-controls">
                     {{#if item.selected}}
                     <dnd5e-checkbox class="item-choice" data-uuid="{{item.uuid}}" checked></dnd5e-checkbox>
                     {{else}}
-                    <dnd5e-checkbox class="item-choice" data-uuid="{{item.uuid}}" {{#if ../isLocked}}disabled{{/if}}></dnd5e-checkbox>
+                    <dnd5e-checkbox class="item-choice" data-uuid="{{item.uuid}}" {{#if (or disabled ../isLocked)}}disabled{{/if}}></dnd5e-checkbox>
+                    {{/if}}
+                    <img class="gold-icon item-img" src="{{item.img}}" alt="{{item.name}}">
+                    <div class="item-details">
+                        <a data-uuid="{{item.uuid}}" class="item-name">{{item.name}}</a>
+                        {{#if item.customization}}
+                        <div class="customization-notes">
+                            {{#if item.customization.maxUses}}
+                            <span class="custom-note">{{item.customization.maxUses}} use{{#unless (eq item.customization.maxUses 1)}}s{{/unless}}</span>
+                            {{/if}}
+                            {{#if item.customization.recovery}}
+                            <span class="custom-note">{{item.customization.recovery}} recovery</span>
+                            {{/if}}
+                            {{#if (and item.isSpell (or item.customization.asScroll item.asScroll))}}
+                            <span class="custom-note">As scroll</span>
+                            {{/if}}
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+                <div class="item-controls">
+                    {{!-- <span class="item-type">{{ item.type }}</span> --}}
+                    {{#if item.cost}}
+                    <div class="currency-container">
+                        {{#if item.cost.pp}}
+                        <label class="currency-item">
+                            <i class="currency pp" aria-label="pp"></i>
+                            <span class="item-cost">{{ item.cost.pp }}</span>
+                        </label>
+                        {{/if}}
+                        {{#if item.cost.gp}}
+                        <label class="currency-item">
+                            <i class="currency gp" aria-label="gp"></i>
+                            <span class="item-cost">{{ item.cost.gp }}</span>
+                        </label>
+                        {{/if}}
+                        {{#if item.cost.sp}}
+                        <label class="currency-item">
+                            <i class="currency sp" aria-label="sp"></i>
+                            <span class="item-cost">{{ item.cost.sp }}</span>
+                        </label>
+                        {{/if}}
+                        {{#if item.cost.cp}}
+                        <label class="currency-item">
+                            <i class="currency cp" aria-label="cp"></i>
+                            <span class="item-cost">{{ item.cost.cp }}</span>
+                        </label>
+                        {{/if}}
+                    </div>
+                    {{!-- <span class="item-cost {{#unless item.affordable}}unaffordable{{/unless}}">{{ item.cost }} GP</span> --}}
+                    {{/if}}
+                    {{#if item.disabledText}}
+                    <div class="disabled-reason">{{ item.disabledText }}</div>
                     {{/if}}
                 </div>
             </div>
@@ -23,7 +100,7 @@
 
     <div class="grant-buttons">
         <button type="button" class="finish-grant-btn">
-            <i class="fas fa-check"></i> Grant Item{{#unless (eq count 0)}}s{{/unless}}
+            <i class="fas fa-check"></i> Grant Item{{#unless (eq count 1)}}s{{/unless}}
         </button>
         <button type="button" class="cancel-grant-btn">
             <i class="fas fa-times"></i> Cancel

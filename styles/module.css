@@ -372,7 +372,8 @@
     border-color: var(--dnd5e-color-gold);
 }
 
-.dnd5e2.activity-chain .branch-indicator {
+.dnd5e2.activity-chain .branch-indicator,
+.dnd5e2.activity-grant .customized-indicator {
     color: var(--dnd5e-color-gold);
 }
 
@@ -564,7 +565,9 @@
 .teleport-targets .selected-targets,
 .movement-targets .selected-targets,
 .dnd5e2.activity-grant .granted-items,
+.grant-selection,
 .grant-selection .granted-items,
+.grant-customization,
 .chain-branch .branched-items {
     display: flex;
     flex-direction: column;
@@ -582,6 +585,99 @@
     padding: 0.5rem;
     border-radius: 4px;
     background: var(--dnd5e-background-card);
+}
+
+.grant-selection .granted-item.disabled {
+    opacity: 0.6;
+}
+
+.grant-selection .item-details {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.grant-selection .item-meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.grant-selection .item-cost {
+    color: var(--dnd5e-color-gold);
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.grant-selection .disabled-reason {
+    font-size: 0.8em;
+    font-style: italic;
+    margin-top: 2px;
+}
+
+.grant-selection .customization-notes {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.grant-selection .custom-note {
+    background: var(--dnd5e-color-blue);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    white-space: nowrap;
+}
+
+.grant-selection .item-controls {
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+}
+
+.grant-selection .currency-container {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+}
+
+.grant-selection .currency-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.tri-state-button-group {
+    display: flex;
+    gap: 4px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.scroll-state-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85em;
+    position: relative;
+}
+
+.scroll-state-btn.active {
+    background: var(--dnd5e-color-gold);
+    font-weight: bold;
+}
+
+.scroll-state-btn i {
+    font-size: 0.9em;
 }
 
 .teleport-targets .target-info,
@@ -619,7 +715,6 @@
 .teleport-targets .target-controls,
 .movement-targets .target-controls,
 .dnd5e2.activity-grant .item-controls,
-.grant-selection .item-controls,
 .chain-branch .item-controls {
     display: flex;
     align-items: center;
@@ -792,7 +887,6 @@
 .no-tokens,
 .no-items {
    text-align: center;
-   color: var(--color-text-dark-secondary);
    font-weight: bold;
    font-style: italic;
 }
@@ -810,23 +904,18 @@
     margin-top: 0.5rem;
 }
 
-.finish-placement-btn,
-.finish-grant-btn,
-.finish-branch-btn {
-   background: var(--button-hover-background-color);
-   padding: 1.25rem;
-   border-radius: 4px;
-   cursor: pointer;
-   font-weight: bold;
-   display: flex;
-   align-items: center;
-   gap: 0.5rem;
+.grant-buttons button {
+    padding: 0.25rem 0.5rem;
 }
 
+.finish-placement-btn,
+.finish-grant-btn,
+.finish-customization-btn,
+.finish-branch-btn,
 .cancel-placement-btn,
 .cancel-grant-btn,
+.cancel-customization-btn,
 .cancel-branch-btn {
-   background: var(--color-button-secondary);
    padding: 1.25rem;
    border-radius: 4px;
    cursor: pointer;
