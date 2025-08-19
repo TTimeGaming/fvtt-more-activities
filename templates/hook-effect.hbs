@@ -15,20 +15,79 @@
             <div class="form-fields">
                 <select name="activeHook">
                 {{#each availableHooks as |hook|}}
-                    <option value="{{ hook.name }}" {{#if hook.selected}}selected{{/if}}>{{ hook.name }}</option>
+                    <option value="{{ hook.name }}" {{#if hook.selected}}selected{{/if}} {{#if hook.custom}}data-custom="true"{{/if}}>{{#if hook.custom}}Custom{{else}}{{ hook.name }}{{/if}}</option>
                 {{/each}}
                 </select>
             </div>
             <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.hook.activeHook.hint"}}</p>
         </div>
+
+        {{#if isCustomHook}}
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.hook.customHook.label"}}</label>
+            <div class="form-fields">
+                <input type="text" name="customHook" value="{{ customHook }}" placeholder="Enter custom hook name">
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.hook.customHook.hint"}}</p>
+        </div>
+        {{/if}}
+    </fieldset>
+
+    <fieldset>
+        <legend><label> Execution </label></legend>
+
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.hook.executionType.label"}}</label>
+            <div class="form-fields">
+                <select name="executionType">
+                    <option value="macro" {{#if (eq executionType "macro")}}selected{{/if}}>Execute Macro</option>
+                    <option value="activity" {{#if (eq executionType "activity")}}selected{{/if}}>Execute Activity</option>
+                </select>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.hook.executionType.hint"}}</p>
+        </div>
+
+        {{#if (eq executionType "activity")}}
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.hook.targetActivityId.label"}}</label>
+            <div class="form-fields">
+                <select name="targetActivityId">
+                    <option value="">Select Activity...</option>
+                    {{#each availableActivities as |activity|}}
+                        <option value="{{ activity.id }}" {{#if activity.selected}}selected{{/if}}>
+                            {{ activity.name }} ({{ activity.type }})
+                        </option>
+                    {{/each}}
+                </select>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.hook.targetActivityId.hint"}}</p>
+        </div>
+        {{/if}}
     </fieldset>
 
     <fieldset>
         <legend><label> Macro </label></legend>
 
+        {{#if isCustomHook}}
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.hook.sanityCheckCode.label"}}</label>
+            <p class="hint">{{{localize "DND5E.ACTIVITY.FIELDS.hook.sanityCheckCode.hint"}}}</p>
+        </div>
+
+        <div class="form-group macro-editor-container">
+            <div class="code-editor-wrapper">
+                {{#if (eq version 12)}}
+                <textarea name="sanityCode" aria-label="Sanity Check">{{ sanityCode }}</textarea>
+                {{else}}
+                <code-mirror name="sanityCode" language="javascript" indent="2" aria-label="Sanity Check">{{ sanityCode }}</code-mirror>
+                {{/if}}
+            </div>
+        </div>
+        {{/if}}
+
         <div class="form-group">
             <label>{{localize "DND5E.ACTIVITY.FIELDS.hook.macroCode.label"}}</label>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.hook.macroCode.hint"}}</p>
+            <p class="hint">{{{localize "DND5E.ACTIVITY.FIELDS.hook.macroCode.hint"}}}</p>
         </div>
 
         <div class="form-group macro-editor-container">

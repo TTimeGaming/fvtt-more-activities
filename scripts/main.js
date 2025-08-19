@@ -14,7 +14,6 @@ Hooks.once(`init`, async() => {
 
     await HandlebarsData.init();
     await Compat.init();
-    await HookData.init();
     await ContestedData.init();
     await SoundData.init();
 
@@ -171,4 +170,8 @@ Hooks.once(`init`, async() => {
         }
         list.remove();
     });
+});
+
+Hooks.once(`ready`, async() => {
+    await HookData.init();
 });
