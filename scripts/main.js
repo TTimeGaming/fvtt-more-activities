@@ -8,6 +8,7 @@ import { SoundActivityData, SoundActivitySheet, SoundActivity, SoundData } from 
 import { GrantActivityData, GrantActivitySheet, GrantActivity, GrantData } from './activities/grant.js';
 import { Compat } from './compat.js';
 import { HandlebarsData } from './utils/handlebars.js';
+import { ContestedMigrations } from './migrations/contested.js';
 
 Hooks.once(`init`, async() => {
     console.log(`More Activities | Initializing`);
@@ -174,4 +175,21 @@ Hooks.once(`init`, async() => {
 
 Hooks.once(`ready`, async() => {
     await HookData.init();
+
+    game.settings.register(`more-activities`, `version`, {
+        name: `Module Version`,
+        scope: `world`,
+        config: false,
+        type: String,
+        default: `1.7.3`,
+    });
+
+    const storedVersion = game.settings.get(`more-activities`, `version`);
+    const currentVersion = game.modules.get(`more-activities`).version;
+    if (storedVersion === currentVersion) return;
+
+    await ContestedMigrations.migrate(storedVersion);
+
+    await game.settings.set(`more-activities`, `version`, currentVersion);
+    ui.notifications.info(`More Activities: Migrated to version ${currentVersion}`);
 });
