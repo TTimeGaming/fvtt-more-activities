@@ -1,0 +1,71 @@
+<section class="tab activity-{{ tab.id }} {{ tab.cssClass }}" data-tab="{{ tab.id }}" data-group="{{ tab.group }}">
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="wall-configuration">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Configuration </label>
+        </legend>
+
+        <div class="fieldset-content">
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.wall.wallType.label"}}</label>
+                <div class="form-fields">
+                    <select name="wallType">
+                        {{#each wallTypeOptions as |option|}}
+                        <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+                        {{/each}}
+                    </select>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.wall.wallType.hint"}}</p>
+            </div>
+
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.wall.maxLength.label"}}</label>
+                <div class="form-fields">
+                    <input type="text" name="maxLength" value="{{ maxLength }}" placeholder="Maximum Length (feet)">
+                </div>
+                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.wall.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.wall.maxLength.hint"}}</p>
+            </div>
+
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.wall.wallHeight.label"}}</label>
+                <div class="form-fields">
+                    <input type="text" name="wallHeight" value="{{ wallHeight }}" placeholder="Height (feet)">
+                </div>
+                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.wall.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.wall.wallHeight.hint"}}</p>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="wall-properties">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Properties </label>
+        </legend>
+        
+        <div class="fieldset-content">
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.wall.blocksMovement.label"}}</label>
+                <div class="form-fields">
+                    <dnd5e-checkbox name="blocksMovement" {{#if blocksMovement}}checked{{/if}}></dnd5e-checkbox>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.wall.blocksMovement.hint"}}</p>
+            </div>
+
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.wall.blocksSight.label"}}</label>
+                <div class="form-fields">
+                    <dnd5e-checkbox name="blocksSight" {{#if blocksSight}}checked{{/if}}></dnd5e-checkbox>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.wall.blocksSight.hint"}}</p>
+            </div>
+
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.wall.blocksSound.label"}}</label>
+                <div class="form-fields">
+                    <dnd5e-checkbox name="blocksSound" {{#if blocksSound}}checked{{/if}}></dnd5e-checkbox>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.wall.blocksSound.hint"}}</p>
+            </div>
+        </div>
+    </fieldset>
+</section>

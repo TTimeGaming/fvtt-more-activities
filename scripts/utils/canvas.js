@@ -57,17 +57,30 @@ export class CanvasData {
         }
     }
 
-    static async createMeasuredTemplate({ x, y, w, h, distance, t = `circle`, borderColor = `#ffffff`, fillColor = `#ffffff` }) {
+    static async createMeasuredTemplate({ x, y, distance, w = 0, h = 0, direction = 0, t = `circle`, borderColor = `#ffffff`, fillColor = `#ffffff` }) {
         const maxDim = Math.max(w / game.canvas.grid.sizeX, h / game.canvas.grid.sizeY) * game.canvas.grid.distance;
         const data = {
             t: t,
             user: game.user.id,
             x: x,
             y: y,
-            distance: distance + (maxDim / 2),
             borderColor: borderColor,
             fillColor: fillColor,
         };
+
+        switch (data.t) {
+            case `circle`:
+                data.distance = distance + (maxDim / 2);
+            case `ray`:
+                data.distance = distance + (maxDim / 2);
+                data.direction = direction;
+                data.width = w;
+                break;
+            default:
+                data.width = w;
+                data.distance = distance + (maxDim / 2);
+                break;
+        }
 
         const [template] = await game.canvas.scene.createEmbeddedDocuments(`MeasuredTemplate`, [data]);
         const object = game.canvas.templates.get(template.id);

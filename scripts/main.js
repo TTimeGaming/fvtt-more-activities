@@ -6,6 +6,7 @@ import { TeleportActivityData, TeleportActivitySheet, TeleportActivity, Teleport
 import { MovementActivityData, MovementActivitySheet, MovementActivity, MovementData } from './activities/movement.js';
 import { SoundActivityData, SoundActivitySheet, SoundActivity, SoundData } from './activities/sound.js';
 import { GrantActivityData, GrantActivitySheet, GrantActivity, GrantData } from './activities/grant.js';
+import { WallActivityData, WallActivitySheet, WallActivity, WallData } from './activities/wall.js';
 import { Compat } from './compat.js';
 import { HandlebarsData } from './utils/handlebars.js';
 import { ContestedMigrations } from './migrations/contested.js';
@@ -74,7 +75,14 @@ Hooks.once(`init`, async() => {
         typeLabel: `DND5E.ACTIVITY.Type.grant`,
     };
 
-    console.log(`More Activities | Registered (8) Activity Types`);
+    CONFIG.DND5E.activityTypes.wall = {
+        documentClass: WallActivity,
+        dataModel: WallActivityData,
+        sheetClass: WallActivitySheet,
+        typeLabel: `DND5E.ACTIVITY.Type.wall`,
+    };
+
+    console.log(`More Activities | Registered (9) Activity Types`);
 
     if (game.version.startsWith(`12`)) {
         Hooks.on(`renderChatMessage`, (message, html) => {
@@ -84,6 +92,7 @@ Hooks.once(`init`, async() => {
             TeleportData.applyListeners(message, html[0]);
             MovementData.applyListeners(message, html[0]);
             GrantData.applyListeners(message, html[0]);
+            WallData.applyListeners(message, html[0]);
         });
     }
     else {
@@ -94,6 +103,7 @@ Hooks.once(`init`, async() => {
             TeleportData.applyListeners(message, html);
             MovementData.applyListeners(message, html);
             GrantData.applyListeners(message, html);
+            WallData.applyListeners(message, html);
         });
     }
 

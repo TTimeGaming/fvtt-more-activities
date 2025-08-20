@@ -912,10 +912,12 @@
 .finish-grant-btn,
 .finish-customization-btn,
 .finish-branch-btn,
+.finish-wall-btn,
 .cancel-placement-btn,
 .cancel-grant-btn,
 .cancel-customization-btn,
-.cancel-branch-btn {
+.cancel-branch-btn,
+.cancel-wall-btn {
    padding: 1.25rem;
    border-radius: 4px;
    cursor: pointer;
@@ -954,4 +956,101 @@
 
 .collapsible-fieldset[data-expanded="false"] .fieldset-content {
     display: none;
+}
+
+.wall-placement-container {
+    padding: 1rem;
+}
+
+.wall-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    justify-content: center;
+}
+
+.stat-item {
+    font-size: 0.9rem;
+}
+
+.placement-header .subtitle {
+    margin: 1rem 0;
+}
+
+.placement-instructions {
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.placement-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.primary-controls, .finish-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.start-placement-btn.placing {
+    background: var(--color-bg-option);
+    border-color: var(--color-border-highlight);
+}
+
+.points-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.5rem;
+}
+
+.point-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    background: var(--color-bg-option);
+    border-radius: 3px;
+    font-size: 0.8rem;
+}
+
+.point-number {
+    background: var(--color-bg-btn);
+    color: var(--color-text-light-primary);
+    border-radius: 50%;
+    width: 1.2rem;
+    height: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.placement-status {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: var(--color-bg-option);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-dark-secondary);
+}
+
+.status-indicator.pulsing i {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
