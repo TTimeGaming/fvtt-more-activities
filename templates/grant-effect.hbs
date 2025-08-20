@@ -112,6 +112,79 @@
                             </button>
                         </div>
                     </div>
+
+                    <div class="grant-customization" data-index="{{item.index}}" style="display: {{#if item.isOpen}}flex{{else}}none{{/if}};">
+                        <fieldset>
+                            <legend><label> Cost </label></legend>
+
+                            <div class="form-group stacked">
+                                <label>Individual Cost</label>
+                                <div class="form-fields">
+                                    <input type="text" name="itemIndividualCost" value="{{ item.customization.individualCost }}" placeholder="Individual Cost" data-index="{{item.index}}">
+                                    <select name="itemIndividualCostCurrency" data-index="{{item.index}}">
+                                        {{#each ../currencyOptions as |currency|}}
+                                        <option value="{{ currency }}" {{#if (eq item.customization.individualCostCurrency currency)}}selected{{/if}}>{{ currency }}</option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Additional cost for this item (added to global base cost)</p>
+                            </div>
+                        </fieldset>
+
+                        <fieldset>
+                            <legend><label> Usage Limitations </label></legend>
+
+                            <div class="form-group stacked">
+                                <label>Override Uses</label>
+                                <div class="form-fields">
+                                    <input type="text" name="itemMaxUses" value="{{ item.customization.maxUses }}" placeholder="{{#if item.hasUses}}{{ item.maxUses }}{{else}}Unlimited{{/if}}" data-index="{{item.index}}">
+                                </div>
+                                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Leave blank to use item default</p>
+                            </div>
+
+                            <div class="form-group stacked">
+                                <label>Recovery Period</label>
+                                <select name="itemRecovery" data-index="{{item.index}}">
+                                    {{#each item.recoveryOptions as |option|}}
+                                    <option value="{{ option.key }}" {{#if option.selected}}selected{{/if}}>{{ option.label }}</option>
+                                    {{/each}}
+                                </select>
+                            </div>
+                        </fieldset>
+
+                        {{#if item.isSpell}}
+                        <fieldset>
+                            <legend><label> Spell Options </label></legend>
+
+                            <div class="form-group stacked">
+                                <label>Grant as Scroll</label>
+                                <div class="form-fields">
+                                    <div class="tri-state-button-group">
+                                    {{#each item.scrollStates as |state|}}
+                                    <button type="button" class="scroll-state-btn {{#if state.selected}}active{{/if}}" data-state="{{state.value}}" data-tooltip="{{state.label}}" data-index="{{item.index}}">
+                                        <i class="{{state.icon}}"></i>
+                                    </button>
+                                    {{/each}}
+                                </div>
+                                </div>
+                                <p class="hint">Override global spell scroll setting for this item</p>
+                            </div>
+
+                            <div class="form-group stacked">
+                                <label>Cost per Level</label>
+                                <div class="form-fields">
+                                    <input type="text" name="itemSpellCostPerLevel" value="{{ item.customization.spellCostPerLevel }}" placeholder="Spell Cost per Level" data-index="{{item.index}}">
+                                    <select name="itemSpellCostPerLevelCurrency" data-index="{{item.index}}">
+                                        {{#each ../currencyOptions as |currency|}}
+                                        <option value="{{ currency }}" {{#if (eq item.customization.spellCostPerLevelCurrency currency)}}selected{{/if}}>{{ currency }}</option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Additional cost for this item (added to global cost per level)</p>
+                            </div>
+                        </fieldset>
+                        {{/if}}
+                    </div>
                     {{/each}}
                 </div>
                 {{else}}

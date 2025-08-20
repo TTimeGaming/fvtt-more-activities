@@ -107,6 +107,11 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
         }
     };
 
+    constructor(options = {}) {
+        super(options);
+        // this.openCustomization = null;
+    }
+
     /** @inheritdoc */
     async _prepareEffectContext(context) {
         context = await super._prepareEffectContext(context);
@@ -124,12 +129,35 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
             const item = await fromUuid(itemId);
             const customization = itemCustomizations[itemId.replace(`.`, `-`)] ?? {};
 
+            let isCustomized = Object.keys(customization).length > 0;
+            if (!customization.individualCostCurrency) customization.individualCostCurrency = `gp`;
+            if (!customization.spellCostPerLevelCurrency) customization.spellCostPerLevelCurrency = `gp`;
+
+            const recoveryOptions = [
+                { key: `default`, label: `Default`, selected: !customization.recovery || customization.recovery === `default`, },
+                { key: `sr`, label: `Short Rest`, selected: customization.recovery === `sr`, },
+                { key: `lr`, label: `Long Rest`, selected: customization.recovery === `lr`, },
+                { key: `day`, label: `Day`, selected: customization.recovery === `day`, },
+            ];
+
+            const scrollStates = [
+                { value: 'disable', label: 'Force Spell', icon: 'fas fa-times', selected: (customization.asScroll ?? null) === false },
+                { value: 'ignore', label: `Use Global`, icon: 'fas fa-minus', selected: (customization.asScroll ?? null) === null },
+                { value: 'enable', label: 'Force Scroll', icon: 'fas fa-check', selected: (customization.asScroll ?? null) === true },
+            ];
+
             grants.push({
                 name: item.name,
                 img: item.img,
                 type: game.i18n.localize(`TYPES.Item.${item.type}`),
                 uuid: itemId,
-                isCustomized: Object.keys(customization).length > 0,
+                isCustomized: isCustomized,
+                isSpell: item.type === `spell`,
+                maxUses: item.system?.uses?.max,
+                hasUses: item.system?.uses?.max !== undefined && item.system?.uses?.max != null,
+                customization: customization,
+                recoveryOptions: recoveryOptions,
+                scrollStates: scrollStates,
             });
         }
 
@@ -148,6 +176,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
         context.grants = grants.map((element, index) => ({
             ...element,
             index: index,
+            isOpen: this.openCustomization === index,
         }));
         return context;
     }
@@ -163,6 +192,11 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
         this.element.querySelectorAll(`.item-delete-btn`).forEach(btn => {
             btn.addEventListener(`click`, async(event) => {
                 const index = parseInt(event.target.dataset.index);
+
+                if (this.openCustomization === index)
+                    this.openCustomization = null;
+                else if (this.openCustomization > index)
+                    this.openCustomization--;
 
                 let itemCustomizations;
                 try {
@@ -186,31 +220,28 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
 
                 await this.activity.update({
                     grants: grants,
-                    itemCustomizations: customizations,
+                    itemCustomizations: JSON.stringify(customizations),
                 });
             });
         });
 
         this.element.querySelectorAll(`.item-customize-btn`).forEach(btn => {
             btn.addEventListener(`click`, async(event) => {
-                let itemCustomizations;
-                try {
-                    itemCustomizations = JSON.parse(this.activity?.itemCustomizations);
-                }
-                catch {
-                    itemCustomizations = {};
-                }
-
-                const uuid = event.target.dataset.uuid;
-                const stored = uuid.replace(`.`, `-`);
-                const item = await fromUuid(uuid);
-                const currentCustomization = itemCustomizations[stored] ?? {};
-                new GrantCustomizationApp(this, stored, item, currentCustomization).render(true);
+                const index = parseInt(event.target.closest('[data-index]').dataset.index);
+                this._toggleCustomizationPanel(index);
             });
         });
 
         this._addDragDropHandlers(input);
+        this._addCustomizationListeners();
         DomData.setupSheetBehaviors(this);
+    }
+
+    /** @inheritdoc */
+    async close(options = {}) {
+        await super.close(options);
+        this.activity.current = ``;
+        this.openCustomization = null;
     }
 
     _addDragDropHandlers(input) {
@@ -297,10 +328,113 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
         }
     }
 
-    /** @inheritdoc */
-    async close(options = {}) {
-        await super.close(options);
-        this.activity.current = ``;
+    _toggleCustomizationPanel(index) {
+        this.openCustomization = this.openCustomization === index ? null : index;
+        this.element?.querySelectorAll(`.grant-customization`).forEach(panel => {
+            if (panel.dataset.index !== index.toString()) {
+                panel.style.display = `none`;
+                return;
+            }
+
+            panel.style.display = panel.style.display === `none` ? `flex` : `none`;
+        });
+    }
+
+    _addCustomizationListeners() {
+        this.element?.querySelectorAll(`input[name="itemIndividualCost"]`).forEach(input => {
+            input.addEventListener(`blur`, async(event) => {
+                await this._updateItemCustomization(event.target.dataset.index, `individualCost`, event.target.value || null);
+            });
+        });
+
+        this.element?.querySelectorAll(`select[name="itemIndividualCostCurrency"]`).forEach(select => {
+            select.addEventListener(`change`, async(event) => {
+                await this._updateItemCustomization(event.target.dataset.index, `individualCostCurrency`, event.target.value);
+            });
+        });
+
+        this.element?.querySelectorAll(`input[name="itemMaxUses"]`).forEach(input => {
+            input.addEventListener(`blur`, async(event) => {
+                await this._updateItemCustomization(event.target.dataset.index, `maxUses`, event.target.value || null);
+            });
+        });
+
+        this.element?.querySelectorAll(`select[name="itemRecovery"]`).forEach(select => {
+            select.addEventListener(`change`, async(event) => {
+                await this._updateItemCustomization(event.target.dataset.index, `recovery`, event.target.value === `default` ? null : event.target.value);
+            });
+        });
+
+        this.element?.querySelectorAll(`input[name="itemSpellCostPerLevel"]`).forEach(input => {
+            input.addEventListener(`blur`, async(event) => {
+                await this._updateItemCustomization(event.target.dataset.index, `spellCostPerLevel`, event.target.value || null);
+            });
+        });
+
+        this.element?.querySelectorAll(`select[name="itemSpellCostPerLevelCurrency"]`).forEach(select => {
+            select.addEventListener(`change`, async(event) => {
+                await this._updateItemCustomization(event.target.dataset.index, `spellCostPerLevelCurrency`, event.target.value);
+            });
+        });
+
+        this.element?.querySelectorAll(`.scroll-state-btn`).forEach(btn => {
+            btn.addEventListener(`click`, async(event) => {
+                const index = event.target.dataset.index;
+                const newState = event.target.dataset.state;
+                
+                let asScrollValue;
+                switch(newState) {
+                    case `ignore`:
+                        asScrollValue = null;
+                        break;
+                    case `disable`:
+                        asScrollValue = false;
+                        break;
+                    case `enable`:
+                        asScrollValue = true;
+                        break;
+                }
+                
+                await this._updateItemCustomization(index, `asScroll`, asScrollValue);
+                
+                this.element?.querySelectorAll(`.scroll-state-btn[data-index="${index}"]`).forEach(b => {
+                    b.classList.remove(`active`);
+                });
+                event.target.classList.add(`active`);
+            });
+        });
+    }
+
+    async _updateItemCustomization(index, property, value) {
+        const grants = this.activity?.grants ?? [];
+        const itemId = grants[parseInt(index)];
+        if (!itemId) return;
+
+        let itemCustomizations;
+        try {
+            itemCustomizations = JSON.parse(this.activity?.itemCustomizations || '{}');
+        }
+        catch {
+            itemCustomizations = {};
+        }
+
+        const stored = itemId.replace(`.`, `-`);
+        if (!itemCustomizations[stored]) {
+            itemCustomizations[stored] = {};
+        }
+
+        if (value === null || value === '' || (property.endsWith('Currency') && value === 'gp')) {
+            delete itemCustomizations[stored][property];
+            if (Object.keys(itemCustomizations[stored]).length === 0) {
+                delete itemCustomizations[stored];
+            }
+        } else {
+            itemCustomizations[stored][property] = value;
+        }
+
+        await this.activity.update({ 
+            itemCustomizations: JSON.stringify(itemCustomizations) 
+        });
     }
 }
 
@@ -340,165 +474,6 @@ export class GrantActivity extends dnd5e.documents.activity.ActivityMixin(GrantA
      */
     get actor() {
         return this.item?.actor || null;
-    }
-}
-
-class GrantCustomizationApp extends HandlebarsApplicationMixin(ApplicationV2) {
-    static DEFAULT_OPTIONS = {
-        classes: [ `dnd5e2`, `standard-form`, `grant-customization-app` ],
-        tag: `form`,
-        position: {
-            width: 400,
-            height: `auto`,
-        },
-    };
-
-    static PARTS = {
-        form: {
-            template: `modules/more-activities/templates/grant-customization.hbs`,
-        },
-    };
-
-    constructor(effectSheet, uuid, item, currentCustomization = {}, options = {}) {
-        super({
-            window: {
-                title: `Customize`
-            },
-            ...options,
-        });
-        this.effectSheet = effectSheet;
-        this.uuid = uuid;
-        this.item = item;
-        this.customization = foundry.utils.deepClone(currentCustomization);
-    }
-
-    /** @inheritdoc */
-    async _prepareContext() {
-        const isSpell = this.item.type === `spell`;
-        const spellLevel = isSpell ? this.item.system?.level ?? 0 : 0;
-
-        const recoveryOptions = [
-            { key: `default`, label: `Default`, selected: !this.customization.recovery || this.customization.recovery === `default`, },
-            { key: `sr`, label: `Short Rest`, selected: this.customization.recovery === `sr`, },
-            { key: `lr`, label: `Long Rest`, selected: this.customization.recovery === `lr`, },
-            { key: `day`, label: `Day`, selected: this.customization.recovery === `day`, },
-        ];
-
-        const scrollStates = [
-            { value: 'disable', label: 'Force Spell', icon: 'fas fa-times', selected: (this.customization.asScroll ?? null) === false },
-            { value: 'ignore', label: `Use Global`, icon: 'fas fa-minus', selected: (this.customization.asScroll ?? null) === null },
-            { value: 'enable', label: 'Force Scroll', icon: 'fas fa-check', selected: (this.customization.asScroll ?? null) === true },
-        ];
-
-        return {
-            item: this.item,
-            isSpell,
-            spellLevel,
-            scrollStates,
-            individualCost: this.customization?.individualCost ?? null,
-            individualCostCurrency: this.customization?.individualCostCurrency ?? `gp`,
-            maxUses: this.customization?.maxUses ?? null,
-            hasUses: this.item.system?.uses?.max !== undefined && this.item.system?.uses?.max != null,
-            recovery: this.customization.recovery ?? `default`,
-            recoveryOptions: recoveryOptions,
-            spellCostPerLevel: this.customization?.spellCostPerLevel ?? null,
-            spellCostPerLevelCurrency: this.customization?.spellCostPerLevelCurrency ?? `gp`,
-            currencyOptions: [ `pp`, `gp`, `ep`, `sp`, `cp` ],
-        };
-    }
-    
-    /** @inheritdoc */
-    async _onRender(context, options) {
-        if (!this.element.querySelector(`.window-subtitle`)) {
-            const subtitle = document.createElement(`h2`);
-            subtitle.classList.add(`window-subtitle`);
-            subtitle.innerText = this.item?.name || ``,
-            this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
-        }
-
-        this.element.querySelectorAll('.scroll-state-btn').forEach(btn => {
-            btn.addEventListener('click', (event) => {
-                const newState = event.target.dataset.state;
-                switch(newState) {
-                    case 'ignore':
-                        this.customization.asScroll = null;
-                        break;
-                    case 'disable':
-                        this.customization.asScroll = false;
-                        break;
-                    case 'enable':
-                        this.customization.asScroll = true;
-                        break;
-                }
-                
-                this.element.querySelectorAll('.scroll-state-btn').forEach(b => {
-                    b.classList.remove('active');
-                });
-                event.target.classList.add('active');
-            });
-        });
-
-        this.element.querySelector(`.cancel-customization-btn`)?.addEventListener(`click`, () => {
-            this.close();
-        });
-
-        this.element.querySelector(`.finish-customization-btn`)?.addEventListener(`click`, async() => {
-            const individualCost = this.element.querySelector(`input[name="individualCost"]`);
-            if ((individualCost?.value ?? ``) != ``)
-                this.customization.individualCost = individualCost.value;
-            else
-                delete this.customization.individualCost;
-
-            const individualCostCurrency = this.element.querySelector(`select[name="individualCostCurrency"]`);
-            if ((individualCostCurrency?.value ?? `gp`) != `gp`)
-                this.customization.individualCostCurrency = individualCostCurrency.value;
-            else
-                delete this.customization.individualCostCurrency;
-
-            const maxUses = this.element.querySelector(`input[name="maxUses"]`);
-            if ((maxUses?.value ?? ``) !== ``)
-                this.customization.maxUses = maxUses.value;
-            else
-                delete this.customization.maxUses;
-
-            const recovery = this.element.querySelector(`select[name="recovery"]`);
-            if ((recovery?.value ?? `default`) !== `default`)
-                this.customization.recovery = recovery.value;
-            else
-                delete this.customization.recovery;
-
-            const spellCostPerLevel = this.element.querySelector(`input[name="spellCostPerLevel"]`);
-            if ((spellCostPerLevel?.value ?? ``) != ``)
-                this.customization.spellCostPerLevel = spellCostPerLevel.value;
-            else
-                delete this.customization.spellCostPerLevel;
-
-            const spellCostPerLevelCurrency = this.element.querySelector(`select[name="spellCostPerLevelCurrency"]`);
-            if ((spellCostPerLevelCurrency?.value ?? `gp`) != `gp`)
-                this.customization.spellCostPerLevelCurrency = spellCostPerLevelCurrency.value;
-            else
-                delete this.customization.spellCostPerLevelCurrency;
-
-            if (this.customization.asScroll == null)
-                delete this.customization.asScroll;
-
-            let itemCustomizations;
-            try {
-                itemCustomizations = JSON.parse(this.effectSheet?.activity?.itemCustomizations);
-            }
-            catch {
-                itemCustomizations = {};
-            }
-            
-            if (Object.values(this.customization).length > 0)
-                itemCustomizations[this.uuid] = this.customization;
-            else
-                delete itemCustomizations[this.uuid];
-
-            await this.effectSheet?.activity?.update({ itemCustomizations: JSON.stringify(itemCustomizations) });
-            this.effectSheet?.render();
-            this.close();
-        });
     }
 }
 
