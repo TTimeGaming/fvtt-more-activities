@@ -338,7 +338,7 @@ class ContestedManager {
     }
     
     static async _applyContestEffects(contest, activity, templateData) {
-        if (activity.appliedEffects.length === 0 && activity.appliedEffectsMinor.length === 0 && activity.appliedEffectsMajor.length === 0) return;
+        if (!activity.effectGroups || activity.effectGroups.length === 0) return;
 
         const attackerActor = contest.initiator;
         for (const defender of templateData.defenderRolls) {
@@ -348,24 +348,20 @@ class ContestedManager {
             const winner = defender.lost ? attackerActor : defenderActor;
             const loser = defender.lost ? defenderActor : attackerActor;
 
-            if (activity.appliedEffects.length > 0) {
-                const targetActor = this._getTargetActor(activity.applyEffectsTo, winner, loser, defender);
-                if (targetActor) {
-                    await EffectsData.apply(activity, [targetActor], activity.appliedEffects);
-                }
-            }
+            for (const group of activity.effectGroups) {
+                const targetActor = this._getTargetActor(group.applyTo, winner, loser, defender);
+                if (!targetActor) continue;
 
-            if (activity.appliedEffectsMinor.length > 0 && (defender.minorWin || defender.minorLoss)) {
-                const targetActor = this._getTargetActor(activity.applyEffectsTo, winner, loser, defender);
-                if (targetActor) {
-                    await EffectsData.apply(activity, [targetActor], activity.appliedEffectsMinor);
+                if ((group.appliedEffects?.length ?? 0) > 0) {
+                    await EffectsData.apply(activity, [targetActor], group.appliedEffects);
                 }
-            }
 
-            if (activity.appliedEffectsMajor.length > 0 && (defender.majorWin || defender.majorLoss)) {
-                const targetActor = this._getTargetActor(activity.applyEffectsTo, winner, loser, defender);
-                if (targetActor) {
-                    await EffectsData.apply(activity, [targetActor], activity.appliedEffectsMajor);
+                if ((group.appliedEffectsMinor?.length ?? 0) > 0 && (defender.minorWin || defender.minorLoss)) {
+                    await EffectsData.apply(activity, [targetActor], group.appliedEffectsMinor);
+                }
+
+                if ((group.appliedEffectsMajor?.length ?? 0) > 0 && (defender.majorWin || defender.majorLoss)) {
+                    await EffectsData.apply(activity, [targetActor], group.appliedEffectsMajor);
                 }
             }
         }
@@ -484,6 +480,48 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
             max: 20,
         });
 
+        schema.effectGroups = new fields.ArrayField(new fields.SchemaField({
+            id: new fields.StringField({
+                required: true,
+                initial: () => foundry.utils.randomID(),
+            }),
+            name: new fields.StringField({
+                required: false,
+                blank: true,
+                initial: `Effect Group`,
+            }),
+            applyTo: new fields.StringField({
+                required: false,
+                initial: `loserDefender`,
+                choices: [ `loserAttacker`, `loserDefender`, `loserAny`, `winnerAttacker`, `winnerDefender`, `winnerAny`, ],
+            }),
+            appliedEffects: new fields.ArrayField(new fields.StringField({
+                required: false,
+                blank: true
+            }), {
+                required: false,
+                initial: [],
+            }),
+            appliedEffectsMinor: new fields.ArrayField(new fields.StringField({
+                required: false,
+                blank: true
+            }), {
+                required: false,
+                initial: [],
+            }),
+            appliedEffectsMajor: new fields.ArrayField(new fields.StringField({
+                required: false,
+                blank: true
+            }), {
+                required: false,
+                initial: [],
+            }),
+        }), {
+            required: false,
+            initial: [],
+        });
+
+        // Deprecated in v1.8.0
         schema.applyEffectsTo = new fields.StringField({
             required: false,
             initial: `loserDefender`,
@@ -594,10 +632,12 @@ export class ContestedActivitySheet extends dnd5e.applications.activity.Activity
         context.thresholdMinorSuccess = this.activity?.thresholdMinorSuccess || 5;
         context.allowMajorSuccess = this.activity?.allowMajorSuccess || false;
         context.thresholdMajorSuccess = this.activity?.thresholdMajorSuccess || 10;
-        context.applyEffectsTo = this.activity?.applyEffectsTo || `loserDefender`;
-        context.appliedEffects = this.activity?.appliedEffects || [];
-        context.appliedEffectsMinor = this.activity?.appliedEffectsMinor || [];
-        context.appliedEffectsMajor = this.activity?.appliedEffectsMajor || [];
+        
+        context.effectGroups = (this.activity?.effectGroups || []).map((element, index) => ({
+            ...element,
+            index: index,
+        }));
+        context.hasEffectGroups = context.effectGroups.length > 0;
 
         return context;
     }
@@ -611,6 +651,76 @@ export class ContestedActivitySheet extends dnd5e.applications.activity.Activity
             attackerRollTypeSelect.addEventListener(`change`, () => this._updateRollOptions(`attacker`));
         if (defenderRollTypeSelect)
             defenderRollTypeSelect.addEventListener(`change`, () => this._updateRollOptions(`defender`));
+
+        this.element?.querySelector(`.add-effect-group`)?.addEventListener(`click`, async() => {
+            const effectGroups = this.activity?.effectGroups || [];
+            effectGroups.push({
+                id: foundry.utils.randomID(),
+                name: `Effect Group ${effectGroups.length + 1}`,
+                applyTo: `loserDefender`,
+                appliedEffects: [],
+                appliedEffectsMinor: [],
+                appliedEffectsMajor: [],
+            });
+            await this.activity.update({ effectGroups: effectGroups });
+        });
+
+        this.element?.querySelectorAll(`.remove-effect-group`).forEach(btn => {
+            btn.addEventListener(`click`, async(event) => {
+                const index = parseInt(event.target.closest(`[data-index]`).dataset.index);
+                const effectGroups = [...(this.activity?.effectGroups || [])];
+                effectGroups.splice(index, 1);
+                await this.activity.update({ effectGroups: effectGroups });
+            });
+        });
+
+        this.element?.querySelectorAll(`input[name="effectGroupName"]`).forEach(input => {
+            input.addEventListener(`blur`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+
+                const effectGroups = [...(this.activity?.effectGroups || [])];
+                if (!effectGroups[index]) return;
+
+                effectGroups[index].name = event.target.value;
+                await this.activity.update({ effectGroups: effectGroups });
+            });
+        });
+
+        this.element?.querySelectorAll(`select[name="applyEffectsTo"]`).forEach(input => {
+            input.addEventListener(`change`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+
+                const effectGroups = [...(this.activity?.effectGroups || [])];
+                if (!effectGroups[index]) return;
+
+                effectGroups[index].applyTo = event.target.value;
+                await this.activity.update({ effectGroups: effectGroups });
+            });
+        });
+
+        this.element?.querySelectorAll(`multi-select[name="appliedEffects"]`).forEach(input => {
+            input.addEventListener(`change`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+                const type = event.target.dataset.type;
+
+                const effectGroups = [...(this.activity?.effectGroups || [])];
+                if (!effectGroups[index]) return;
+
+                switch (type) {
+                    case `normal`:
+                        effectGroups[index].appliedEffects = [...event.target.value];
+                        break;
+                    case `minor`:
+                        effectGroups[index].appliedEffectsMinor = [...event.target.value];
+                        break;
+                    case `major`:
+                        effectGroups[index].appliedEffectsMajor = [...event.target.value];
+                        break;
+                }
+
+                await this.activity.update({ effectGroups: effectGroups });
+            });
+        });
     }
 
     /**

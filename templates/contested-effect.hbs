@@ -172,66 +172,82 @@
     </fieldset>
 
     <fieldset>
-        <legend><label> Effects </label></legend>
-        
-        <div class="form-group">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.label"}}</label>
-            <div class="form-fields">
-                <select name="applyEffectsTo">
-                    {{#each applyEffectsToOptions as |option|}}
-                    <option value="{{ option.value }}" {{#if (eq ../applyEffectsTo option.value)}}selected{{/if}}>
-                        {{ option.label }}
-                    </option>
-                    {{/each}}
-                </select>
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.hint"}}</p>
-        </div>
+        <legend>
+            <label> Effect Groups </label>
+            <button type="button" class="add-effect-group unbutton control-button" data-tooltip aria-label="Create Effect Group">
+                <i class="fas fa-plus"></i>
+            </button>
+        </legend>        
 
-        <div class="form-group stacked">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.label"}}</label>
-            <div class="form-fields">
-                <multi-select name="appliedEffects">
-                    {{#each availableEffects as |effect|}}
-                    <option value="{{ effect.id }}" {{#if (includes ../appliedEffects effect.id)}}selected{{/if}}>
-                        {{ effect.name }}
-                    </option>
-                    {{/each}}
-                </multi-select>
+        {{#each effectGroups as |group|}}
+        <fieldset>
+            <legend style="display: flex; gap: 0.25rem;">
+                <input type="text" name="effectGroupName" value="{{ group.name }}" placeholder="Effect Group" data-index="{{ group.index }}">
+                <button type="button" class="remove-effect-group unbutton control-button" data-tooltip aria-label="Remove Effect Group" data-index="{{ group.index }}" style="width: 26px;">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </legend>
+            
+            <div class="form-group">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.label"}}</label>
+                <div class="form-fields">
+                    <select name="applyEffectsTo" data-index="{{ group.index }}">
+                        {{#each ../applyEffectsToOptions as |option|}}
+                        <option value="{{ option.value }}" {{#if (eq group.applyTo option.value)}}selected{{/if}}>
+                            {{ option.label }}
+                        </option>
+                        {{/each}}
+                    </select>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.hint"}}</p>
             </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.hint"}}</p>
-        </div>
 
-        {{#if allowMinorSuccess}}
-        <div class="form-group stacked">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMinor.label"}}</label>
-            <div class="form-fields">
-                <multi-select name="appliedEffectsMinor">
-                    {{#each availableEffects as |effect|}}
-                    <option value="{{ effect.id }}" {{#if (includes ../appliedEffectsMinor effect.id)}}selected{{/if}}>
-                        {{ effect.name }}
-                    </option>
-                    {{/each}}
-                </multi-select>
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.label"}}</label>
+                <div class="form-fields">
+                    <multi-select name="appliedEffects" data-index="{{ group.index }}" data-type="normal">
+                        {{#each ../availableEffects as |effect|}}
+                        <option value="{{ effect.id }}" {{#if (includes group.appliedEffects effect.id)}}selected{{/if}}>
+                            {{ effect.name }}
+                        </option>
+                        {{/each}}
+                    </multi-select>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.hint"}}</p>
             </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMinor.hint"}}</p>
-        </div>
-        {{/if}}
 
-        {{#if allowMajorSuccess}}
-        <div class="form-group stacked">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMajor.label"}}</label>
-            <div class="form-fields">
-                <multi-select name="appliedEffectsMajor">
-                    {{#each availableEffects as |effect|}}
-                    <option value="{{ effect.id }}" {{#if (includes ../appliedEffectsMajor effect.id)}}selected{{/if}}>
-                        {{ effect.name }}
-                    </option>
-                    {{/each}}
-                </multi-select>
+            {{#if ../allowMinorSuccess}}
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMinor.label"}}</label>
+                <div class="form-fields">
+                    <multi-select name="appliedEffects" data-index="{{ group.index }}" data-type="minor">
+                        {{#each ../availableEffects as |effect|}}
+                        <option value="{{ effect.id }}" {{#if (includes group.appliedEffectsMinor effect.id)}}selected{{/if}}>
+                            {{ effect.name }}
+                        </option>
+                        {{/each}}
+                    </multi-select>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMinor.hint"}}</p>
             </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMajor.hint"}}</p>
-        </div>      
-        {{/if}}
+            {{/if}}
+
+            {{#if ../allowMajorSuccess}}
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMajor.label"}}</label>
+                <div class="form-fields">
+                    <multi-select name="appliedEffects" data-index="{{ group.index }}" data-type="major">
+                        {{#each ../availableEffects as |effect|}}
+                        <option value="{{ effect.id }}" {{#if (includes group.appliedEffectsMajor effect.id)}}selected{{/if}}>
+                            {{ effect.name }}
+                        </option>
+                        {{/each}}
+                    </multi-select>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMajor.hint"}}</p>
+            </div>      
+            {{/if}}
+        </fieldset>
+        {{/each}}
     </fieldset>
 </section>
