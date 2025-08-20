@@ -4,6 +4,15 @@ export class DomData {
         this._preventFormSubmission(sheet);
     }
 
+    static addSubtitle(element, activity) {
+        if (element.querySelector(`.window-subtitle`)) return;
+
+        const subtitle = document.createElement(`h2`);
+        subtitle.classList.add(`window-subtitle`);
+        subtitle.innerText = activity.item?.name || activity.name || ``,
+        element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
+    }
+
     static _setupCollapsibleFieldsets(sheet) {
         const fieldsets = sheet.element?.querySelectorAll(`.collapsible-fieldset`);
         if (!fieldsets) return;

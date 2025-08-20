@@ -491,12 +491,7 @@ class MovementDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     /** @inheritdoc */
     async _onRender(context, options) {
-        if (!this.element.querySelector(`.window-subtitle`)) {
-            const subtitle = document.createElement(`h2`);
-            subtitle.classList.add(`window-subtitle`);
-            subtitle.innerText = this.activity?.item?.name || this.activity?.name || ``,
-            this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
-        }
+        DomData.addSubtitle(this.element, this.activity);
 
         this.element.querySelector(`.pull-movement-btn`)?.addEventListener(`click`, async(event) => {
             this.directionCallback?.(`pull`);
@@ -585,12 +580,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     /** @inheritdoc */
     async _onRender(context, options) {
-        if (!this.element.querySelector(`.window-subtitle`)) {
-            const subtitle = document.createElement(`h2`);
-            subtitle.classList.add(`window-subtitle`);
-            subtitle.innerText = this.targetApp.activity?.item?.name || this.targetApp.activity?.name || ``,
-            this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
-        }
+        DomData.addSubtitle(this.element, this.targetApp.activity);
 
         this.element.querySelector('.prev-token-btn')?.addEventListener('click', this._onPrevToken.bind(this));
         this.element.querySelector('.next-token-btn')?.addEventListener('click', this._onNextToken.bind(this));

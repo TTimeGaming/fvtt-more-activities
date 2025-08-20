@@ -649,12 +649,7 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     /** @inheritdoc */
     async _onRender(context, options) {
-        if (!this.element.querySelector(`.window-subtitle`)) {
-            const subtitle = document.createElement(`h2`);
-            subtitle.classList.add(`window-subtitle`);
-            subtitle.innerText = this.activity?.item?.name || this.activity?.name || ``,
-            this.element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
-        }
+        DomData.addSubtitle(this.element, this.activity);
 
         this.element.querySelectorAll(`.item-choice`).forEach(checkbox => {
             checkbox.addEventListener(`change`, () => {
