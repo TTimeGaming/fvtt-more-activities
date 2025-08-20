@@ -1,3 +1,6 @@
+import { DomData } from '../utils/dom.js';
+import { MessageData } from '../utils/message.js';
+
 const TEMPLATE_NAME = `template`;
 
 export class TemplateData {
@@ -5,6 +8,10 @@ export class TemplateData {
     }
 
     static applyListeners(message, html) {
+        MessageData.addActivityButton(message, html, true,
+            TEMPLATE_NAME, `Button Name`, (activity) => {
+            }
+        );
     }
 }
 
@@ -42,6 +49,7 @@ export class TemplateActivitySheet extends dnd5e.applications.activity.ActivityS
 
     /** @inheritdoc */
     _onRender(context, options) {
+        DomData.setupSheetBehaviors(this);
     }
 }
 
