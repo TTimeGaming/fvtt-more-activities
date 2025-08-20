@@ -1,5 +1,6 @@
 import { MessageData } from '../utils/message.js';
 import { FieldsData } from '../utils/fields.js';
+import { DomData } from '../utils/dom.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_NAME = `grant`;
@@ -209,6 +210,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
         });
 
         this._addDragDropHandlers(input);
+        DomData.setupSheetBehaviors(this);
     }
 
     _addDragDropHandlers(input) {

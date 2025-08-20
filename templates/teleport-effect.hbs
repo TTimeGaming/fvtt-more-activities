@@ -1,118 +1,134 @@
 <section class="tab activity-{{ tab.id }} {{ tab.cssClass }}" data-tab="{{ tab.id }}" data-group="{{ tab.group }}">
-    <fieldset>
-        <legend><label> Configuration </label></legend>
-
-        <div class="form-group stacked">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.maxTargets.label"}}</label>
-            <div class="form-fields">
-                <input type="text" name="maxTargets" value="{{ maxTargets }}" placeholder="Max Targets">
-            </div>
-            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.maxTargets.hint"}}</p>
-        </div>
-
-        <div class="form-group">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetSelf.label"}}</label>
-            <div class="form-fields">
-                <dnd5e-checkbox name="targetSelf" {{#if targetSelf}}checked{{/if}}></dnd5e-checkbox>
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetSelf.hint"}}</p>
-        </div>
-
-        <div class="form-group indented">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.onlyTargetSelf.label"}}</label>
-            <div class="form-fields">
-                {{#if (and targetSelf (eq maxTargets "1"))}}
-                <dnd5e-checkbox name="onlyTargetSelf" {{#if onlyTargetSelf}}checked{{/if}}></dnd5e-checkbox>
-                {{else}}
-                <dnd5e-checkbox name="onlyTargetSelf" disabled></dnd5e-checkbox>
-                {{/if}}
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.onlyTargetSelf.hint"}}</p>
-        </div>
-
-        <div class="form-group stacked">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetRadius.label"}}</label>
-            <div class="form-fields">
-                <input type="text" name="targetRadius" value="{{ targetRadius }}" placeholder="Target Radius">
-            </div>
-            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetRadius.hint"}}</p>
-        </div>
-
-        <div class="form-group stacked">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.teleportDistance.label"}}</label>
-            <div class="form-fields">
-                <input type="text" name="teleportDistance" value="{{ teleportDistance }}" placeholder="Teleport Distance">
-            </div>
-            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.teleportDistance.hint"}}</p>
-        </div>
-    </fieldset>
-    <fieldset>
-        <legend><label> Placement </label></legend>
-
-        <div class="form-group">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualPlacement.label"}}</label>
-            <div class="form-fields">
-                {{#if (or keepArrangement (eq maxTargets "1"))}}
-                <dnd5e-checkbox name="manualPlacement" disabled></dnd5e-checkbox>
-                {{else}}
-                <dnd5e-checkbox name="manualPlacement" {{#if manualPlacement}}checked{{/if}}></dnd5e-checkbox>
-                {{/if}}
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualPlacement.hint"}}</p>
-        </div>
-
-        <div class="form-group stacked indented">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualRadius.label"}}</label>
-            <div class="form-fields">
-                {{#if manualPlacement}}
-                <input type="text" name="manualRadius" value="{{ manualRadius }}" placeholder="Placement Radius">
-                {{else}}
-                <input type="text" name="manualRadius" value="0" placeholder="Placement Radius" disabled>
-                {{/if}}
-            </div>
-            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualRadius.hint"}}</p>
-        </div>
-
-        <div class="form-group">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.keepArrangement.label"}}</label>
-            <div class="form-fields">
-                {{#if (or manualPlacement (eq maxTargets 1))}}
-                <dnd5e-checkbox name="keepArrangement" disabled></dnd5e-checkbox>
-                {{else}}
-                <dnd5e-checkbox name="keepArrangement" {{#if keepArrangement}}checked{{/if}}></dnd5e-checkbox>
-                {{/if}}
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.keepArrangement.hint"}}</p>
-        </div>
-
-        <div class="form-group stacked">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.clusterRadius.label"}}</label>
-            <div class="form-fields">
-                {{#if (or manualPlacement keepArrangement (eq maxTargets 1))}}
-                <input type="text" name="clusterRadius" value="0" placeholder="Cluster Radius" disabled>
-                {{else}}
-                <input type="text" name="clusterRadius" value="{{ clusterRadius }}" placeholder="Cluster Radius">
-                {{/if}}
-            </div>
-            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.clusterRadius.hint"}}</p>
-        </div>
-    </fieldset>
-
-    <fieldset>
-        <legend><label> Effects </label></legend>
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="teleport-configuration">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Configuration </label>
+        </legend>
         
-        <div class="form-group stacked">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.appliedEffects.label"}}</label>
-            <div class="form-fields">
-                <multi-select name="appliedEffects">
-                    {{#each availableEffects as |effect|}}
-                    <option value="{{ effect.id }}" {{#if (includes ../appliedEffects effect.id)}}selected{{/if}}>
-                        {{ effect.name }}
-                    </option>
-                    {{/each}}
-                </multi-select>
+        <div class="fieldset-content">
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.maxTargets.label"}}</label>
+                <div class="form-fields">
+                    <input type="text" name="maxTargets" value="{{ maxTargets }}" placeholder="Max Targets">
+                </div>
+                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.maxTargets.hint"}}</p>
             </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.appliedEffects.hint"}}</p>
+
+            <div class="form-group">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetSelf.label"}}</label>
+                <div class="form-fields">
+                    <dnd5e-checkbox name="targetSelf" {{#if targetSelf}}checked{{/if}}></dnd5e-checkbox>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetSelf.hint"}}</p>
+            </div>
+
+            <div class="form-group indented">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.onlyTargetSelf.label"}}</label>
+                <div class="form-fields">
+                    {{#if (and targetSelf (eq maxTargets "1"))}}
+                    <dnd5e-checkbox name="onlyTargetSelf" {{#if onlyTargetSelf}}checked{{/if}}></dnd5e-checkbox>
+                    {{else}}
+                    <dnd5e-checkbox name="onlyTargetSelf" disabled></dnd5e-checkbox>
+                    {{/if}}
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.onlyTargetSelf.hint"}}</p>
+            </div>
+
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetRadius.label"}}</label>
+                <div class="form-fields">
+                    <input type="text" name="targetRadius" value="{{ targetRadius }}" placeholder="Target Radius">
+                </div>
+                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.targetRadius.hint"}}</p>
+            </div>
+
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.teleportDistance.label"}}</label>
+                <div class="form-fields">
+                    <input type="text" name="teleportDistance" value="{{ teleportDistance }}" placeholder="Teleport Distance">
+                </div>
+                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.teleportDistance.hint"}}</p>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="teleport-placement">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Placement </labe>
+        </legend>
+
+        <div class="fieldset-content">
+            <div class="form-group">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualPlacement.label"}}</label>
+                <div class="form-fields">
+                    {{#if (or keepArrangement (eq maxTargets "1"))}}
+                    <dnd5e-checkbox name="manualPlacement" disabled></dnd5e-checkbox>
+                    {{else}}
+                    <dnd5e-checkbox name="manualPlacement" {{#if manualPlacement}}checked{{/if}}></dnd5e-checkbox>
+                    {{/if}}
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualPlacement.hint"}}</p>
+            </div>
+
+            <div class="form-group stacked indented">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualRadius.label"}}</label>
+                <div class="form-fields">
+                    {{#if manualPlacement}}
+                    <input type="text" name="manualRadius" value="{{ manualRadius }}" placeholder="Placement Radius">
+                    {{else}}
+                    <input type="text" name="manualRadius" value="0" placeholder="Placement Radius" disabled>
+                    {{/if}}
+                </div>
+                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.manualRadius.hint"}}</p>
+            </div>
+
+            <div class="form-group">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.keepArrangement.label"}}</label>
+                <div class="form-fields">
+                    {{#if (or manualPlacement (eq maxTargets 1))}}
+                    <dnd5e-checkbox name="keepArrangement" disabled></dnd5e-checkbox>
+                    {{else}}
+                    <dnd5e-checkbox name="keepArrangement" {{#if keepArrangement}}checked{{/if}}></dnd5e-checkbox>
+                    {{/if}}
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.keepArrangement.hint"}}</p>
+            </div>
+
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.clusterRadius.label"}}</label>
+                <div class="form-fields">
+                    {{#if (or manualPlacement keepArrangement (eq maxTargets 1))}}
+                    <input type="text" name="clusterRadius" value="0" placeholder="Cluster Radius" disabled>
+                    {{else}}
+                    <input type="text" name="clusterRadius" value="{{ clusterRadius }}" placeholder="Cluster Radius">
+                    {{/if}}
+                </div>
+                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.teleport.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.teleport.clusterRadius.hint"}}</p>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="teleport-effects">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Effects </label>
+        </legend>
+        
+        <div class="fieldset-content">
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.appliedEffects.label"}}</label>
+                <div class="form-fields">
+                    <multi-select name="appliedEffects">
+                        {{#each availableEffects as |effect|}}
+                        <option value="{{ effect.id }}" {{#if (includes ../appliedEffects effect.id)}}selected{{/if}}>
+                            {{ effect.name }}
+                        </option>
+                        {{/each}}
+                    </multi-select>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.appliedEffects.hint"}}</p>
+            </div>
         </div>
     </fieldset>
 </section>

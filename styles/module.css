@@ -923,3 +923,35 @@
    align-items: center;
    gap: 0.5rem;
 }
+
+.collapsible-fieldset .collapsible-legend {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.25rem 0;
+}
+
+.collapsible-fieldset .collapse-arrow {
+    margin-right: 0.5rem;
+    transform: transform 0.2s ease;
+    font-size: 0.8em;
+    width: 12px;
+    text-align: center;
+}
+
+.collapsible-fieldset .collapsible-legend:hover {
+    opacity: 0.8;
+}
+
+.collapsible-fieldset .fieldset-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.collapsible-fieldset[data-expanded="false"] .fieldset-content {
+    display: none;
+}

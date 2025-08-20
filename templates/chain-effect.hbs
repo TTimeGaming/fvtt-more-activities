@@ -1,148 +1,152 @@
-{{!-- templates/chain-effect.hbs --}}
 <section class="tab activity-{{ tab.id }} {{ tab.cssClass }}" data-tab="{{ tab.id }}" data-group="{{ tab.group }}">
-    <fieldset>
-        <legend><label> Activities </label></legend>
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="chain-activities">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Activities </label>
+        </legend>
 
-        <div class="form-group">
-            <label>Available Activities</label>
-            <div class="form-fields add-activity-controls">
-                <select name="newActivity">
-                    <option value="">-- Select Activity --</option>
-                    {{#if availableActivities}}
-                    {{#each availableActivities as |activity|}}
-                    {{#unless activity.isChained}}
-                    <option value="{{ activity.id }}">{{ activity.name }} ({{ activity.type }})</option>
-                    {{/unless}}
-                    {{/each}}
-                    {{/if}}
-                </select>
+        <div class="fieldset-content">
+            <div class="form-group">
+                <label>Available Activities</label>
+                <div class="form-fields add-activity-controls">
+                    <select name="newActivity">
+                        <option value="">-- Select Activity --</option>
+                        {{#if availableActivities}}
+                        {{#each availableActivities as |activity|}}
+                        {{#unless activity.isChained}}
+                        <option value="{{ activity.id }}">{{ activity.name }} ({{ activity.type }})</option>
+                        {{/unless}}
+                        {{/each}}
+                        {{/if}}
+                    </select>
+                </div>
             </div>
-        </div>
-        
-        {{#if chainedActivities.length}}
-        <div class="chained-activities-list">
-            {{#each chainedActivities as |chainedActivity index|}}
-            <div class="chained-activity-item" data-index="{{ index }}">
-                <div class="activity-header">
-                    <div class="activity-info">
-                        <span class="activity-name">
-                            {{#if chainedActivity.exists}}
-                                {{ chainedActivity.resolvedName }}
-                            {{else}}
-                                <span class="missing-activity">{{ chainedActivity.resolvedName }} (Missing)</span>
-                            {{/if}}
-                        </span>
-                    </div>
-                    <div class="activity-meta-controls">
-                        <div class="activity-type-info">
-                            {{#if chainedActivity.icon}}
-                            <img src="{{ chainedActivity.icon }}" alt="{{ chainedActivity.activityType }}" class="activity-type-icon" />
-                            {{else}}
-                            <i class="activity-type-icon fas fa-cog"></i>
-                            {{/if}}
-                            <span class="activity-type">{{ chainedActivity.activityType }}</span>
+            
+            {{#if chainedActivities.length}}
+            <div class="chained-activities-list">
+                {{#each chainedActivities as |chainedActivity index|}}
+                <div class="chained-activity-item" data-index="{{ index }}">
+                    <div class="activity-header">
+                        <div class="activity-info">
+                            <span class="activity-name">
+                                {{#if chainedActivity.exists}}
+                                    {{ chainedActivity.resolvedName }}
+                                {{else}}
+                                    <span class="missing-activity">{{ chainedActivity.resolvedName }} (Missing)</span>
+                                {{/if}}
+                            </span>
                         </div>
-                        <div class="activity-controls">
-                            {{#unless (eq index 0)}}
-                            <button type="button" class="move-up-btn" data-index="{{ index }}" title="Move Up">
-                                <i class="fas fa-chevron-up"></i>
-                            </button>
-                            {{/unless}}
-                            {{#unless (eq index (subtract ../chainedActivities.length 1))}}
-                            <button type="button" class="move-down-btn" data-index="{{ index }}" title="Move Down">
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            {{/unless}}
-                            <button type="button" class="remove-activity-btn" data-index="{{ index }}" title="Remove">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {{#if chainedActivity.availableListeners.length}}
-                <div class="activity-listeners">
-                    <div class="listeners-header">
-                        <label>Activation Triggers</label>
-                    </div>
-                    <div class="listeners-list">
-                        <div class="listeners-add">
-                            <label>Add Trigger:</label>
-                            <select class="add-listener-select" data-activity-index="{{ index }}">
-                                <option value="">-- Select Trigger --</option>
-                                {{#each chainedActivity.availableListeners as |triggerGroup|}}
-                                <optgroup label="{{ triggerGroup.activityName }}">
-                                    {{#each triggerGroup.triggers as |trigger|}}
-                                    {{#unless trigger.selected}}
-                                    <option value="{{ trigger.value }}">{{ trigger.label }}</option>
-                                    {{/unless}}
-                                    {{/each}}
-                                </optgroup>
-                                {{/each}}
-                            </select>
-                        </div>
-                    </div>
-
-                    {{#if chainedActivity.enrichedListeners.length}}
-                    {{#each chainedActivity.enrichedListeners as |listener triggerIndex|}}
-                    <div class="active-mapping-item">
-                        <span class="mapping-label"><strong>{{ listener.sourceActivityName }}: </strong> {{ listener.label }}</span>
-                        <button type="button" class="remove-mapping-btn" 
-                                data-activity-index="{{ ../index }}" 
-                                data-listener-key="{{ listener.value }}"
-                                title="Remove">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    {{/each}}
-                    {{else}}
-                    <p class="no-mappings-hint">This activity will not be triggered by any previous activities.</p>
-                    {{/if}}
-                </div>
-                {{else}}
-                {{#unless (eq index 0)}}
-                <div class="activity-listeners">
-                    <div class="listeners-header">
-                        <label>Activation Triggers</label>
-                    </div>
-                    <p class="no-available-triggers-hint">No triggers available from previous activities.</p>
-                </div>
-                {{/unless}}
-                {{/if}}
-
-                {{#unless (eq index (subtract ../chainedActivities.length 1))}}
-                <div class="activity-triggers">
-                    <div class="triggers-header">
-                        <label>Continuation Options</label>
-                        <button type="button" class="add-trigger-btn" data-activity-index="{{ index }}" data-activity-type="{{ chainedActivity.activityType }}" title="Add Trigger">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-
-                    {{#if chainedActivity.triggers.length}}
-                    <div class="triggers-list">
-                        {{#each chainedActivity.triggers as |trigger triggerIndex|}}
-                        <div class="trigger-item" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}">
-                            <div class="trigger-controls">
-                                <input type="text" class="trigger-label-input {{#if trigger.branch}}branching{{/if}}" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}" value="{{ trigger.name }}" placeholder="Trigger Label">
-                                {{#if trigger.branch}}<i class="branch-indicator fas fa-code-branch"></i>{{/if}}
-                                <button type="button" class="remove-trigger-btn" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}" title="Remove Trigger">
-                                    <i class="fas fa-times"></i>
+                        <div class="activity-meta-controls">
+                            <div class="activity-type-info">
+                                {{#if chainedActivity.icon}}
+                                <img src="{{ chainedActivity.icon }}" alt="{{ chainedActivity.activityType }}" class="activity-type-icon" />
+                                {{else}}
+                                <i class="activity-type-icon fas fa-cog"></i>
+                                {{/if}}
+                                <span class="activity-type">{{ chainedActivity.activityType }}</span>
+                            </div>
+                            <div class="activity-controls">
+                                {{#unless (eq index 0)}}
+                                <button type="button" class="move-up-btn" data-index="{{ index }}" title="Move Up">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
+                                {{/unless}}
+                                {{#unless (eq index (subtract ../chainedActivities.length 1))}}
+                                <button type="button" class="move-down-btn" data-index="{{ index }}" title="Move Down">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                {{/unless}}
+                                <button type="button" class="remove-activity-btn" data-index="{{ index }}" title="Remove">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
+                    </div>
+
+                    {{#if chainedActivity.availableListeners.length}}
+                    <div class="activity-listeners">
+                        <div class="listeners-header">
+                            <label>Activation Triggers</label>
+                        </div>
+                        <div class="listeners-list">
+                            <div class="listeners-add">
+                                <label>Add Trigger:</label>
+                                <select class="add-listener-select" data-activity-index="{{ index }}">
+                                    <option value="">-- Select Trigger --</option>
+                                    {{#each chainedActivity.availableListeners as |triggerGroup|}}
+                                    <optgroup label="{{ triggerGroup.activityName }}">
+                                        {{#each triggerGroup.triggers as |trigger|}}
+                                        {{#unless trigger.selected}}
+                                        <option value="{{ trigger.value }}">{{ trigger.label }}</option>
+                                        {{/unless}}
+                                        {{/each}}
+                                    </optgroup>
+                                    {{/each}}
+                                </select>
+                            </div>
+                        </div>
+
+                        {{#if chainedActivity.enrichedListeners.length}}
+                        {{#each chainedActivity.enrichedListeners as |listener triggerIndex|}}
+                        <div class="active-mapping-item">
+                            <span class="mapping-label"><strong>{{ listener.sourceActivityName }}: </strong> {{ listener.label }}</span>
+                            <button type="button" class="remove-mapping-btn" 
+                                    data-activity-index="{{ ../index }}" 
+                                    data-listener-key="{{ listener.value }}"
+                                    title="Remove">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                         {{/each}}
+                        {{else}}
+                        <p class="no-mappings-hint">This activity will not be triggered by any previous activities.</p>
+                        {{/if}}
                     </div>
                     {{else}}
-                    <p class="no-triggers-hint">No triggers defined. Add triggers to control chain progression.</p>
+                    {{#unless (eq index 0)}}
+                    <div class="activity-listeners">
+                        <div class="listeners-header">
+                            <label>Activation Triggers</label>
+                        </div>
+                        <p class="no-available-triggers-hint">No triggers available from previous activities.</p>
+                    </div>
+                    {{/unless}}
                     {{/if}}
+
+                    {{#unless (eq index (subtract ../chainedActivities.length 1))}}
+                    <div class="activity-triggers">
+                        <div class="triggers-header">
+                            <label>Continuation Options</label>
+                            <button type="button" class="add-trigger-btn" data-activity-index="{{ index }}" data-activity-type="{{ chainedActivity.activityType }}" title="Add Trigger">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+
+                        {{#if chainedActivity.triggers.length}}
+                        <div class="triggers-list">
+                            {{#each chainedActivity.triggers as |trigger triggerIndex|}}
+                            <div class="trigger-item" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}">
+                                <div class="trigger-controls">
+                                    <input type="text" class="trigger-label-input {{#if trigger.branch}}branching{{/if}}" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}" value="{{ trigger.name }}" placeholder="Trigger Label">
+                                    {{#if trigger.branch}}<i class="branch-indicator fas fa-code-branch"></i>{{/if}}
+                                    <button type="button" class="remove-trigger-btn" data-activity-index="{{ ../index }}" data-trigger-index="{{ triggerIndex }}" title="Remove Trigger">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {{/each}}
+                        </div>
+                        {{else}}
+                        <p class="no-triggers-hint">No triggers defined. Add triggers to control chain progression.</p>
+                        {{/if}}
+                    </div>
+                    {{/unless}}
                 </div>
-                {{/unless}}
+                {{/each}}
             </div>
-            {{/each}}
+            {{else}}
+            <p class="hint">No activities in chain. Add activities above to build your chain.</p>
+            {{/if}}
         </div>
-        {{else}}
-        <p class="hint">No activities in chain. Add activities above to build your chain.</p>
-        {{/if}}
     </fieldset>
 </section>

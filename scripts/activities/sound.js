@@ -1,3 +1,5 @@
+import { DomData } from '../utils/dom.js';
+
 const TEMPLATE_NAME = `sound`;
 
 export class SoundData {
@@ -78,7 +80,7 @@ export class SoundActivitySheet extends dnd5e.applications.activity.ActivityShee
 
     /** @inheritdoc */
     _onRender(context, options) {
-        console.log(this.activity.soundFile);
+        DomData.setupSheetBehaviors(this);
     }
 }
 

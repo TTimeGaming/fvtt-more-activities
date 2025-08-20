@@ -46,6 +46,7 @@
     "DND5E.ACTIVITY.FIELDS.contested.availableOptions.hint": "Select which options the attacker can choose from",
     "DND5E.ACTIVITY.FIELDS.contested.customBonus.label": "Custom Bonus",
     "DND5E.ACTIVITY.FIELDS.contested.customBonus.hint": "The custom bonus that is applied to the roll",
+    "DND5E.ACTIVITY.FIELDS.contested.effectGroupName.label": "Group Name",
     "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.label": "Apply Effects To",
     "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.hint": "Choose who receives the effects when the contest is resolved",
     "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.label": "Effects",

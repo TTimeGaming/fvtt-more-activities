@@ -1,3 +1,4 @@
+import { DomData } from '../utils/dom.js';
 import { MessageData } from '../utils/message.js';
 
 const TEMPLATE_NAME = `macro`;
@@ -66,6 +67,8 @@ export class MacroActivitySheet extends dnd5e.applications.activity.ActivityShee
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => this._saveMacroCode(), 1000);
         });
+
+        DomData.setupSheetBehaviors(this);
     }
 
     /**

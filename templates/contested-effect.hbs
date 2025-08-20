@@ -1,253 +1,285 @@
 <section class="tab activity-{{ tab.id }} {{ tab.cssClass }}" data-tab="{{ tab.id }}" data-group="{{ tab.group }}">
-    <fieldset>
-        <legend><label> Configuration </label></legend>
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="contested-configuration">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Configuration </label>
+        </legend>
 
-        <div class="form-group">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.tieCondition.label"}}</label>
-            <div class="form-fields">
-                <select name="tieCondition">
-                    {{#each tieConditionOptions as |option|}}
-                    <option value="{{ option.value }}" {{#if (eq ../tieCondition option.value)}}selected{{/if}}>
-                        {{ option.label }}
-                    </option>
-                    {{/each}}
-                </select>
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.tieCondition.hint"}}</p>
-        </div>
-
-        <div class="form-group">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.allowPlayerTargeting.label"}}</label>
-            <div class="form-fields">
-                <dnd5e-checkbox name="allowPlayerTargeting" {{#if allowPlayerTargeting}}checked{{/if}}></dnd5e-checkbox>
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.allowPlayerTargeting.hint"}}</p>
-        </div>
-    </fieldset>
-
-    <fieldset>
-        <legend><label> Degrees of Success </label></legend>
-
-        <div class="form-group">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.allowMinorSuccess.label"}}</label>
-            <div class="form-fields">
-                <dnd5e-checkbox name="allowMinorSuccess" {{#if allowMinorSuccess}}checked{{/if}}></dnd5e-checkbox>
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.allowMinorSuccess.hint"}}</p>
-        </div>
-
-        {{#if allowMinorSuccess}}
-        <div class="form-group stacked indented">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.thresholdMinorSuccess.label"}}</label>
-            <div class="form-fields">
-                <input type="number" name="thresholdMinorSuccess" value="{{ thresholdMinorSuccess }}" min="1" max="20">
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.thresholdMinorSuccess.hint"}}</p>
-        </div>
-        {{/if}}
-
-        <div class="form-group">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.allowMajorSuccess.label"}}</label>
-            <div class="form-fields">
-                <dnd5e-checkbox name="allowMajorSuccess" {{#if allowMajorSuccess}}checked{{/if}}></dnd5e-checkbox>
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.allowMajorSuccess.hint"}}</p>
-        </div>
-
-        {{#if allowMajorSuccess}}
-        <div class="form-group stacked indented">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.thresholdMajorSuccess.label"}}</label>
-            <div class="form-fields">
-                <input type="number" name="thresholdMajorSuccess" value="{{ thresholdMajorSuccess }}" min="1" max="20">
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.thresholdMajorSuccess.hint"}}</p>
-        </div>
-        {{/if}}
-    </fieldset>
-
-    <fieldset>
-        <legend><label> Attacker </label></legend>
-
-        <div class="form-group stacked">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.label.label"}}</label>
-            <div class="form-fields">
-                <input type="text" name="attackerLabel" value="{{ attackerLabel }}" placeholder="Attacker">
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.rollType.label"}}</label>
-            <div class="form-fields">
-                <select name="attackerRollType">
-                    <option value="ability" {{#if (eq attackerRollType "ability")}}selected{{/if}}>Ability Check</option>
-                    <option value="skill" {{#if (eq attackerRollType "skill")}}selected{{/if}}>Skill Check</option>
-                    <option value="spellcasting" {{#if (eq attackerRollType "spellcasting")}}selected{{/if}}>Spellcasting</option>
-                    <option value="custom" {{#if (eq attackerRollType "custom")}}selected{{/if}}>Custom DC</option>
-                </select>
-            </div>
-        </div>
-
-        {{#if (or (eq attackerRollType "ability") (eq attackerRollType "skill"))}}
-        <div class="form-group stacked indented">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.label"}}</label>
-            <div class="form-fields">
-                <multi-select name="attackerOptions">
-                {{#if (eq attackerRollType "ability")}}
-                    {{#each rollTypeOptions.ability as |option|}}
-                    <option value="{{ option.value }}" {{#if (includes ../attackerOptions option.value)}}selected{{/if}}>
-                        {{ option.label }}
-                    </option>
-                    {{/each}}
-                {{/if}}
-                {{#if (eq attackerRollType "skill")}}
-                    {{#each rollTypeOptions.skill as |option|}}
-                    <option value="{{ option.value }}" {{#if (includes ../attackerOptions option.value)}}selected{{/if}}>
-                        {{ option.label }}
-                    </option>
-                    {{/each}}
-                {{/if}}
-                </multi-select>
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.hint"}}</p>
-        </div>
-        {{/if}}
-
-        {{#if (eq attackerRollType "custom")}}
-        <div class="form-group stacked indented">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.customBonus.label"}}</label>
-            <div class="form-fields">
-                <input type="text" name="attackerCustom" value="{{ attackerCustom }}" placeholder="Custom Bonus">
-            </div>
-            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.contested.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.contested.customBonus.hint"}}</p>
-        </div>
-        {{/if}}
-    </fieldset>
-    </fieldset>
-
-    <fieldset>
-        <legend><label> Defender </label></legend>
-
-        <div class="form-group stacked">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.label.label"}}</label>
-            <div class="form-fields">
-                <input type="text" name="defenderLabel" value="{{ defenderLabel }}" placeholder="Defender">
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.rollType.label"}}</label>
-            <div class="form-fields">
-                <select name="defenderRollType">
-                    <option value="ability" {{#if (eq defenderRollType "ability")}}selected{{/if}}>Ability Check</option>
-                    <option value="skill" {{#if (eq defenderRollType "skill")}}selected{{/if}}>Skill Check</option>
-                    <option value="spellcasting" {{#if (eq defenderRollType "spellcasting")}}selected{{/if}}>Spellcasting</option>
-                </select>
-            </div>
-        </div>
-
-        {{#if (or (eq defenderRollType "ability") (eq defenderRollType "skill"))}}
-        <div class="form-group stacked indented">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.label"}}</label>
-            <div class="form-fields">
-                <multi-select name="defenderOptions">
-                    {{#if (eq defenderRollType "ability")}}
-                    {{#each rollTypeOptions.ability as |option|}}
-                    <option value="{{ option.value }}" {{#if (includes ../defenderOptions option.value)}}selected{{/if}}>
-                        {{ option.label }}
-                    </option>
-                    {{/each}}
-                {{/if}}
-                {{#if (eq defenderRollType "skill")}}
-                    {{#each rollTypeOptions.skill as |option|}}
-                    <option value="{{ option.value }}" {{#if (includes ../defenderOptions option.value)}}selected{{/if}}>
-                        {{ option.label }}
-                    </option>
-                    {{/each}}
-                {{/if}}
-                </multi-select>
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.hint"}}</p>
-        </div>
-        {{/if}}
-    </fieldset>
-
-    <fieldset>
-        <legend>
-            <label> Effect Groups </label>
-            <button type="button" class="add-effect-group unbutton control-button" data-tooltip aria-label="Create Effect Group">
-                <i class="fas fa-plus"></i>
-            </button>
-        </legend>        
-
-        {{#each effectGroups as |group|}}
-        <fieldset>
-            <legend style="display: flex; gap: 0.25rem;">
-                <input type="text" name="effectGroupName" value="{{ group.name }}" placeholder="Effect Group" data-index="{{ group.index }}">
-                <button type="button" class="remove-effect-group unbutton control-button" data-tooltip aria-label="Remove Effect Group" data-index="{{ group.index }}" style="width: 26px;">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </legend>
-            
+        <div class="fieldset-content">
             <div class="form-group">
-                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.label"}}</label>
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.tieCondition.label"}}</label>
                 <div class="form-fields">
-                    <select name="applyEffectsTo" data-index="{{ group.index }}">
-                        {{#each ../applyEffectsToOptions as |option|}}
-                        <option value="{{ option.value }}" {{#if (eq group.applyTo option.value)}}selected{{/if}}>
+                    <select name="tieCondition">
+                        {{#each tieConditionOptions as |option|}}
+                        <option value="{{ option.value }}" {{#if (eq ../tieCondition option.value)}}selected{{/if}}>
                             {{ option.label }}
                         </option>
                         {{/each}}
                     </select>
                 </div>
-                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.hint"}}</p>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.tieCondition.hint"}}</p>
             </div>
 
-            <div class="form-group stacked">
-                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.label"}}</label>
+            <div class="form-group">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.allowPlayerTargeting.label"}}</label>
                 <div class="form-fields">
-                    <multi-select name="appliedEffects" data-index="{{ group.index }}" data-type="normal">
-                        {{#each ../availableEffects as |effect|}}
-                        <option value="{{ effect.id }}" {{#if (includes group.appliedEffects effect.id)}}selected{{/if}}>
-                            {{ effect.name }}
-                        </option>
-                        {{/each}}
-                    </multi-select>
+                    <dnd5e-checkbox name="allowPlayerTargeting" {{#if allowPlayerTargeting}}checked{{/if}}></dnd5e-checkbox>
                 </div>
-                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.hint"}}</p>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.allowPlayerTargeting.hint"}}</p>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="contested-success">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Degrees of Success </label>
+        </legend>
+
+        <div class="fieldset-content">
+            <div class="form-group">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.allowMinorSuccess.label"}}</label>
+                <div class="form-fields">
+                    <dnd5e-checkbox name="allowMinorSuccess" {{#if allowMinorSuccess}}checked{{/if}}></dnd5e-checkbox>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.allowMinorSuccess.hint"}}</p>
             </div>
 
-            {{#if ../allowMinorSuccess}}
-            <div class="form-group stacked">
-                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMinor.label"}}</label>
+            {{#if allowMinorSuccess}}
+            <div class="form-group stacked indented">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.thresholdMinorSuccess.label"}}</label>
                 <div class="form-fields">
-                    <multi-select name="appliedEffects" data-index="{{ group.index }}" data-type="minor">
-                        {{#each ../availableEffects as |effect|}}
-                        <option value="{{ effect.id }}" {{#if (includes group.appliedEffectsMinor effect.id)}}selected{{/if}}>
-                            {{ effect.name }}
-                        </option>
-                        {{/each}}
-                    </multi-select>
+                    <input type="number" name="thresholdMinorSuccess" value="{{ thresholdMinorSuccess }}" min="1" max="20">
                 </div>
-                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMinor.hint"}}</p>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.thresholdMinorSuccess.hint"}}</p>
             </div>
             {{/if}}
 
-            {{#if ../allowMajorSuccess}}
-            <div class="form-group stacked">
-                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMajor.label"}}</label>
+            <div class="form-group">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.allowMajorSuccess.label"}}</label>
                 <div class="form-fields">
-                    <multi-select name="appliedEffects" data-index="{{ group.index }}" data-type="major">
-                        {{#each ../availableEffects as |effect|}}
-                        <option value="{{ effect.id }}" {{#if (includes group.appliedEffectsMajor effect.id)}}selected{{/if}}>
-                            {{ effect.name }}
+                    <dnd5e-checkbox name="allowMajorSuccess" {{#if allowMajorSuccess}}checked{{/if}}></dnd5e-checkbox>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.allowMajorSuccess.hint"}}</p>
+            </div>
+
+            {{#if allowMajorSuccess}}
+            <div class="form-group stacked indented">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.thresholdMajorSuccess.label"}}</label>
+                <div class="form-fields">
+                    <input type="number" name="thresholdMajorSuccess" value="{{ thresholdMajorSuccess }}" min="1" max="20">
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.thresholdMajorSuccess.hint"}}</p>
+            </div>
+            {{/if}}
+        </div>
+    </fieldset>
+
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="contested-attacker">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Attacker </label>
+        </legend>
+
+        <div class="fieldset-content">
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.label.label"}}</label>
+                <div class="form-fields">
+                    <input type="text" name="attackerLabel" value="{{ attackerLabel }}" placeholder="Attacker">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.rollType.label"}}</label>
+                <div class="form-fields">
+                    <select name="attackerRollType">
+                        <option value="ability" {{#if (eq attackerRollType "ability")}}selected{{/if}}>Ability Check</option>
+                        <option value="skill" {{#if (eq attackerRollType "skill")}}selected{{/if}}>Skill Check</option>
+                        <option value="spellcasting" {{#if (eq attackerRollType "spellcasting")}}selected{{/if}}>Spellcasting</option>
+                        <option value="custom" {{#if (eq attackerRollType "custom")}}selected{{/if}}>Custom DC</option>
+                    </select>
+                </div>
+            </div>
+
+            {{#if (or (eq attackerRollType "ability") (eq attackerRollType "skill"))}}
+            <div class="form-group stacked indented">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.label"}}</label>
+                <div class="form-fields">
+                    <multi-select name="attackerOptions">
+                    {{#if (eq attackerRollType "ability")}}
+                        {{#each rollTypeOptions.ability as |option|}}
+                        <option value="{{ option.value }}" {{#if (includes ../attackerOptions option.value)}}selected{{/if}}>
+                            {{ option.label }}
                         </option>
                         {{/each}}
+                    {{/if}}
+                    {{#if (eq attackerRollType "skill")}}
+                        {{#each rollTypeOptions.skill as |option|}}
+                        <option value="{{ option.value }}" {{#if (includes ../attackerOptions option.value)}}selected{{/if}}>
+                            {{ option.label }}
+                        </option>
+                        {{/each}}
+                    {{/if}}
                     </multi-select>
                 </div>
-                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMajor.hint"}}</p>
-            </div>      
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.hint"}}</p>
+            </div>
             {{/if}}
-        </fieldset>
-        {{/each}}
+
+            {{#if (eq attackerRollType "custom")}}
+            <div class="form-group stacked indented">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.customBonus.label"}}</label>
+                <div class="form-fields">
+                    <input type="text" name="attackerCustom" value="{{ attackerCustom }}" placeholder="Custom Bonus">
+                </div>
+                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.contested.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.contested.customBonus.hint"}}</p>
+            </div>
+            {{/if}}
+        </div>
+    </fieldset>
+
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="contested-defender">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Defender </label>
+        </legend>
+
+        <div class="fieldset-content">
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.label.label"}}</label>
+                <div class="form-fields">
+                    <input type="text" name="defenderLabel" value="{{ defenderLabel }}" placeholder="Defender">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.rollType.label"}}</label>
+                <div class="form-fields">
+                    <select name="defenderRollType">
+                        <option value="ability" {{#if (eq defenderRollType "ability")}}selected{{/if}}>Ability Check</option>
+                        <option value="skill" {{#if (eq defenderRollType "skill")}}selected{{/if}}>Skill Check</option>
+                        <option value="spellcasting" {{#if (eq defenderRollType "spellcasting")}}selected{{/if}}>Spellcasting</option>
+                    </select>
+                </div>
+            </div>
+
+            {{#if (or (eq defenderRollType "ability") (eq defenderRollType "skill"))}}
+            <div class="form-group stacked indented">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.label"}}</label>
+                <div class="form-fields">
+                    <multi-select name="defenderOptions">
+                        {{#if (eq defenderRollType "ability")}}
+                        {{#each rollTypeOptions.ability as |option|}}
+                        <option value="{{ option.value }}" {{#if (includes ../defenderOptions option.value)}}selected{{/if}}>
+                            {{ option.label }}
+                        </option>
+                        {{/each}}
+                    {{/if}}
+                    {{#if (eq defenderRollType "skill")}}
+                        {{#each rollTypeOptions.skill as |option|}}
+                        <option value="{{ option.value }}" {{#if (includes ../defenderOptions option.value)}}selected{{/if}}>
+                            {{ option.label }}
+                        </option>
+                        {{/each}}
+                    {{/if}}
+                    </multi-select>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.availableOptions.hint"}}</p>
+            </div>
+            {{/if}}
+        </div>
+    </fieldset>
+
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="contested-groups">
+        <legend class="collapsible-legend" style="display: flex; gap: 0.25rem;">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Effect Groups </label>
+            <button type="button" class="add-effect-group unbutton control-button" data-tooltip aria-label="Create Effect Group">
+                <i class="fas fa-plus"></i>
+            </button>
+        </legend>
+
+        <div class="fieldset-content">
+            {{#each effectGroups as |group|}}
+            <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="contested-group-{{ group.index }}">
+                <legend class="collapsible-legend" style="display: flex; gap: 0.25rem;">
+                    <i class="fas fa-chevron-down collapse-arrow"></i>
+                    <label> {{ group.name }} </label>
+                    <button type="button" class="remove-effect-group unbutton control-button" data-tooltip aria-label="Remove Effect Group" data-index="{{ group.index }}" style="width: 26px;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </legend>
+                
+                <div class="fieldset-content">
+                    <div class="form-group">
+                        <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.effectGroupName.label"}}</label>
+                        <div class="form-fields">
+                            <input type="text" name="effectGroupName" value="{{ group.name }}" placeholder="Effect Group" data-index="{{ group.index }}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.label"}}</label>
+                        <div class="form-fields">
+                            <select name="applyEffectsTo" data-index="{{ group.index }}">
+                                {{#each ../applyEffectsToOptions as |option|}}
+                                <option value="{{ option.value }}" {{#if (eq group.applyTo option.value)}}selected{{/if}}>
+                                    {{ option.label }}
+                                </option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.hint"}}</p>
+                    </div>
+
+                    <div class="form-group stacked">
+                        <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.label"}}</label>
+                        <div class="form-fields">
+                            <multi-select name="appliedEffects" data-index="{{ group.index }}" data-type="normal">
+                                {{#each ../availableEffects as |effect|}}
+                                <option value="{{ effect.id }}" {{#if (includes group.appliedEffects effect.id)}}selected{{/if}}>
+                                    {{ effect.name }}
+                                </option>
+                                {{/each}}
+                            </multi-select>
+                        </div>
+                        <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.hint"}}</p>
+                    </div>
+
+                    {{#if ../allowMinorSuccess}}
+                    <div class="form-group stacked">
+                        <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMinor.label"}}</label>
+                        <div class="form-fields">
+                            <multi-select name="appliedEffects" data-index="{{ group.index }}" data-type="minor">
+                                {{#each ../availableEffects as |effect|}}
+                                <option value="{{ effect.id }}" {{#if (includes group.appliedEffectsMinor effect.id)}}selected{{/if}}>
+                                    {{ effect.name }}
+                                </option>
+                                {{/each}}
+                            </multi-select>
+                        </div>
+                        <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMinor.hint"}}</p>
+                    </div>
+                    {{/if}}
+
+                    {{#if ../allowMajorSuccess}}
+                    <div class="form-group stacked">
+                        <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMajor.label"}}</label>
+                        <div class="form-fields">
+                            <multi-select name="appliedEffects" data-index="{{ group.index }}" data-type="major">
+                                {{#each ../availableEffects as |effect|}}
+                                <option value="{{ effect.id }}" {{#if (includes group.appliedEffectsMajor effect.id)}}selected{{/if}}>
+                                    {{ effect.name }}
+                                </option>
+                                {{/each}}
+                            </multi-select>
+                        </div>
+                        <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMajor.hint"}}</p>
+                    </div>      
+                    {{/if}}
+                </div>
+            </fieldset>
+            {{/each}}
+        </div>
     </fieldset>
 </section>

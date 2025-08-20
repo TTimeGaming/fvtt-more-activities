@@ -721,6 +721,8 @@ export class ContestedActivitySheet extends dnd5e.applications.activity.Activity
                 await this.activity.update({ effectGroups: effectGroups });
             });
         });
+
+        DomData.setupSheetBehaviors(this);
     }
 
     /**

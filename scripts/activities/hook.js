@@ -481,6 +481,8 @@ export class HookActivitySheet extends dnd5e.applications.activity.ActivitySheet
                 saveTimeout = setTimeout(() => this._saveSanityCode(), 1000);
             });
         }
+
+        DomData.setupSheetBehaviors(this);
     }
 
     /** @inheritdoc */

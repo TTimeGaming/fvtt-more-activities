@@ -1,108 +1,123 @@
 <section class="tab activity-{{ tab.id }} {{ tab.cssClass }}" data-tab="{{ tab.id }}" data-group="{{ tab.group }}">
-    <fieldset>
-        <legend><label> Configuration </label></legend>
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="grant-configuration">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Configuration </label>
+        </legend>
 
-        <div class="form-group stacked">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.grant.grantAll.label"}}</label>
-            <div class="form-fields">
-                <dnd5e-checkbox name="grantAll" {{#if grantAll}}checked{{/if}}></dnd5e-checkbox>
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.grant.grantAll.hint"}}</p>
-        </div>
-
-        <div class="form-group stacked indented">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.grant.count.label"}}</label>
-            <div class="form-fields">
-                <input type="text" name="count" value="{{ count }}" placeholder="Amount to Grant" {{#if grantAll}}disabled{{/if}}>
-            </div>
-            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.grant.count.hint"}}</p>
-        </div>
-
-        <div class="form-group stacked indented">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.grant.swappable.label"}}</label>
-            <div class="form-fields">
-                <dnd5e-checkbox name="swappable" {{#if swappable}}checked{{/if}} {{#if grantAll}}disabled{{/if}}></dnd5e-checkbox>
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.grant.swappable.hint"}}</p>
-        </div>
-    </fieldset>
-
-    <fieldset>
-        <legend><label> Global Settings </label></legend>
-
-        <div class="form-group stacked">
-            <label>Base Cost</label>
-            <div class="form-fields">
-                <input type="text" name="baseCost" value="{{ baseCost }}" placeholder="Base Cost">
-                <select name="baseCostCurrency">
-                    {{#each currencyOptions as |currency|}}
-                    <option value="{{ currency }}" {{#if (eq ../baseCostCurrency currency)}}selected{{/if}}>{{ currency }}</option>
-                    {{/each}}
-                </select>
-            </div>
-            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Base cost for all items (added to individual costs)</p>
-        </div>
-
-        <div class="form-group stacked">
-            <label>Spell Cost per Level</label>
-            <div class="form-fields">
-                <input type="text" name="spellCostPerLevel" value="{{ spellCostPerLevel }}" placeholder="Spell Cost per Level">
-                <select name="spellCostPerLevelCurrency">
-                    {{#each currencyOptions as |currency|}}
-                    <option value="{{ currency }}" {{#if (eq ../spellCostPerLevelCurrency currency)}}selected{{/if}}>{{ currency }}</option>
-                    {{/each}}
-                </select>
-            </div>
-            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Additional cost per spell level (spells only)</p>
-        </div>
-
-        <div class="form-group stacked">
-            <label>Convert Spells to Scrolls</label>
-            <div class="form-fields">
-                <dnd5e-checkbox name="spellsAsScrolls" {{#if spellsAsScrolls}}checked{{/if}}></dnd5e-checkbox>
-            </div>
-            <p class="hint">Grant spells as scrolls instead of adding to the spellbook</p>
-        </div>
-    </fieldset>
-
-    <fieldset>
-        <legend><label> Items </label></legend>
-
-        <div class="form-group stacked">
-            <label>{{localize "DND5E.ACTIVITY.FIELDS.grant.uuid.label"}}</label>
-            <div class="form-fields">
-                <input type="text" name="current" value="{{ current }}" placeholder="UUID or drag & drop item here">
-                <button type="button" class="add-item-btn"><i class="fas fa-plus"></i></button>
-            </div>
-            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.grant.uuid.hint"}}</p>
-        </div>
-
-        <div class="form-group stacked">
-            <label>Items ({{grants.length}}):</label>
-            {{#if grants.length}}
-            <div class="granted-items">
-                {{#each grants as |item|}}
-                <div class="granted-item">
-                    <div class="item-info">
-                        {{#if item.isCustomized}}<abbr title="Customized"><i class="customized-indicator fas fa-star"></i></abbr>{{/if}}
-                        <img class="gold-icon item-img" src="{{item.img}}" alt="{{item.name}}">
-                        <a data-uuid="{{item.uuid}}" class="item-name">{{item.name}}</a>
-                    </div>
-                    <div class="item-controls">
-                        <div class="item-type">{{item.type}}</div>
-                        <button type="button" class="item-customize-btn" data-index="{{item.index}}" data-uuid="{{item.uuid}}">
-                            <i class="fas fa-cog"></i>
-                        </button>
-                        <button type="button" class="item-delete-btn" data-index="{{item.index}}" data-uuid="{{item.uuid}}">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
+        <div class="fieldset-content">
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.grant.grantAll.label"}}</label>
+                <div class="form-fields">
+                    <dnd5e-checkbox name="grantAll" {{#if grantAll}}checked{{/if}}></dnd5e-checkbox>
                 </div>
-                {{/each}}
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.grant.grantAll.hint"}}</p>
             </div>
-            {{else}}
-            <div class="no-items">{{localize "DND5E.ACTIVITY.FIELDS.grant.none.hint"}}</div>
-            {{/if}}
+
+            <div class="form-group stacked indented">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.grant.count.label"}}</label>
+                <div class="form-fields">
+                    <input type="text" name="count" value="{{ count }}" placeholder="Amount to Grant" {{#if grantAll}}disabled{{/if}}>
+                </div>
+                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.grant.count.hint"}}</p>
+            </div>
+
+            <div class="form-group stacked indented">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.grant.swappable.label"}}</label>
+                <div class="form-fields">
+                    <dnd5e-checkbox name="swappable" {{#if swappable}}checked{{/if}} {{#if grantAll}}disabled{{/if}}></dnd5e-checkbox>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.grant.swappable.hint"}}</p>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="grant-settings">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Global Settings </label>
+        </legend>
+
+        <div class="fieldset-content">
+            <div class="form-group stacked">
+                <label>Base Cost</label>
+                <div class="form-fields">
+                    <input type="text" name="baseCost" value="{{ baseCost }}" placeholder="Base Cost">
+                    <select name="baseCostCurrency">
+                        {{#each currencyOptions as |currency|}}
+                        <option value="{{ currency }}" {{#if (eq ../baseCostCurrency currency)}}selected{{/if}}>{{ currency }}</option>
+                        {{/each}}
+                    </select>
+                </div>
+                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Base cost for all items (added to individual costs)</p>
+            </div>
+
+            <div class="form-group stacked">
+                <label>Spell Cost per Level</label>
+                <div class="form-fields">
+                    <input type="text" name="spellCostPerLevel" value="{{ spellCostPerLevel }}" placeholder="Spell Cost per Level">
+                    <select name="spellCostPerLevelCurrency">
+                        {{#each currencyOptions as |currency|}}
+                        <option value="{{ currency }}" {{#if (eq ../spellCostPerLevelCurrency currency)}}selected{{/if}}>{{ currency }}</option>
+                        {{/each}}
+                    </select>
+                </div>
+                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Additional cost per spell level (spells only)</p>
+            </div>
+
+            <div class="form-group stacked">
+                <label>Convert Spells to Scrolls</label>
+                <div class="form-fields">
+                    <dnd5e-checkbox name="spellsAsScrolls" {{#if spellsAsScrolls}}checked{{/if}}></dnd5e-checkbox>
+                </div>
+                <p class="hint">Grant spells as scrolls instead of adding to the spellbook</p>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="grant-items">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Items </label>
+        </legend>
+
+        <div class="fieldset-content">
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.grant.uuid.label"}}</label>
+                <div class="form-fields">
+                    <input type="text" name="current" value="{{ current }}" placeholder="UUID or drag & drop item here">
+                    <button type="button" class="add-item-btn"><i class="fas fa-plus"></i></button>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.grant.uuid.hint"}}</p>
+            </div>
+
+            <div class="form-group stacked">
+                <label>Items ({{grants.length}}):</label>
+                {{#if grants.length}}
+                <div class="granted-items">
+                    {{#each grants as |item|}}
+                    <div class="granted-item">
+                        <div class="item-info">
+                            {{#if item.isCustomized}}<abbr title="Customized"><i class="customized-indicator fas fa-star"></i></abbr>{{/if}}
+                            <img class="gold-icon item-img" src="{{item.img}}" alt="{{item.name}}">
+                            <a data-uuid="{{item.uuid}}" class="item-name">{{item.name}}</a>
+                        </div>
+                        <div class="item-controls">
+                            <div class="item-type">{{item.type}}</div>
+                            <button type="button" class="item-customize-btn" data-index="{{item.index}}" data-uuid="{{item.uuid}}">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <button type="button" class="item-delete-btn" data-index="{{item.index}}" data-uuid="{{item.uuid}}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+                {{else}}
+                <div class="no-items">{{localize "DND5E.ACTIVITY.FIELDS.grant.none.hint"}}</div>
+                {{/if}}
+            </div>
         </div>
     </fieldset>
 </section>

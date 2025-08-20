@@ -4,6 +4,7 @@ import { MessageData } from '../utils/message.js';
 import { CanvasData } from '../utils/canvas.js';
 import { EffectsData } from '../utils/effects.js';
 import { FieldsData } from '../utils/fields.js';
+import { DomData } from '../utils/dom.js';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_NAME = `movement`;
@@ -128,6 +129,7 @@ export class MovementActivitySheet extends dnd5e.applications.activity.ActivityS
 
     /** @inheritdoc */
     _onRender(context, options) {
+        DomData.setupSheetBehaviors(this);
     }
 }
 

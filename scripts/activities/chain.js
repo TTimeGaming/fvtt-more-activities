@@ -220,6 +220,7 @@ export class ChainActivitySheet extends dnd5e.applications.activity.ActivityShee
     /** @inheritdoc */
     async _onRender(context, options) {
         this._addChainListeners();
+        DomData.setupSheetBehaviors(this);
     }
 
     /**

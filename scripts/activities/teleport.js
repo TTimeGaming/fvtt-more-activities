@@ -127,6 +127,11 @@ export class TeleportActivitySheet extends dnd5e.applications.activity.ActivityS
 
         return context;
     }
+
+    /** @inheritdoc */
+    _onRender(context, options) {
+        DomData.setupSheetBehaviors(this);
+    }
 }
 
 export class TeleportActivity extends dnd5e.documents.activity.ActivityMixin(TeleportActivityData) {
