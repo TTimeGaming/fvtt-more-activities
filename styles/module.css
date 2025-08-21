@@ -913,6 +913,7 @@
 .finish-customization-btn,
 .finish-branch-btn,
 .finish-wall-btn,
+.next-wall-btn,
 .cancel-placement-btn,
 .cancel-grant-btn,
 .cancel-customization-btn,
@@ -1040,4 +1041,75 @@
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
+}
+
+.completed-walls-section {
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.completed-walls-section legend {
+    padding: 0 5px;
+    font-weight: bold;
+}
+
+.completed-walls-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.completed-wall-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    border-left: 4px solid #95a5a6;
+}
+
+.wall-info {
+    flex: 1;
+}
+
+.wall-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.wall-type {
+    font-size: 0.85em;
+    color: #666;
+    font-style: italic;
+}
+
+.wall-details {
+    display: flex;
+    gap: 12px;
+    font-size: 0.85em;
+    color: #555;
+}
+
+.detail-item {
+    white-space: nowrap;
+}
+
+.delete-wall-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 6px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: background-color 0.2s;
+}
+
+.delete-wall-btn:hover {
+    background: #c0392b;
 }

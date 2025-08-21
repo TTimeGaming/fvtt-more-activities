@@ -105,10 +105,15 @@ export class WallActivityData extends dnd5e.dataModels.activity.BaseActivityData
         const fields = foundry.data.fields;
         const schema = super.defineSchema();
 
+        schema.maxWalls = new fields.StringField({
+            required: false,
+            initial: `1`,
+        });
+
         schema.wallType = new fields.StringField({
             required: false,
             initial: `continuous`,
-            options: [ `continuous`, `circular`, `panels`, ],
+            options: [ `continuous`, `circular`, ],
         });
 
         schema.facing = new fields.StringField({
@@ -167,6 +172,7 @@ export class WallActivitySheet extends dnd5e.applications.activity.ActivitySheet
     async _prepareEffectContext(context) {
         context = await super._prepareEffectContext(context);
 
+        context.maxWalls = this.activity?.maxWalls ?? `1`;
         context.wallType = this.activity?.wallType ?? `continuous`;
         context.facing = this.activity?.facing ?? `both`;
         context.referenceRange = this.activity?.referenceRange ?? `0`;
@@ -268,6 +274,11 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         this.activity = activity;
         this.actor = activity?.actor;
+
+        this.allWalls = [];
+        this.currentWallIndex = 0;
+        this.maxWalls = FieldsData.resolveFormula(activity.maxWalls, activity.item);
+
         this.placementPoints = [];
         this.previewSegments = [];
         this.previewTemplates = [];
@@ -286,20 +297,35 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     /** @inheritdoc */
     async _prepareContext() {
+        const completedWallsData = this.allWalls.map((wall, index) => ({
+            index: index,
+            summary: this._getWallSummary(wall),
+            canDelete: true
+        }));
+
         return {
             wallType: this.activity.wallType,
             facing: this.selectedFacing,
             maxLength: this.maxLength,
             currentLength: Math.round(this.currentLength),
+            totalLength: Math.round(this._getTotalWallsLength()),
             placedPoints: this.placementPoints.length,
             isPlacing: this.isPlacing,
             needsReferencePoint: this.needsReferencePoint,
             hasReferencePoint: !!this.referencePoint,
+            canResetReference: this.referenceRange > 0 && this.referencePoint,
             isPlacingReference: this.isPlacingReference,
             referenceRange: this.referenceRange,
             canChooseFacing: this.activity.facing === `any`,
             canFinish: this.placementPoints.length >= (this.activity.wallType === `circular` ? 2 : 2) && (!this.needsReferencePoint || this.referencePoint),
-            wallTypeLabel: this._getWallTypeLabel(),
+            wallTypeLabel: this._getCurrentWallTitle(),
+            currentWallIndex: this.currentWallIndex,
+            maxWalls: this.maxWalls,
+            completedWalls: this.allWalls.length + (this.placementPoints.length > 0 ? 1 : 0),
+            hasCompletedWalls: this.allWalls.length > 0,
+            completedWallsData: completedWallsData,
+            canAddMoreWalls: this._canAddMoreWalls(),
+            isMultipleWalls: this.maxWalls > 1,
             facingOptions: [
                 { value: `towards`, label: `Towards Reference`, selected: this.selectedFacing === `towards` },
                 { value: `away`, label: `Away from Reference`, selected: this.selectedFacing === `away` },
@@ -313,13 +339,24 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         this.element.querySelector(`.start-placement-btn`)?.addEventListener(`click`, this._onStartPlacement.bind(this));
         this.element.querySelector(`.start-reference-btn`)?.addEventListener(`click`, this._onStartReferencePlace.bind(this));
+        this.element.querySelector(`.reset-reference-btn`)?.addEventListener(`click`, this._onResetReference.bind(this));
         this.element.querySelector(`.facing-select`)?.addEventListener(`change`, this._onFacingChange.bind(this));
+        this.element.querySelector(`.next-wall-btn`)?.addEventListener(`click`, this._onNextWall.bind(this));
         this.element.querySelector(`.finish-wall-btn`)?.addEventListener(`click`, this._onFinishWall.bind(this));    
         this.element.querySelector(`.clear-points-btn`)?.addEventListener(`click`, this._onClearPoints.bind(this));
         this.element.querySelector(`.cancel-wall-btn`)?.addEventListener(`click`, this._onCancelWall.bind(this));
 
+        this.element.querySelectorAll(`.delete-wall-btn`).forEach(btn => {
+            btn.addEventListener(`click`, (event) => {
+                const wallIndex = parseInt(event.target.dataset.wallIndex);
+                this._deleteWall(wallIndex);
+            });
+        });
+
         if (this.referencePoint)
             await this._createReferenceMarker();
+
+        await this._updatePreview();
     }
 
     /** @inheritdoc */
@@ -371,6 +408,19 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.referenceTemplate = null;
     }
 
+    async _clearReferencePoint() {
+        await this._clearReferenceMarker();
+        this.referencePoint = null;
+        this.needsReferencePoint = this.referenceRange > 0;
+
+        if (this.referenceRange === 0) {
+            this._determineReferencePoint();
+            await this._createReferenceMarker();
+        }
+
+        this.render();
+    }
+
     _onStartReferencePlace() {
         if (this.canvasClickHandler) {
             game.canvas.stage.off(`mouseup`, this.canvasClickHandler);
@@ -391,6 +441,14 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.render();
     }
 
+    async _onResetReference() {
+        await this._clearReferencePoint();
+    }
+
+    async _onNextWall() {
+        await this._nextWall();
+    }
+
     _onStartPlacement() {
         if (this.canvasClickHandler) {
             game.canvas.stage.off(`mouseup`, this.canvasClickHandler);
@@ -405,16 +463,10 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.render();
     }
 
-    async _onFinishWall() {
+    async _finishCurrentWall() {
         if (this.placementPoints.length < 2) {
             ui.notifications.warn(`Need at least 2 points to create a wall.`);
-            return;
-        }
-
-        const minPoints = this.activity.wallType === 'circular' ? 2 : 2;
-        if (this.placementPoints.length < minPoints) {
-            ui.notifications.warn(`${this._getWallTypeLabel()} walls require at least ${minPoints} points.`);
-            return;
+            return false;
         }
 
         const segments = WallData.calculateWallSegments(
@@ -424,33 +476,91 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         if (segments.length === 0) {
             ui.notifications.warn(`No valid wall segments could be created.`);
+            return false;
+        }
+
+        this.allWalls.push({
+            points: [...this.placementPoints],
+            segments: segments,
+            length: this.currentLength,
+            referencePoint: this.referencePoint,
+            facing: this.selectedFacing,
+            wallIndex: this.currentWallIndex,
+        });
+
+        this.placementPoints = [];
+        this.currentLength = 0;
+        return true;
+    }
+
+    async _nextWall() {
+        const finished = await this._finishCurrentWall();
+        if (!finished) return;
+
+        this.currentWallIndex++;
+        this.render();
+    }
+
+    _deleteWall(wallIndex) {
+        if (wallIndex < 0 || wallIndex >= this.allWalls.length) return;
+
+        this.allWalls.splice(wallIndex, 1);
+        for (let i = wallIndex; i < this.allWalls.length; i++) {
+            this.allWalls[i].wallIndex = i;
+        }
+
+        if (this.currentWallIndex > wallIndex) {
+            this.currentWallIndex--;
+        } else if (this.currentWallIndex === wallIndex && this.currentWallIndex > 0) {
+            this.currentWallIndex--;
+        }
+        
+        this.render();
+    }
+
+    async _onFinishWall() {
+        if (this.placementPoints.length >= 2) {
+            const finished = await this._finishCurrentWall();
+            if (!finished) return;
+        }
+
+        if (this.allWalls.length === 0) {
+            ui.notifications.warn(`No walls to create.`);
             return;
         }
 
-        const wallConfig = {
-            blocksMovement: this.activity.blocksMovement,
-            blocksSight: this.activity.blocksSight,
-            blocksSound: this.activity.blocksSound,
-            activityId: this.activity.id,
-            facing: this.selectedFacing,
-            referencePoint: this.referencePoint,
-        };
+        const allWallDocuments = [];
+        let totalSegments = 0;
 
-        try {
-            const walls = await WallData.createWallDocuments(segments, wallConfig);
+        for (const wallData of this.allWalls) {
+            const wallConfig = {
+                blocksMovement: this.activity.blocksMovement,
+                blocksSight: this.activity.blocksSight,
+                blocksSound: this.activity.blocksSound,
+                activityId: this.activity.id,
+                facing: wallData.facing,
+                referencePoint: wallData.referencePoint,
+            };
 
-            ui.notifications.info(`Created ${walls.length} wall segments (${Math.round(this.currentLength)} ft total).`);
-            this.close();
-        } catch (error) {
-            console.error('Failed to create wall:', error);
-            ui.notifications.error(`Failed to create wall: ${error.message}`);
+            try {
+                const walls = await WallData.createWallDocuments(wallData.segments, wallConfig);
+                allWallDocuments.push(...walls);
+                totalSegments += wallData.segments.length;
+            } catch (error) {
+                console.error('Failed to create wall:', error);
+                ui.notifications.error(`Failed to create wall: ${error.message}`);
+                continue;
+            }
         }
+
+        const totalLength = Math.round(this._getTotalWallsLength());
+        ui.notifications.info(`Created ${this.allWalls.length} wall(s) with ${totalSegments} segments (${totalLength} ft total).`);
+        this.close();
     }
 
     async _onClearPoints() {
         this.placementPoints = [];
         this.currentLength = 0;
-        await this._clearPreviewTemplates();
         this.render();
     }
 
@@ -475,7 +585,8 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         });
 
         const newLength = this._calculateTotalLength([...this.placementPoints, snappedPos]);
-        if (newLength > this.maxLength) {
+        const totalLength = this._getTotalWallsLength() - this.currentLength;
+        if (newLength + totalLength > this.maxLength) {
             ui.notifications.warn(`Adding this point would exceed maximum wall length of ${this.maxLength} feet.`);
             return;
         }
@@ -489,7 +600,6 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.isPlacing = false;
         }
 
-        await this._updatePreview();
         this.render();
     }
 
@@ -549,8 +659,20 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
     async _updatePreview() {
         await this._clearPreviewTemplates();
 
+        for (const wallData of this.allWalls) {
+            for (const point of wallData.points) {
+                const pointTemplate = await this._createPointMarker(point, `completed`);
+                this.previewTemplates.push(pointTemplate);
+            }
+
+            for (const segment of wallData.segments) {
+                const lineTemplate = await this._createLineSegment(segment, `completed`);
+                this.previewTemplates.push(lineTemplate);
+            }
+        }
+
         for (const point of this.placementPoints) {
-            const pointTemplate = await this._createPointMarker(point);
+            const pointTemplate = await this._createPointMarker(point, `current`);
             this.previewTemplates.push(pointTemplate);
         }
 
@@ -562,23 +684,47 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         );
         
         for (const segment of segments) {
-            const lineTemplate = await this._createLineSegment(segment);
+            const lineTemplate = await this._createLineSegment(segment, `current`);
             this.previewTemplates.push(lineTemplate);
         }
     }
 
-    async _createPointMarker(point) {
+    async _createPointMarker(point, type = `current`) {
+        let fillColor, borderColor;
+        switch (type) {
+            case `completed`:
+                fillColor = `#95a5a6`;
+                borderColor = `#7f8c8d`;
+                break;
+            default:
+                fillColor = `#4ecdc4`;
+                borderColor = `#26a69a`;
+                break;
+        }
+
         return await CanvasData.createMeasuredTemplate({
             t: `circle`,
             x: point.x,
             y: point.y,
             distance: 0,
-            fillColor: `#4ecdc4`,
-            borderColor: `#26a69a`,
+            fillColor: fillColor,
+            borderColor: borderColor,
         });
     }
 
-    async _createLineSegment(segment) {
+    async _createLineSegment(segment, type = `current`) {
+        let fillColor, borderColor;
+        switch (type) {
+            case `completed`:
+                fillColor = `#bdc3c7`;
+                borderColor = `#95a5a6`;
+                break;
+            default:
+                fillColor = `#ff6b6b`;
+                borderColor = `#ff4757`;
+                break;
+        }
+
         const length = Math.sqrt(
             Math.pow(segment.x2 - segment.x1, 2) + 
             Math.pow(segment.y2 - segment.y1, 2)
@@ -591,8 +737,8 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             y: segment.y1,
             direction: Math.toDegrees(angle),
             distance: length / game.canvas.grid.size * game.canvas.grid.distance,
-            fillColor: `#ff6b6b`,
-            borderColor: `#ff4757`,
+            fillColor: fillColor,
+            borderColor: borderColor,
         });
     }
     
@@ -603,10 +749,36 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.previewTemplates = [];
     }
 
+    _canAddMoreWalls() {
+        return this.currentWallIndex < this.maxWalls - 1;
+    }
+
+    _getCurrentWallTitle() {
+        return this.maxWalls === 1 ? this._getWallTypeLabel() : `${this._getWallTypeLabel()} (${this.currentWallIndex + 1} / ${this.maxWalls})`;
+    }
+
     _getWallTypeLabel() {
         switch (this.activity.wallType) {
             case 'circular': return 'Circular';
             default: return 'Contiguous';
         }
+    }
+
+    _getWallSummary(wall) {
+        return {
+            pointCount: wall.points.length,
+            segmentCount: wall.segments.length,
+            length: Math.round(wall.length),
+            facing: wall.facing,
+            wallType: this.activity.wallType,
+        };
+    }
+
+    _getTotalWallsLength() {
+        let total = this.currentLength;
+        for (const wall of this.allWalls) {
+            total += wall.length;
+        }
+        return total;
     }
 }

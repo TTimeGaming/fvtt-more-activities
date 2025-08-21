@@ -5,6 +5,14 @@
             <label> Configuration </label>
         </legend>
 
+        <div class="form-group stacked">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.wall.maxWalls.label"}}</label>
+            <div class="form-fields">
+                <input type="text" name="maxWalls" value="{{ maxWalls }}" placeholder="Wall Count">
+            </div>
+            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.wall.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.wall.maxWalls.hint"}}</p>
+        </div>
+
         <div class="fieldset-content">
             <div class="form-group stacked">
                 <label>{{localize "DND5E.ACTIVITY.FIELDS.wall.wallType.label"}}</label>

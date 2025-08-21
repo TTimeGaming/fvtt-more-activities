@@ -1,9 +1,22 @@
 <div class="wall-placement-container">
     <div class="placement-header">
+        {{#if isMultipleWalls}}
+        <div class="wall-stats">
+            <div class="stat-item">
+                <span><strong>Walls:</strong></span>
+                <span>{{completedWalls}} / {{maxWalls}}</span>
+            </div>
+            <div class="stat-item">
+                <span><strong>Total:</strong></span>
+                <span>{{totalLength}} / {{maxLength}} ft</span>
+            </div>
+        </div>
+        {{/if}}
+
         <div class="wall-stats">
             <div class="stat-item">
                 <span><strong>Length:</strong></span>
-                <span>{{currentLength}} / {{maxLength}} ft</span>
+                <span>{{currentLength}}{{#unless isMultipleWalls}} / {{maxLength}} {{/unless}}ft</span>
             </div>
             <div class="stat-item">
                 <span><strong>Points:</strong></span>
@@ -20,13 +33,18 @@
     {{#if needsReferencePoint}}
     <div class="reference-section">
         {{#unless hasReferencePoint}}
-        <p>Place reference point ({{referenceRange}} ft range)</p>
-        <button type="button" class="start-reference-btn {{#if isPlacingReference}}placing{{/if}}">
-            <i class="fas fa-crosshairs"></i> 
-            {{#if isPlacingReference}}Stop Placing Reference{{else}}Place Reference Point{{/if}}
-        </button>
+            <p>Place reference point ({{referenceRange}} ft range)</p>
+            <button type="button" class="start-reference-btn {{#if isPlacingReference}}placing{{/if}}">
+                <i class="fas fa-crosshairs"></i> 
+                {{#if isPlacingReference}}Stop Placing Reference{{else}}Place Reference Point{{/if}}
+            </button>
         {{else}}
-        <p><i class="fas fa-check-circle"></i> Reference point placed</p>
+            <p><i class="fas fa-check-circle"></i> Reference point placed</p>
+            {{#if canResetReference}}
+            <button type="button" class="reset-reference-btn">
+                <i class="fas fa-redo"></i> Reset Reference Point
+            </button>
+            {{/if}}
         {{/unless}}
     </div>
     {{/if}}
@@ -58,12 +76,46 @@
         {{/if}}
     </div>
 
+    {{#if hasCompletedWalls}}
+    <fieldset class="completed-walls-section">
+        <legend>Completed Walls</legend>
+        <div class="completed-walls-list">
+            {{#each completedWallsData as |wall|}}
+            <div class="completed-wall-item">
+                <div class="wall-info">
+                    <div class="wall-header">
+                        <strong>Wall {{add wall.index 1}}</strong>
+                        <span class="wall-type">{{wall.summary.wallType}}</span>
+                    </div>
+                    <div class="wall-details">
+                        <span class="detail-item">{{wall.summary.pointCount}} points</span>
+                        <span class="detail-item">{{wall.summary.segmentCount}} segments</span>
+                        <span class="detail-item">{{wall.summary.length}} ft</span>
+                        <span class="detail-item">{{wall.summary.facing}} facing</span>
+                    </div>
+                </div>
+                {{#if wall.canDelete}}
+                <button type="button" class="delete-wall-btn" data-wall-index="{{wall.index}}" title="Delete this wall">
+                    <i class="fas fa-trash"></i>
+                </button>
+                {{/if}}
+            </div>
+            {{/each}}
+        </div>
+    </fieldset>
+    {{/if}}
+
     <div class="placement-controls">
-        {{#if canFinish}}
-        <button type="button" class="finish-wall-btn">
-            <i class="fas fa-check"></i> Create Wall
+        {{#if canAddMoreWalls}}
+        <button type="button" class="next-wall-btn" {{#unless canFinish}}disabled{{/unless}}>
+            <i class="fas fa-plus"></i> Next Wall
         </button>
         {{/if}}
+
+        <button type="button" class="finish-wall-btn" {{#unless (or canFinish (gt completedWalls 0))}}disabled{{/unless}}>
+            <i class="fas fa-check"></i> 
+            {{#if (gt completedWalls 0)}}Create Walls{{else}}Create Wall{{/if}}
+        </button>
         
         <button type="button" class="cancel-wall-btn">
             <i class="fas fa-times"></i> Cancel

@@ -145,6 +145,8 @@
 
     "DND5E.ACTIVITY.Type.wall": "Wall",
     "DND5E.ACTIVITY.FIELDS.wall.rollFormula.label": "Can use roll formulas using @",
+    "DND5E.ACTIVITY.FIELDS.wall.maxWalls.label": "Maximum Count",
+    "DND5E.ACTIVITY.FIELDS.wall.maxWalls.hint": "The number of individual walls that can be placed",
     "DND5E.ACTIVITY.FIELDS.wall.wallType.label": "Wall Shape",
     "DND5E.ACTIVITY.FIELDS.wall.wallType.hint": "The shape of the wall to be placed",
     "DND5E.ACTIVITY.FIELDS.wall.facing.label": "Facing",
