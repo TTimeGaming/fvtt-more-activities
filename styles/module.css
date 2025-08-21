@@ -959,6 +959,9 @@
 }
 
 .wall-placement-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
     padding: 1rem;
 }
 
@@ -970,17 +973,30 @@
 }
 
 .stat-item {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
     font-size: 0.9rem;
+    background: var(--dnd5e-background-card);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
 }
 
 .placement-header .subtitle {
     margin: 1rem 0;
 }
 
+.reference-section {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
 .placement-instructions {
+    display: flex;
+    justify-content: center;
+    text-align: center;
     padding: 0.75rem;
-    border-radius: 4px;
-    margin-bottom: 1rem;
     font-size: 0.9rem;
 }
 
@@ -998,35 +1014,6 @@
 .start-placement-btn.placing {
     background: var(--color-bg-option);
     border-color: var(--color-border-highlight);
-}
-
-.points-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 0.5rem;
-}
-
-.point-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.25rem 0.5rem;
-    background: var(--color-bg-option);
-    border-radius: 3px;
-    font-size: 0.8rem;
-}
-
-.point-number {
-    background: var(--color-bg-btn);
-    color: var(--color-text-light-primary);
-    border-radius: 50%;
-    width: 1.2rem;
-    height: 1.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    font-weight: bold;
 }
 
 .placement-status {

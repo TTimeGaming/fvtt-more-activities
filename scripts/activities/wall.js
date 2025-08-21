@@ -15,6 +15,30 @@ export class WallData {
         );
     }
 
+    static calculateWallDirection(segment, referencePoint, facing) {
+        const segmentVector = {
+            x: segment.x2 - segment.x1,
+            y: segment.y2 - segment.y1,
+        };
+        
+        const segmentMid = {
+            x: (segment.x1 + segment.x2) / 2,
+            y: (segment.y1 + segment.y2) / 2,
+        };
+
+        const toReference = {
+            x: referencePoint.x - segmentMid.x,
+            y: referencePoint.y - segmentMid.y,
+        };
+
+        const cross = segmentVector.x * toReference.y - segmentVector.y * toReference.x;
+        switch (facing) {
+            case `towards`: return cross > 0 ? CONST.WALL_DIRECTIONS.LEFT : CONST.WALL_DIRECTIONS.RIGHT;
+            case `away`: return cross > 0 ? CONST.WALL_DIRECTIONS.RIGHT : CONST.WALL_DIRECTIONS.LEFT;
+            default: return CONST.WALL_DIRECTIONS.BOTH;
+        }
+    }
+
     static calculateWallSegments(points, wallType) {
         const segments = [];
         
@@ -64,16 +88,9 @@ export class WallData {
                 move: wallConfig.blocksMovement ? CONST.WALL_MOVEMENT_TYPES.NORMAL : CONST.WALL_MOVEMENT_TYPES.NONE,
                 sight: wallConfig.blocksSight ? CONST.WALL_SENSE_TYPES.NORMAL : CONST.WALL_SENSE_TYPES.NONE,
                 sound: wallConfig.blocksSound ? CONST.WALL_SENSE_TYPES.NORMAL : CONST.WALL_SENSE_TYPES.NONE,
-                dir: CONST.WALL_DIRECTIONS.BOTH,
+                dir: wallConfig.referencePoint && wallConfig.facing !== `both` ? this.calculateWallDirection(segment, wallConfig.referencePoint, wallConfig.facing) : CONST.WALL_DIRECTIONS.BOTH,
                 door: CONST.WALL_DOOR_TYPES.NONE,
                 ds: CONST.WALL_DOOR_STATES.CLOSED,
-                flags: {
-                    'more-activities': {
-                        wallType: segment.type,
-                        createdBy: game.user.id,
-                        activityId: wallConfig.activityId,
-                    }
-                }
             };
             
             walls.push(wallData);
@@ -94,14 +111,20 @@ export class WallActivityData extends dnd5e.dataModels.activity.BaseActivityData
             options: [ `continuous`, `circular`, `panels`, ],
         });
 
+        schema.facing = new fields.StringField({
+            required: false,
+            initial: `both`,
+            options: [ `both`, `towards`, `away`, `any`, ],
+        });
+
+        schema.referenceRange = new fields.StringField({
+            required: false,
+            initial: `0`,
+        });
+
         schema.maxLength = new fields.StringField({
             required: false,
             initial: `60`,
-        });
-
-        schema.wallHeight = new fields.StringField({
-            required: false,
-            initial: `20`,
         });
 
         schema.blocksMovement = new fields.BooleanField({
@@ -145,15 +168,23 @@ export class WallActivitySheet extends dnd5e.applications.activity.ActivitySheet
         context = await super._prepareEffectContext(context);
 
         context.wallType = this.activity?.wallType ?? `continuous`;
+        context.facing = this.activity?.facing ?? `both`;
+        context.referenceRange = this.activity?.referenceRange ?? `0`;
         context.maxLength = this.activity?.maxLength ?? `60`;
-        context.wallHeight = this.activity?.wallHeight ?? `20`;
         context.blocksMovement = this.activity?.blocksMovement ?? true;
         context.blocksSight = this.activity?.blocksSight ?? true;
         context.blocksSound = this.activity?.blocksSound ?? false;
 
         context.wallTypeOptions = [
-            { value: `continuous`, label: `Continuous Line`, selected: context.wallType === `continuous` },
+            { value: `continuous`, label: `Contiguous`, selected: context.wallType === `continuous` },
             { value: `circular`, label: `Circular`, selected: context.wallType === `circular` },
+        ];
+
+        context.facingOptions = [
+            { value: `both`, label: `Bidirectional`, selected: context.facing === `both` },
+            { value: `towards`, label: `Towards Reference`, selected: context.facing === `towards` },
+            { value: `away`, label: `Away from Reference`, selected: context.facing === `away` },
+            { value: `any`, label: `Either Direction`, selected: context.facing === `any` },
         ];
 
         return context;
@@ -240,23 +271,39 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.placementPoints = [];
         this.previewSegments = [];
         this.previewTemplates = [];
+        this.selectedFacing = activity.facing;
         this.isPlacing = false;
+        this.isPlacingReference = false;
+        this.needsReferencePoint = false;
         this.currentLength = 0;
+        this.referencePoint = null;
+        this.referenceTemplate = null;
         this.canvasClickHandler = null;
         this.maxLength = FieldsData.resolveFormula(activity.maxLength, activity.item);
+        this.referenceRange = FieldsData.resolveFormula(activity.referenceRange, activity.item);
+        this._determineReferencePoint();
     }
 
     /** @inheritdoc */
     async _prepareContext() {
         return {
             wallType: this.activity.wallType,
+            facing: this.selectedFacing,
             maxLength: this.maxLength,
             currentLength: Math.round(this.currentLength),
-            remainingLength: Math.max(0, this.maxLength - this.currentLength),
             placedPoints: this.placementPoints.length,
             isPlacing: this.isPlacing,
-            canFinish: this.placementPoints.length >= this.activity.wallType === `circular` ? 2 : 2,
+            needsReferencePoint: this.needsReferencePoint,
+            hasReferencePoint: !!this.referencePoint,
+            isPlacingReference: this.isPlacingReference,
+            referenceRange: this.referenceRange,
+            canChooseFacing: this.activity.facing === `any`,
+            canFinish: this.placementPoints.length >= (this.activity.wallType === `circular` ? 2 : 2) && (!this.needsReferencePoint || this.referencePoint),
             wallTypeLabel: this._getWallTypeLabel(),
+            facingOptions: [
+                { value: `towards`, label: `Towards Reference`, selected: this.selectedFacing === `towards` },
+                { value: `away`, label: `Away from Reference`, selected: this.selectedFacing === `away` },
+            ],
         };
     }
 
@@ -265,9 +312,14 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         DomData.addSubtitle(this.element, this.activity);
 
         this.element.querySelector(`.start-placement-btn`)?.addEventListener(`click`, this._onStartPlacement.bind(this));
-        this.element.querySelector(`.finish-wall-btn`)?.addEventListener(`click`, this._onFinishWall.bind(this));
+        this.element.querySelector(`.start-reference-btn`)?.addEventListener(`click`, this._onStartReferencePlace.bind(this));
+        this.element.querySelector(`.facing-select`)?.addEventListener(`change`, this._onFacingChange.bind(this));
+        this.element.querySelector(`.finish-wall-btn`)?.addEventListener(`click`, this._onFinishWall.bind(this));    
         this.element.querySelector(`.clear-points-btn`)?.addEventListener(`click`, this._onClearPoints.bind(this));
         this.element.querySelector(`.cancel-wall-btn`)?.addEventListener(`click`, this._onCancelWall.bind(this));
+
+        if (this.referencePoint)
+            await this._createReferenceMarker();
     }
 
     /** @inheritdoc */
@@ -280,6 +332,63 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         }
 
         await this._clearPreviewTemplates();
+        await this._clearReferenceMarker();
+    }
+
+    _determineReferencePoint() {
+        if (this.referenceRange > 0)
+            this.needsReferencePoint = true;
+        else {
+            const originToken = CanvasData.getOriginToken(this.actor);
+            if (originToken) {
+                this.referencePoint = {
+                    x: originToken.x + (originToken.w / 2),
+                    y: originToken.y + (originToken.h / 2),
+                };
+            }
+        }
+
+        if (this.activity.facing === `any`)
+            this.selectedFacing = `away`;
+    }
+
+    async _createReferenceMarker() {
+        if (!this.referencePoint || this.referenceTemplate) return;
+        this.referenceTemplate = await CanvasData.createMeasuredTemplate({
+            t: `circle`,
+            x: this.referencePoint.x,
+            y: this.referencePoint.y,
+            distance: game.canvas.grid.distance / 2,
+            fillColor: `#ff9500`,
+            borderColor: `#ff6b00`,
+        });
+    }
+
+    async _clearReferenceMarker() {
+        if (!this.referenceTemplate) return;
+
+        await CanvasData.removeMeasuredTemplate(this.referenceTemplate);
+        this.referenceTemplate = null;
+    }
+
+    _onStartReferencePlace() {
+        if (this.canvasClickHandler) {
+            game.canvas.stage.off(`mouseup`, this.canvasClickHandler);
+            this.canvasClickHandler = null;
+            this.isPlacingReference = false;
+            this.render();
+            return;
+        }
+
+        this.canvasClickHandler = this._onReferenceClick.bind(this);
+        game.canvas.stage.on(`mouseup`, this.canvasClickHandler);
+        this.isPlacingReference = true;
+        this.render();
+    }
+
+    _onFacingChange(event) {
+        this.selectedFacing = event.target.value;
+        this.render();
     }
 
     _onStartPlacement() {
@@ -322,7 +431,9 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             blocksMovement: this.activity.blocksMovement,
             blocksSight: this.activity.blocksSight,
             blocksSound: this.activity.blocksSound,
-            activityId: this.activity.id
+            activityId: this.activity.id,
+            facing: this.selectedFacing,
+            referencePoint: this.referencePoint,
         };
 
         try {
@@ -379,6 +490,38 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         }
 
         await this._updatePreview();
+        this.render();
+    }
+
+    async _onReferenceClick(event) {
+        const pos = game.canvas.canvasCoordinatesFromClient(event.data.originalEvent);
+        const snappedPos = game.canvas.grid.getCenterPoint({
+            x: Math.round(pos.x * 10) / 10,
+            y: Math.round(pos.y * 10) / 10
+        });
+
+        if (this.referenceRange > 0) {
+            const originToken = CanvasData.getOriginToken(this.actor);
+            if (originToken) {
+                const distance = CanvasData.calculateCoordDistance(
+                    snappedPos.x, snappedPos.y,
+                    originToken.x + (originToken.w / 2),
+                    originToken.y + (originToken.h / 2),
+                );
+
+                if (distance > this.referenceRange) {
+                    ui.notifications.warn(`Reference point must be within ${this.referenceRange} feet.`);
+                    return;
+                }
+            }
+        }
+
+        this.referencePoint = snappedPos;
+        await this._createReferenceMarker();
+
+        game.canvas.stage.off(`mouseup`, this.canvasClickHandler);
+        this.canvasClickHandler = null;
+        this.isPlacingReference = false;
         this.render();
     }
 
@@ -463,7 +606,7 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
     _getWallTypeLabel() {
         switch (this.activity.wallType) {
             case 'circular': return 'Circular';
-            default: return 'Continuous Line';
+            default: return 'Contiguous';
         }
     }
 }

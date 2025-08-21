@@ -141,5 +141,21 @@
     "DND5E.ACTIVITY.FIELDS.grant.swappable.hint": "Whether granted items should be swapped when using this activity more than once.",
     "DND5E.ACTIVITY.FIELDS.grant.uuid.label": "UUID",
     "DND5E.ACTIVITY.FIELDS.grant.uuid.hint": "You can drag items from the sidebar or compendium directly into the input field.",
-    "DND5E.ACTIVITY.FIELDS.grant.none.hint": "No items added yet. Add items above to grant them when this activity is used."
+    "DND5E.ACTIVITY.FIELDS.grant.none.hint": "No items added yet. Add items above to grant them when this activity is used.",
+
+    "DND5E.ACTIVITY.Type.wall": "Wall",
+    "DND5E.ACTIVITY.FIELDS.wall.rollFormula.label": "Can use roll formulas using @",
+    "DND5E.ACTIVITY.FIELDS.wall.wallType.label": "Wall Shape",
+    "DND5E.ACTIVITY.FIELDS.wall.wallType.hint": "The shape of the wall to be placed",
+    "DND5E.ACTIVITY.FIELDS.wall.facing.label": "Facing",
+    "DND5E.ACTIVITY.FIELDS.wall.facing.hint": "The direction the wall should be placed relevant to the reference point",
+    "DND5E.ACTIVITY.FIELDS.wall.referenceRange.label": "Reference Range",
+    "DND5E.ACTIVITY.FIELDS.wall.referenceRange.hint": "The distance from the user the reference point can be placed (0 = the user's position)",
+    "DND5E.ACTIVITY.FIELDS.wall.maxLength.label": "Max. Length",
+    "DND5E.ACTIVITY.FIELDS.wall.maxLength.hint": "The maximum length of the wall (radius for circular walls)",
+    "DND5E.ACTIVITY.FIELDS.wall.blocksMovement.label": "Blocks Movement",
+    "DND5E.ACTIVITY.FIELDS.wall.blocksSight.label": "Blocks Sight",
+    "DND5E.ACTIVITY.FIELDS.wall.blocksSound.label": "Blocks Sound",
+    "DND5E.ACTIVITY.FIELDS.wall.continuousInstructions.label": "Place points to form a continuous wall",
+    "DND5E.ACTIVITY.FIELDS.wall.circularInstructions.label": "Place the center point first and then<br>place the radius marker point second"
 }

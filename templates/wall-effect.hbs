@@ -19,19 +19,31 @@
             </div>
 
             <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.wall.facing.label"}}</label>
+                <div class="form-fields">
+                    <select name="facing">
+                        {{#each facingOptions as |option|}}
+                        <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+                        {{/each}}
+                    </select>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.wall.facing.hint"}}</p>
+            </div>
+
+            <div class="form-group stacked">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.wall.referenceRange.label"}}</label>
+                <div class="form-fields">
+                    <input type="text" name="referenceRange" value="{{ referenceRange }}" placeholder="Reference Range (0 = self)">
+                </div>
+                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.wall.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.wall.referenceRange.hint"}}</p>
+            </div>
+
+            <div class="form-group stacked">
                 <label>{{localize "DND5E.ACTIVITY.FIELDS.wall.maxLength.label"}}</label>
                 <div class="form-fields">
                     <input type="text" name="maxLength" value="{{ maxLength }}" placeholder="Maximum Length (feet)">
                 </div>
                 <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.wall.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.wall.maxLength.hint"}}</p>
-            </div>
-
-            <div class="form-group stacked">
-                <label>{{localize "DND5E.ACTIVITY.FIELDS.wall.wallHeight.label"}}</label>
-                <div class="form-fields">
-                    <input type="text" name="wallHeight" value="{{ wallHeight }}" placeholder="Height (feet)">
-                </div>
-                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.wall.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.wall.wallHeight.hint"}}</p>
             </div>
         </div>
     </fieldset>
@@ -48,7 +60,6 @@
                 <div class="form-fields">
                     <dnd5e-checkbox name="blocksMovement" {{#if blocksMovement}}checked{{/if}}></dnd5e-checkbox>
                 </div>
-                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.wall.blocksMovement.hint"}}</p>
             </div>
 
             <div class="form-group stacked">
@@ -56,7 +67,6 @@
                 <div class="form-fields">
                     <dnd5e-checkbox name="blocksSight" {{#if blocksSight}}checked{{/if}}></dnd5e-checkbox>
                 </div>
-                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.wall.blocksSight.hint"}}</p>
             </div>
 
             <div class="form-group stacked">
@@ -64,7 +74,6 @@
                 <div class="form-fields">
                     <dnd5e-checkbox name="blocksSound" {{#if blocksSound}}checked{{/if}}></dnd5e-checkbox>
                 </div>
-                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.wall.blocksSound.hint"}}</p>
             </div>
         </div>
     </fieldset>
