@@ -2,7 +2,7 @@
   "id": "more-activities",
   "title": "More Activities",
   "description": "Expands the activity types for the dnd5e system",
-  "version": "1.7.3",
+  "version": "1.8.0",
   "compatibility": {
     "minimum": "12",
     "verified": "13.346"
@@ -36,5 +36,5 @@
   "socket": true,
   "url": "https://github.com/TTimeGaming/fvtt-more-activities",
   "manifest": "https://raw.githubusercontent.com/TTimeGaming/fvtt-more-activities/master/module.json",
-  "download": "https://github.com/TTimeGaming/fvtt-more-activities/releases/download/release-1.7.3/module.zip"
+  "download": "https://github.com/TTimeGaming/fvtt-more-activities/releases/download/release-1.8.0/module.zip"
 }

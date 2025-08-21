@@ -117,7 +117,7 @@ Hooks.once(`init`, async() => {
         ChainData.removeActivities(dialog.item, html);
     });
 
-    const moreActivities = [ `macro`, `hook`, `contested`, `chain`, `teleport`, `movement`, `sound`, `grant` ];
+    const moreActivities = [ `macro`, `hook`, `contested`, `chain`, `teleport`, `movement`, `sound`, `grant`, `wall` ];
     Hooks.on(`renderDialog`, (dialog, html) => {
         if (!html.hasClass(`create-document`)) return;
 

@@ -1,6 +1,6 @@
 ## More Activities - Now with V12 Support!
 
-![Latest](https://img.shields.io/badge/Module%20Version:%201.7.3-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)  
+![Latest](https://img.shields.io/badge/Module%20Version:%201.8.0-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
 
 An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides additional activity types.
 
@@ -16,6 +16,7 @@ An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides
 - **Movement Activity:** Force tokens to move on the canvas
 - **Sound Activity:** Play sounds directly from the activity
 - **Grant Activity:** Grant items or create Pact-style selections
+- **Wall Activity:** Create walls directly on the canvas
 
 ### 🍾 Versioning
 
@@ -24,7 +25,7 @@ An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides
 ## 👏 Huge Thanks
 
 - **TogaParty:** Suggestion for *Contested* Activity
-- **darkanx:** Suggestion for *Chain*, *Teleport*, *Movement* and *Grant* Activities
+- **darkanx:** Suggestion for *Chain*, *Teleport*, *Movement*, *Grant* and *Wall* Activities
 - **TPNils:** Improvement for *Grant* Activity
 - **darkanx, alterNERDtive, WelpM8:** Highlighting bugs in this module
 
@@ -110,6 +111,10 @@ Your support helps fund:
 ### Grant Activity
 <img src="./assets/grant-activity.png" width="700" />
 <img src="./assets/grant-selection.png" width="350" />
+
+### Wall Activity
+<img src="./assets/wall-activity.png" width="700" />
+<img src="./assets/wall-placement.png" width="350" />
 
 ---
 
