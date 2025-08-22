@@ -1,0 +1,43 @@
+<div class="movement-targets">
+    <fieldset>
+        <legend><label> Configuration </label></legend>
+        
+        <div class="form-group">
+            <div class="config-info">
+                <div class="config-item">
+                    <strong>{{localize "DND5E.ACTIVITY.FIELDS.movement.movementDistance.label"}}:</strong> {{movementDistance}} ft
+                </div>
+                {{#if originToken}}
+                <div class="config-item">
+                    <strong>{{localize "DND5E.ACTIVITY.FIELDS.movement.originToken.label"}}:</strong> {{originToken.name}}
+                </div>
+                {{/if}}
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend><label> Target Selection </label></legend>
+
+        <div class="form-group">
+            <label>Select Target:</label>
+            <select name="movementTargetId">
+                <option value="">-- Select Target --</option>
+                {{#if tokensData.otherTokens}}
+                {{#each tokensData.otherTokens as |tokenData|}}
+                <option value="{{tokenData.token.id}}">
+                    {{tokenData.name}} ({{tokenData.distance}} ft)
+                </option>
+                {{/each}}
+                {{else}}
+                <option value="" disabled>No targets in range</option>
+                {{/if}}
+            </select>
+        </div>
+    </fieldset>
+    
+    <div class="movement-buttons">
+        <button type="button" class="start-self-movement-btn">Execute Movement</button>
+        <button type="button" class="cancel-self-movement-btn">Cancel</button>
+    </div>
+</div>

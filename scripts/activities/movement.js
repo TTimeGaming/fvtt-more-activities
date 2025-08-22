@@ -13,36 +13,60 @@ export class MovementData {
     static applyListeners(message, html) {
         MessageData.addActivityButton(message, html, true,
             TEMPLATE_NAME, `Force Movement`, (activity) => {
-                new MovementTargetApp(activity).render(true);
+                const app = new MovementTargetApp(activity);
+                if (!app.shouldBypassTargeting())
+                    app.render(true);
             }
         );
     }
 
-    static calculateMovementDestinations(origin, target, distance, movementType) {
-        const moveDistance = game.canvas.grid.size * distance / game.canvas.grid.distance;
-        const destinations = [];
+    static calculateMovementDestination(origin, target, distance, movementType) {
+        const originCenter = {
+            x: origin.x + (origin.w / 2),
+            y: origin.y + (origin.h / 2)
+        };
+        
+        const targetCenter = {
+            x: target.x + (target.w / 2),
+            y: target.y + (target.h / 2)
+        };
 
+        let path = null;
         if (movementType === `push`) {
-            const angle = CanvasData.getAngleBetween(origin, target);
-            const newX = target.x + Math.cos(angle) * moveDistance;
-            const newY = target.y + Math.sin(angle) * moveDistance;
-            const snapped = game.canvas.grid.getTopLeftPoint({
-                x: Math.round(newX * 10) / 10,
-                y: Math.round(newY * 10) / 10,
-            });
-            destinations.push({ x: snapped.x, y: snapped.y, type: `automatic` });
+            path = game.canvas.grid.getDirectPath([originCenter, targetCenter]);
         } else if (movementType === `pull`) {
-            const angle = CanvasData.getAngleBetween(target, origin);
-            const newX = target.x + Math.cos(angle) * moveDistance;
-            const newY = target.y + Math.sin(angle) * moveDistance;
-            const snapped = game.canvas.grid.getTopLeftPoint({
-                x: Math.round(newX * 10) / 10,
-                y: Math.round(newY * 10) / 10,
-            });
-            destinations.push({ x: snapped.x, y: snapped.y, type: `automatic` });
+            path = game.canvas.grid.getDirectPath([targetCenter, originCenter]);
         }
 
-        return destinations;
+        let movementDistance = 0;
+        let destination = path[0];
+        for (let i = 1; i < path.length; i++) {
+            const currentPoint = path[i];
+            movementDistance += game.canvas.grid.measurePath([destination, currentPoint]).cost;
+            if (movementDistance > distance) break;
+
+            destination = currentPoint;
+        }
+        return game.canvas.grid.getTopLeftPoint(destination);
+    }
+
+    static async executeSingleTokenMovement(actor, x, y) {
+        const originalToken = CanvasData.getOriginToken(actor);
+        if (!originalToken) return;
+
+        const oldPosition = {
+            x: originalToken.x,
+            y: originalToken.y
+        };
+
+        await game.canvas.scene.updateEmbeddedDocuments(`Token`, [{
+            _id: originalToken.id,
+            x: x,
+            y: y
+        }]);
+
+        originalToken.setTarget(false, { releaseOthers: true, groupSelection: true });
+        return oldPosition;
     }
 }
 
@@ -54,6 +78,16 @@ export class MovementActivityData extends dnd5e.dataModels.activity.BaseActivity
         schema.maxTargets = new fields.StringField({
             required: false,
             initial: `1`,
+        });
+
+        schema.targetSelf = new fields.BooleanField({
+            required: false,
+            initial: false,
+        });
+
+        schema.onlyTargetSelf = new fields.BooleanField({
+            required: false,
+            initial: false,
         });
 
         schema.targetRange = new fields.StringField({
@@ -106,6 +140,8 @@ export class MovementActivitySheet extends dnd5e.applications.activity.ActivityS
         context = await super._prepareEffectContext(context);
         
         context.maxTargets = this.activity?.maxTargets ?? 1;
+        context.targetSelf = this.activity?.targetSelf ?? false;
+        context.onlyTargetSelf = this.activity?.onlyTargetSelf ?? false;
         context.targetRange = this.activity?.targetRange ?? 30;
         context.movementDistance = this.activity?.movementDistance ?? 10;
         context.movementType = this.activity?.movementType ?? `push`;
@@ -166,7 +202,10 @@ export class MovementActivity extends dnd5e.documents.activity.ActivityMixin(Mov
             return results;
         }
 
-        new MovementTargetApp(this).render(true);
+        const app = new MovementTargetApp(this);
+        if (!app.shouldBypassTargeting())
+            app.render(true);
+
         return results;
     }
 
@@ -328,6 +367,35 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
         }
     }
 
+    shouldBypassTargeting() {
+        if (FieldsData.resolveFormula(this.activity?.maxTargets, this.activity.item) !== 1 || !this.activity?.onlyTargetSelf) return false;
+
+        this._skipToSelfMovement();
+        return true;
+    }
+
+    /**
+     * Skip directly to movement with self as target
+     * @private
+     */
+    async _skipToSelfMovement() {
+        const originToken = CanvasData.getOriginToken(this.actor);
+
+        this.selectedTargets = [];
+        this.selectedTargets.push({
+            id: originToken.id,
+            name: originToken.name,
+            distance: 0,
+            token: originToken
+        });
+
+        originToken.setTarget(true, { releaseOthers: true, groupSelection: true });
+
+        new MovementSelfTargetApp(this, this.activity, this.actor, this.selectedTargets).render(true);
+        this.isSelecting = true;
+        this.close();
+    }
+
     /**
      * Start the movement process
      * @private
@@ -360,21 +428,18 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         const originToken = CanvasData.getOriginToken(this.actor);
         for (const target of this.selectedTargets) {
-            const destinations = MovementData.calculateMovementDestinations(
+            const destination = MovementData.calculateMovementDestination(
                 originToken,
                 target.token,
                 FieldsData.resolveFormula(this.activity.movementDistance, this.activity.item),
                 direction,
             );
 
-            if (destinations.length > 0) {
-                const dest = destinations[0];
-                updates.push({
-                    _id: target.id,
-                    x: dest.x,
-                    y: dest.y
-                });
-            }
+            updates.push({
+                _id: target.id,
+                x: destination.x,
+                y: destination.y
+            });
         }
 
         this.selectedTargets.forEach(target => {
@@ -414,15 +479,29 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
         const tokens = [];
         const selectedIds = this.selectedTargets.map(t => t.id);
 
-        const otherTokens = CanvasData.getTokensInRange(originToken, FieldsData.resolveFormula(this.activity.targetRange, this.activity.item))
-            .filter(data => !selectedIds.includes(data.token.id))
-            .map(data => ({
-                ...data,
-                name: data.token.name,
-                type: 'other'
-            }))
-        ;
+        if (this.activity.targetSelf && originToken && !selectedIds.includes(originToken.id)) {
+            tokens.push({
+                token: originToken,
+                name: originToken.name,
+                distance: 0,
+                inRange: true,
+                type: `self`,
+            });
+        }
 
+        let otherTokens = [];
+        if (!this.activity.onlyTargetSelf || !this.activity.targetSelf || this.activity.maxTargets !== `1`) {
+            otherTokens = CanvasData.getTokensInRange(originToken, FieldsData.resolveFormula(this.activity.targetRange, this.activity.item))
+                .filter(data => !selectedIds.includes(data.token.id))
+                .map(data => ({
+                    ...data,
+                    name: data.token.name,
+                    type: 'other'
+                }))
+            ;
+        }
+
+        console.log(tokens);
         return {
             selfTokens: tokens.filter(t => t.type === 'self'),
             otherTokens: otherTokens.filter(t => t.type === 'other'),
@@ -659,7 +738,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             y: Math.round(snappedPos.y * 10) / 10,
         });
 
-        const oldPosition = await this._executeSingleTokenMovement(tokenToPlace.token.actor, snapped.x, snapped.y);
+        const oldPosition = await MovementData.executeSingleTokenMovement(tokenToPlace.token.actor, snapped.x, snapped.y);
         const placedToken = this.tokensToPlace.splice(this.currentTokenIndex, 1)[0];
         this.placedTokens.push({
             token: placedToken.token,
@@ -721,7 +800,7 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
      */
     async _onCancelPlacement() {
         for (const placedToken of this.placedTokens) {
-            await this._executeSingleTokenMovement(
+            await MovementData.executeSingleTokenMovement(
                 placedToken.token.actor,
                 placedToken.position.x,
                 placedToken.position.y
@@ -738,23 +817,153 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.isHardClose = true;
         this.close();
     }
+}
 
-    async _executeSingleTokenMovement(actor, x, y) {
-        const originalToken = CanvasData.getOriginToken(actor);
-        if (!originalToken) return;
+class MovementSelfTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
+    static DEFAULT_OPTIONS = {
+        classes: [`dnd5e2`, `movement-self-target-app`],
+        tag: `form`,
+        position: {
+            width: 300,
+            height: `auto`,
+        }
+    };
 
-        const oldPosition = {
-            x: originalToken.x,
-            y: originalToken.y
+    static PARTS = {
+        form: {
+            template: `modules/more-activities/templates/movement-target-self.hbs`,
+        },
+    };
+
+    constructor(targetApp, activity, actor, selectedTargets, options = {}) {
+        super({
+            window: {
+                title: `Select Target`
+            },
+            ...options,
+        });
+        
+        this.targetApp = targetApp;
+        this.activity = activity;
+        this.actor = actor;
+        this.selectedTargets = [...selectedTargets].map(target => target.token);
+        this.selectionTarget = null;
+        this.movementTarget = null;
+    }
+
+    /** @inheritdoc */
+    async _prepareContext() {
+        const tokensData = this._getAvailableTokens();
+
+        return {
+            tokensData: tokensData,
+            movementType: this.activity.movementType,
+            movementDistance: FieldsData.resolveFormula(this.activity.movementDistance, this.activity.item),
+            originToken: CanvasData.getOriginToken(this.actor),
         };
+    }
 
-        await game.canvas.scene.updateEmbeddedDocuments(`Token`, [{
-            _id: originalToken.id,
-            x: x,
-            y: y
-        }]);
+    /** @inheritdoc */
+    async _onRender(context, options) {
+        DomData.addSubtitle(this.element, this.targetApp.activity);
 
-        originalToken.setTarget(false, { releaseOthers: true, groupSelection: true });
-        return oldPosition;
+        const originToken = CanvasData.getOriginToken(this.actor);
+        if (!this.selectionTarget) {
+            this.selectionTarget = await CanvasData.createMeasuredTemplate({
+                x: originToken.x + (originToken.w / 2),
+                y: originToken.y + (originToken.h / 2),
+                w: originToken.w,
+                h: originToken.h,
+                distance: FieldsData.resolveFormula(this.activity.targetRange, this.activity.item),
+                fillColor: `#B16192`,
+            });
+        }
+
+        this.element.querySelector(`select[name="movementTargetId"]`)?.addEventListener(`change`, async(event) => {
+            const tokenId = event.currentTarget.value;
+            if (!tokenId) return;
+
+            const token = game.canvas.tokens.get(tokenId);
+            if (!token) return;
+
+            if (this.movementTarget != null) {
+                this.movementTarget.setTarget(false, { releaseOthers: true, groupSelection: true });
+                this.selectedTargets = this.selectedTargets.filter(t => t.id !== this.movementTarget.id);
+            }
+
+            this.movementTarget = token;
+            this.selectedTargets.push(token);
+            
+            game.canvas.tokens.releaseAll();
+            this.selectedTargets.forEach(target => {
+                target.setTarget(true, { releaseOthers: false, groupSelection: true });
+            });
+        });
+
+        this.element.querySelector(`.start-self-movement-btn`)?.addEventListener(`click`, async(event) => {
+            if (!this.movementTarget) {
+                ui.notifications.warn(game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.selectTarget.label`));
+                return;
+            }
+
+            await this._executeSelfMovement();
+            this.close();
+        });
+
+        this.element.querySelector(`.cancel-self-movement-btn`)?.addEventListener(`click`, async(event) => {
+            this.close();
+        });
+    }
+
+    /** @inheritdoc */
+    async close(options = {}) {
+        await super.close(options);
+
+        if (this.selectionTarget) {
+            await CanvasData.removeMeasuredTemplate(this.selectionTarget);
+            this.selectionTarget = null;
+        }
+
+        this.selectedTargets.forEach(target => {
+            target.setTarget(false, { releaseOthers: true, groupSelection: true });
+        });
+    }
+
+    async _executeSelfMovement() {
+        const originToken = CanvasData.getOriginToken(this.actor);
+        const destination = MovementData.calculateMovementDestination(
+            this.movementTarget,
+            originToken,
+            FieldsData.resolveFormula(this.activity.movementDistance, this.activity.item),
+            `pull`,
+        );
+
+        await MovementData.executeSingleTokenMovement(this.actor, destination.x, destination.y);
+        await EffectsData.apply(this.activity, [this.actor], this.activity.appliedEffects);
+        ui.notifications.info(`1 ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.success.label`)}`);
+    }
+
+    /**
+     * Get available tokens for self-movement
+     * @returns {Array}
+     * @private
+     */
+    _getAvailableTokens() {
+        const originToken = CanvasData.getOriginToken(this.actor);
+
+        const otherTokens = CanvasData.getTokensInRange(originToken, FieldsData.resolveFormula(this.activity.targetRange, this.activity.item))
+            .filter(data => data.token.id !== originToken.id)
+            .map(data => ({
+                ...data,
+                name: data.token.name,
+                type: 'other'
+            }))
+        ;
+
+        return {
+            selfTokens: [],
+            otherTokens: otherTokens.filter(t => t.type === 'other'),
+            hasMultipleGroups: false,
+        };
     }
 }

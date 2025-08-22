@@ -511,6 +511,7 @@
     transform: translateY(0);
 }
 
+.dnd5e2.activity-movement .form-group.indented,
 .dnd5e2.activity-teleport .form-group.indented,
 .dnd5e2.activity-grant .form-group.indented,
 .dnd5e2.activity-contested .form-group.indented {
@@ -892,6 +893,7 @@
 }
 
 .placement-buttons,
+.movement-buttons,
 .grant-buttons,
 .branch-buttons {
    display: flex;

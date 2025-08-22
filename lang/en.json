@@ -102,6 +102,7 @@
 
     "DND5E.ACTIVITY.Type.movement": "Movement",
     "DND5E.ACTIVITY.FIELDS.movement.invalidScope.label": "No valid token for this actor on the canvas.",
+    "DND5E.ACTIVITY.FIELDS.movement.selectTarget.label": "Select a target to initiate movement.",
     "DND5E.ACTIVITY.FIELDS.movement.moreTargets.label": "Select at least one target to teleport.",
     "DND5E.ACTIVITY.FIELDS.movement.lessTargets.label": "Select fewer targets to teleport.",
     "DND5E.ACTIVITY.FIELDS.movement.outOfBounds.label": "Clicked point is outside of permitted radius.",
@@ -111,6 +112,10 @@
     "DND5E.ACTIVITY.FIELDS.movement.rollFormula.label": "Can use roll formulas using @",
     "DND5E.ACTIVITY.FIELDS.movement.maxTargets.label": "Max Targets",
     "DND5E.ACTIVITY.FIELDS.movement.maxTargets.hint": "The permitted number of tokens to forcibly move",
+    "DND5E.ACTIVITY.FIELDS.movement.targetSelf.label": "Target Self",
+    "DND5E.ACTIVITY.FIELDS.movement.targetSelf.hint": "Allow the user to target themself?",
+    "DND5E.ACTIVITY.FIELDS.movement.onlyTargetSelf.label": "Only Target Self",
+    "DND5E.ACTIVITY.FIELDS.movement.onlyTargetSelf.hint": "Should the user only target themself?",
     "DND5E.ACTIVITY.FIELDS.movement.targetRange.label": "Target Range",
     "DND5E.ACTIVITY.FIELDS.movement.targetRange.hint": "The range around the user to select targets from (in feet)",
     "DND5E.ACTIVITY.FIELDS.movement.movementDistance.label": "Movement Distance",

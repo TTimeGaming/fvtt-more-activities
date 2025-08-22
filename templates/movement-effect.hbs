@@ -14,6 +14,26 @@
                 <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.movement.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{localize "DND5E.ACTIVITY.FIELDS.movement.maxTargets.hint"}}</p>
             </div>
 
+            <div class="form-group">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.movement.targetSelf.label"}}</label>
+                <div class="form-fields">
+                    <dnd5e-checkbox name="targetSelf" {{#if targetSelf}}checked{{/if}}></dnd5e-checkbox>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.movement.targetSelf.hint"}}</p>
+            </div>
+
+            <div class="form-group indented">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.movement.onlyTargetSelf.label"}}</label>
+                <div class="form-fields">
+                    {{#if (and targetSelf (eq maxTargets "1"))}}
+                    <dnd5e-checkbox name="onlyTargetSelf" {{#if onlyTargetSelf}}checked{{/if}}></dnd5e-checkbox>
+                    {{else}}
+                    <dnd5e-checkbox name="onlyTargetSelf" disabled></dnd5e-checkbox>
+                    {{/if}}
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.movement.onlyTargetSelf.hint"}}</p>
+            </div>
+
             <div class="form-group stacked">
                 <label>{{localize "DND5E.ACTIVITY.FIELDS.movement.targetRange.label"}}</label>
                 <div class="form-fields">
@@ -33,11 +53,17 @@
             <div class="form-group stacked">
                 <label>{{localize "DND5E.ACTIVITY.FIELDS.movement.movementType.label"}}</label>
                 <div class="form-fields">
+                    {{#if onlyTargetSelf}}
+                    <select name="movementType" disabled>
+                        <option value="pull" selected>Pull (Toward)</option>
+                    </select>
+                    {{else}}
                     <select name="movementType">
                         {{#each movementTypeOptions as |option|}}
                         <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
                         {{/each}}
                     </select>
+                    {{/if}}
                 </div>
                 <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.movement.movementType.hint"}}</p>
             </div>
