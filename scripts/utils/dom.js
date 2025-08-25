@@ -27,23 +27,13 @@ export class DomData {
             sheet._fieldsetStates = new Map();
 
         fieldsets.forEach((fieldset, index) => {
-            let legend = fieldset.querySelector(`.collapsible-legend`);
+            const legend = fieldset.querySelector(`.collapsible-legend`);
             const content = fieldset.querySelector(`.fieldset-content`);
-            let arrow = legend?.querySelector(`.collapse-arrow`);
+            const arrow = legend?.querySelector(`.collapse-arrow`);
             if (!legend || !content || !arrow) return;
             
             const fieldsetId = fieldset.dataset.fieldsetId;
-            const savedState = sheet._fieldsetStates.get(fieldsetId);
-            const isExpanded = savedState !== undefined ? savedState : fieldset.dataset.expanded === `true`;
-
-            setFieldsetState(fieldset, content, arrow, isExpanded);
-            sheet._fieldsetStates.set(fieldsetId, isExpanded);
-
-            legend.replaceWith(legend.cloneNode(true));
-            legend = fieldset.querySelector(`.collapsible-legend`);
-            arrow = legend?.querySelector(`.collapse-arrow`);
-
-            legend.addEventListener(`click`, (e) => {
+            arrow.addEventListener(`click`, (e) => {
                 e.preventDefault();
                 e.stopPropagation();
 
