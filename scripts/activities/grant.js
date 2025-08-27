@@ -986,7 +986,7 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     break;
                 }
 
-                const maxUses = FieldsData.resolveFormula(actorItem.system?.uses?.max, this.actor.item, Infinity);
+                const maxUses = actorItem.system?.uses?.max ?? Infinity;
                 const usedUses = actorItem.system?.uses?.spent || 0;
                 const availableUses = maxUses - usedUses;
 
