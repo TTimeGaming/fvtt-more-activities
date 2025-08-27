@@ -10,6 +10,7 @@ import { WallActivityData, WallActivitySheet, WallActivity, WallData } from './a
 import { Compat } from './compat.js';
 import { HandlebarsData } from './utils/handlebars.js';
 import { ContestedMigrations } from './migrations/contested.js';
+import { GrantMigrations } from './migrations/grant.js';
 
 Hooks.once(`init`, async() => {
     console.log(`More Activities | Initializing`);
@@ -199,6 +200,7 @@ Hooks.once(`ready`, async() => {
     if (storedVersion === currentVersion) return;
 
     await ContestedMigrations.migrate(storedVersion);
+    await GrantMigrations.migrate(storedVersion);
 
     await game.settings.set(`more-activities`, `version`, currentVersion);
     ui.notifications.info(`More Activities: Migrated to version ${currentVersion}`);
