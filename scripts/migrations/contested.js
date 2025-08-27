@@ -61,8 +61,6 @@ export class ContestedMigrations {
         const hasOldEffects = (activity.appliedEffects?.length ?? 0) > 0 || (activity.appliedEffectsMinor?.length ?? 0) > 0 || (activity.appliedEffectsMajor?.length ?? 0) > 0;
         if (!hasOldEffects) return null;
 
-        console.log(`oldEffects`);
-
         const effectGroups = [];
         const oldEffects = activity.appliedEffects || [];
         const oldEffectsMinor = activity.appliedEffectsMinor || [];

@@ -522,6 +522,7 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
         });
 
         // Deprecated in v1.8.0
+        // {
         schema.applyEffectsTo = new fields.StringField({
             required: false,
             initial: `loserDefender`,
@@ -551,6 +552,7 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
             required: false,
             initial: [],
         });
+        // }
 
         return schema;
     }
