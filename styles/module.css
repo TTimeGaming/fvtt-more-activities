@@ -1115,3 +1115,22 @@
 .delete-wall-btn:hover {
     background: #c0392b;
 }
+
+.consumption-requirements {
+    font-size: 0.85em;
+    margin-top: 0.25rem;
+}
+
+.customization-notes {
+    margin-top: 0.25rem;
+}
+
+.custom-note {
+    display: inline-block;
+    background: var(--color-border-light-tertiary);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.8em;
+    margin-right: 0.25rem;
+    margin-top: 0.1rem;
+}

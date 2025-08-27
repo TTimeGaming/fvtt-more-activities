@@ -54,6 +54,62 @@ export class GrantActivityData extends dnd5e.dataModels.activity.BaseActivityDat
             initial: `{}`,
         });
 
+        schema.spellsAsScrolls = new fields.BooleanField({
+            required: false,
+            initial: false,
+        });
+
+        schema.costGroups = new fields.ArrayField(new fields.SchemaField({
+            id: new fields.StringField({
+                required: true,
+                initial: () => foundry.utils.randomID(),
+            }),
+            name: new fields.StringField({
+                required: false,
+                blank: true,
+                initial: `Consumption`,
+            }),
+            type: new fields.StringField({
+                required: false,
+                initial: `currency`,
+                options: [ `currency`, `itemUses`, `itemConsume` ],
+            }),
+
+            baseCurrencyAmount: new fields.StringField({
+                required: false,
+                initial: `0`,
+            }),
+            baseCurrencyCoin: new fields.StringField({
+                required: false,
+                initial: `gp`,
+                options: [ `pp`, `gp`, `ep`, `sp`, `cp` ],
+            }),
+
+            spellCurrencyAmount: new fields.StringField({
+                required: false,
+                initial: `0`,
+            }),
+            spellCurrencyCoin: new fields.StringField({
+                required: false,
+                initial: `gp`,
+                options: [ `pp`, `gp`, `ep`, `sp`, `cp` ],
+            }),
+
+            itemUuid: new fields.StringField({
+                required: false,
+                blank: true,
+            }),
+            itemAmount: new fields.StringField({
+                required: false,
+                initial: `1`,
+            }),
+        }), {
+            required: false,
+            initial: [],
+        });
+
+        // Deprecated in v1.8.2
+        // {
         schema.baseCost = new fields.StringField({
             required: false,
             initial: `0`,
@@ -75,16 +131,7 @@ export class GrantActivityData extends dnd5e.dataModels.activity.BaseActivityDat
             initial: `gp`,
             options: [ `pp`, `gp`, `ep`, `sp`, `cp` ]
         });
-
-        schema.limitedDuration = new fields.BooleanField({
-            required: false,
-            initial: false,
-        });
-
-        schema.spellsAsScrolls = new fields.BooleanField({
-            required: false,
-            initial: false,
-        });
+        // }
 
         return schema;
     }
@@ -129,6 +176,11 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
             const item = await fromUuid(itemId);
             const customization = itemCustomizations[itemId.replace(`.`, `-`)] ?? {};
 
+            customization.costGroups = (customization.costGroups ?? []).map((element, index) => ({
+                ...element,
+                index: index,
+            }));
+
             let isCustomized = Object.keys(customization).length > 0;
             if (!customization.individualCostCurrency) customization.individualCostCurrency = `gp`;
             if (!customization.spellCostPerLevelCurrency) customization.spellCostPerLevelCurrency = `gp`;
@@ -165,11 +217,6 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
         context.count = this.activity?.count ?? `1`;
         context.swappable = this.activity?.swappable ?? false;
         context.current = this.activity?.current ?? ``;
-        context.baseCost = this.activity?.baseCost ?? `0`;
-        context.baseCostCurrency = this.activity?.baseCostCurrency ?? `gp`;
-        context.spellCostPerLevel = this.activity?.spellCostPerLevel ?? `0`;
-        context.spellCostPerLevelCurrency = this.activity?.spellCostPerLevelCurrency ?? `gp`;
-        context.limitedDuration = this.activity?.limitedDuration ?? false;
         context.spellsAsScrolls = this.activity?.spellsAsScrolls ?? false;
         context.currencyOptions = [ `pp`, `gp`, `ep`, `sp`, `cp` ];
 
@@ -178,13 +225,17 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
             index: index,
             isOpen: this.openCustomization === index,
         }));
+
+        context.costGroups = (this.activity?.costGroups || []).map((element, index) => ({
+            ...element,
+            index: index,
+        }));
+
         return context;
     }
 
     /** @inheritdoc */
     _onRender(context, options) {
-        const input = this.element.querySelector(`input[name="current"]`);
-
         this.element.querySelector(`.add-item-btn`).addEventListener(`click`, async() => {
             await this._addItemFromInput(input);
         });
@@ -232,7 +283,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
             });
         });
 
-        this._addDragDropHandlers(input);
+        this._addCostGroupListeners();
         this._addCustomizationListeners();
         DomData.setupSheetBehaviors(this);
     }
@@ -244,7 +295,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
         this.openCustomization = null;
     }
 
-    _addDragDropHandlers(input) {
+    _addDragDropHandlers(input, callback) {
         input.addEventListener('dragover', (event) => {
             event.preventDefault();
             input.classList.add('drag-over');
@@ -273,8 +324,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 ;
                 
                 if (data.type === 'Item') {
-                    input.value = data.uuid;
-                    await this._addItemFromInput(input);
+                    callback(data.uuid);
                 } else {
                     ui.notifications.warn(`Only items can be dropped here!`);
                 }
@@ -340,16 +390,319 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
         });
     }
 
-    _addCustomizationListeners() {
-        this.element?.querySelectorAll(`input[name="itemIndividualCost"]`).forEach(input => {
-            input.addEventListener(`blur`, async(event) => {
-                await this._updateItemCustomization(event.target.dataset.index, `individualCost`, event.target.value || null);
+    _addCostGroupListeners() {
+        this.element?.querySelector(`.add-cost-group`)?.addEventListener(`click`, async() => {
+            const costGroups = this.activity?.costGroups || [];
+            costGroups.push({
+                id: foundry.utils.randomID(),
+                name: `Cost Group ${costGroups.length + 1}`,
+                type: `currency`,
+                baseCurrencyAmount: ``,
+                baseCurrencyCoin: `gp`,
+                spellCurrencyAmount: ``,
+                spellCurrencyCoin: `gp`,
+                itemUuid: ``,
+                itemUses: ``,
+            });
+            await this.activity.update({ costGroups: costGroups });
+        });
+
+        this.element?.querySelectorAll(`.remove-cost-group`).forEach(btn => {
+            btn.addEventListener(`click`, async(event) => {
+                const index = parseInt(event.target.closest(`[data-index]`).dataset.index);
+                const costGroups = [...(this.activity?.costGroups || [])];
+                costGroups.splice(index, 1);
+                await this.activity.update({ costGroups: costGroups });
             });
         });
 
-        this.element?.querySelectorAll(`select[name="itemIndividualCostCurrency"]`).forEach(select => {
-            select.addEventListener(`change`, async(event) => {
-                await this._updateItemCustomization(event.target.dataset.index, `individualCostCurrency`, event.target.value);
+        this.element?.querySelectorAll(`input[name="costGroupName"]`).forEach(input => {
+            input.addEventListener(`blur`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+
+                const costGroups = [...(this.activity?.costGroups || [])];
+                if (!costGroups[index]) return;
+
+                costGroups[index].name = event.target.value;
+                await this.activity.update({ costGroups: costGroups });
+            });
+        });
+
+        this.element?.querySelectorAll(`select[name="costType"]`).forEach(input => {
+            input.addEventListener(`change`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+
+                const costGroups = [...(this.activity?.costGroups || [])];
+                if (!costGroups[index]) return;
+
+                costGroups[index].type = event.target.value;
+                await this.activity.update({ costGroups: costGroups });
+            });
+        });
+
+        this.element?.querySelectorAll(`input[name="baseCurrencyAmount"]`).forEach(input => {
+            input.addEventListener(`blur`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+
+                const costGroups = [...(this.activity?.costGroups || [])];
+                if (!costGroups[index]) return;
+
+                costGroups[index].baseCurrencyAmount = event.target.value;
+                await this.activity.update({ costGroups: costGroups });
+            });
+        });
+
+        this.element?.querySelectorAll(`select[name="baseCurrencyCoin"]`).forEach(input => {
+            input.addEventListener(`change`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+
+                const costGroups = [...(this.activity?.costGroups || [])];
+                if (!costGroups[index]) return;
+
+                costGroups[index].baseCurrencyCoin = event.target.value;
+                await this.activity.update({ costGroups: costGroups });
+            });
+        });
+
+        this.element?.querySelectorAll(`input[name="spellCurrencyAmount"]`).forEach(input => {
+            input.addEventListener(`blur`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+
+                const costGroups = [...(this.activity?.costGroups || [])];
+                if (!costGroups[index]) return;
+
+                costGroups[index].spellCurrencyAmount = event.target.value;
+                await this.activity.update({ costGroups: costGroups });
+            });
+        });
+
+        this.element?.querySelectorAll(`select[name="spellCurrencyCoin"]`).forEach(input => {
+            input.addEventListener(`change`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+
+                const costGroups = [...(this.activity?.costGroups || [])];
+                if (!costGroups[index]) return;
+
+                costGroups[index].spellCurrencyCoin = event.target.value;
+                await this.activity.update({ costGroups: costGroups });
+            });
+        });
+
+        this.element?.querySelectorAll(`input[name="itemAmount"]`).forEach(input => {
+            input.addEventListener(`blur`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+
+                const costGroups = [...(this.activity?.costGroups || [])];
+                if (!costGroups[index]) return;
+
+                costGroups[index].itemAmount = event.target.value;
+                await this.activity.update({ costGroups: costGroups });
+            });
+        });
+
+        this.element.querySelectorAll(`input[name="itemUuid"]`).forEach(input => {
+            this._addDragDropHandlers(input, async(uuid) => {
+                const index = parseInt(input.dataset.index);
+
+                const costGroups = [...(this.activity?.costGroups || [])];
+                if (!costGroups[index]) return;
+
+                costGroups[index].itemUuid = uuid;
+                await this.activity.update({ costGroups: costGroups})
+            });
+
+            input.addEventListener(`blur`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+
+                const costGroups = [...(this.activity?.costGroups || [])];
+                if (!costGroups[index]) return;
+
+                costGroups[index].itemUuid = event.target.value;
+                await this.activity.update({ costGroups: costGroups });
+            });
+        });
+    }
+
+    _addCustomizationListeners() {
+        let itemCustomizations;
+        try {
+            itemCustomizations = JSON.parse(this.activity?.itemCustomizations);
+        }
+        catch {
+            itemCustomizations = {};
+        }
+
+        const input = this.element.querySelector(`input[name="current"]`);
+        this._addDragDropHandlers(input, async(uuid) => {
+            input.value = uuid;
+            await this._addItemFromInput(input);
+        });
+
+        this.element?.querySelectorAll(`.add-item-cost-group`).forEach(btn => {
+            btn.addEventListener(`click`, async() => {
+                const item = parseInt(btn.dataset.item);
+                const grants = this.activity?.grants ?? [];
+                const itemId = grants[parseInt(item)];
+
+                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                costGroups.push({
+                    id: foundry.utils.randomID(),
+                    name: `Cost Group ${costGroups.length + 1}`,
+                    type: `currency`,
+                    baseCurrencyAmount: ``,
+                    baseCurrencyCoin: `gp`,
+                    spellCurrencyAmount: ``,
+                    spellCurrencyCoin: `gp`,
+                    itemUuid: ``,
+                    itemUses: ``,
+                });
+                await this._updateItemCustomization(item, `costGroups`, costGroups);
+            });
+        });
+
+        this.element?.querySelectorAll(`.remove-item-cost-group`).forEach(btn => {
+            btn.addEventListener(`click`, async(event) => {
+                const item = parseInt(btn.dataset.item);
+                const index = parseInt(btn.dataset.index);
+                const grants = this.activity?.grants ?? [];
+                const itemId = grants[parseInt(item)];
+
+                const costGroups = [...(itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [])];
+                costGroups.splice(index, 1);
+                await this._updateItemCustomization(item, `costGroups`, costGroups);
+            });
+        });
+
+        this.element?.querySelectorAll(`input[name="itemCostGroupName"]`).forEach(input => {
+            input.addEventListener(`blur`, async(event) => {
+                const item = parseInt(event.target.dataset.item);
+                const index = parseInt(event.target.dataset.index);
+                const grants = this.activity?.grants ?? [];
+                const itemId = grants[parseInt(item)];
+
+                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                if (!costGroups[index]) return;
+
+                costGroups[index].name = event.target.value;
+                await this._updateItemCustomization(item, `costGroups`, costGroups);
+            });
+        });
+
+        this.element?.querySelectorAll(`select[name="itemCostType"]`).forEach(input => {
+            input.addEventListener(`change`, async(event) => {
+                const item = parseInt(event.target.dataset.item);
+                const index = parseInt(event.target.dataset.index);
+                const grants = this.activity?.grants ?? [];
+                const itemId = grants[parseInt(item)];
+
+                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                if (!costGroups[index]) return;
+
+                costGroups[index].type = event.target.value;
+                await this._updateItemCustomization(item, `costGroups`, costGroups);
+            });
+        });
+
+        this.element?.querySelectorAll(`input[name="itemBaseCurrencyAmount"]`).forEach(input => {
+            input.addEventListener(`blur`, async(event) => {
+                const item = parseInt(event.target.dataset.item);
+                const index = parseInt(event.target.dataset.index);
+                const grants = this.activity?.grants ?? [];
+                const itemId = grants[parseInt(item)];
+
+                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                if (!costGroups[index]) return;
+
+                costGroups[index].baseCurrencyAmount = event.target.value;
+                await this._updateItemCustomization(item, `costGroups`, costGroups);
+            });
+        });
+
+        this.element?.querySelectorAll(`select[name="itemBaseCurrencyCoin"]`).forEach(input => {
+            input.addEventListener(`change`, async(event) => {
+                const item = parseInt(event.target.dataset.item);
+                const index = parseInt(event.target.dataset.index);
+                const grants = this.activity?.grants ?? [];
+                const itemId = grants[parseInt(item)];
+
+                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                if (!costGroups[index]) return;
+
+                costGroups[index].baseCurrencyCoin = event.target.value;
+                await this._updateItemCustomization(item, `costGroups`, costGroups);
+            });
+        });
+
+        this.element?.querySelectorAll(`input[name="itemSpellCurrencyAmount"]`).forEach(input => {
+            input.addEventListener(`blur`, async(event) => {
+                const item = parseInt(event.target.dataset.item);
+                const index = parseInt(event.target.dataset.index);
+                const grants = this.activity?.grants ?? [];
+                const itemId = grants[parseInt(item)];
+
+                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                if (!costGroups[index]) return;
+
+                costGroups[index].spellCurrencyAmount = event.target.value;
+                await this._updateItemCustomization(item, `costGroups`, costGroups);
+            });
+        });
+
+        this.element?.querySelectorAll(`select[name="itemSpellCurrencyCoin"]`).forEach(input => {
+            input.addEventListener(`change`, async(event) => {
+                const item = parseInt(event.target.dataset.item);
+                const index = parseInt(event.target.dataset.index);
+                const grants = this.activity?.grants ?? [];
+                const itemId = grants[parseInt(item)];
+
+                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                if (!costGroups[index]) return;
+
+                costGroups[index].spellCurrencyCoin = event.target.value;
+                await this._updateItemCustomization(item, `costGroups`, costGroups);
+            });
+        });
+
+        this.element?.querySelectorAll(`input[name="itemItemAmount"]`).forEach(input => {
+            input.addEventListener(`blur`, async(event) => {
+                const item = parseInt(event.target.dataset.item);
+                const index = parseInt(event.target.dataset.index);
+                const grants = this.activity?.grants ?? [];
+                const itemId = grants[parseInt(item)];
+
+                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                if (!costGroups[index]) return;
+
+                costGroups[index].itemAmount = event.target.value;
+                await this._updateItemCustomization(item, `costGroups`, costGroups);
+            });
+        });
+
+        this.element.querySelectorAll(`input[name="itemItemUuid"]`).forEach(input => {
+            this._addDragDropHandlers(input, async(uuid) => {
+                const item = parseInt(input.dataset.item);
+                const index = parseInt(input.dataset.index);
+                const grants = this.activity?.grants ?? [];
+                const itemId = grants[parseInt(item)];
+
+                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                if (!costGroups[index]) return;
+
+                costGroups[index].itemUuid = uuid;
+                await this._updateItemCustomization(item, `costGroups`, costGroups);
+            });
+
+            input.addEventListener(`blur`, async(event) => {
+                const item = parseInt(event.target.dataset.item);
+                const index = parseInt(event.target.dataset.index);
+                const grants = this.activity?.grants ?? [];
+                const itemId = grants[parseInt(item)];
+
+                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                if (!costGroups[index]) return;
+
+                costGroups[index].itemUuid = event.target.value;
+                await this._updateItemCustomization(item, `costGroups`, costGroups);
             });
         });
 
@@ -362,18 +715,6 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
         this.element?.querySelectorAll(`select[name="itemRecovery"]`).forEach(select => {
             select.addEventListener(`change`, async(event) => {
                 await this._updateItemCustomization(event.target.dataset.index, `recovery`, event.target.value === `default` ? null : event.target.value);
-            });
-        });
-
-        this.element?.querySelectorAll(`input[name="itemSpellCostPerLevel"]`).forEach(input => {
-            input.addEventListener(`blur`, async(event) => {
-                await this._updateItemCustomization(event.target.dataset.index, `spellCostPerLevel`, event.target.value || null);
-            });
-        });
-
-        this.element?.querySelectorAll(`select[name="itemSpellCostPerLevelCurrency"]`).forEach(select => {
-            select.addEventListener(`change`, async(event) => {
-                await this._updateItemCustomization(event.target.dataset.index, `spellCostPerLevelCurrency`, event.target.value);
             });
         });
 
@@ -539,8 +880,29 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
             actorFunds += FieldsData.resolveCurrency(this.actor.system.currency.cp, `cp`);
         }
 
-        const activityBaseCost = FieldsData.resolveFormula(this.activity.baseCost, this.activity.item, 0);
-        const activityPerLevelCost = FieldsData.resolveFormula(this.activity.spellCostPerLevel, this.activity.item, 0);
+        const activityUses = new Map();
+        const activityConsume = new Map();
+
+        let activityBaseCost = 0;
+        let activityPerLevelCost = 0;
+
+        for (const group of this.activity.costGroups) {
+            switch (group.type) {
+                case `currency`:
+                    activityBaseCost += FieldsData.resolveCurrency(FieldsData.resolveFormula(group.baseCurrencyAmount, this.activity.item, 0), group.baseCurrencyCoin);
+                    activityPerLevelCost += FieldsData.resolveCurrency(FieldsData.resolveFormula(group.spellCurrencyAmount, this.activity.item, 0), group.spellCurrencyCoin);
+                    break;
+                case `itemUses`:
+                case `itemConsume`:
+                    const uuid = group.itemUuid || this.activity.item.id;
+                    const amount = FieldsData.resolveFormula(group.itemAmount, this.activity.item, 1);
+                    if (group.type === `itemUses`)
+                        activityUses.set(uuid, (activityUses.get(uuid) || 0) + amount);
+                    if (group.type === `itemConsume`)
+                        activityConsume.set(uuid, (activityConsume.get(uuid) || 0) + amount);
+                    break;
+            }
+        }
 
         let itemCustomizations;
         try {
@@ -561,26 +923,123 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         for (const grant of (this.activity.grants ?? [])) {
             const item = (await fromUuid(grant)).toObject();
 
+            const itemUses = new Map(activityUses);
+            const itemConsume = new Map(activityConsume);
+
             const customization = itemCustomizations[grant.replace(`.`, `-`)] ?? {};
             if (customization.maxUses)
                 customization.maxUses = FieldsData.resolveFormula(customization.maxUses, this.activity.item);
             if (customization.recovery)
                 customization.recovery = recoveryTable[customization.recovery];
 
-            const itemBaseCost = FieldsData.resolveFormula(customization.individualCost, this.activity.item, 0);
-            const itemPerLevelCost = FieldsData.resolveFormula(customization.spellCostPerLevel, this.activity.item, 0);
+            let itemBaseCost = 0;
+            let itemPerLevelCost = 0;
+            
+            for (const group of (customization?.costGroups || [])) {
+                switch (group.type) {
+                    case `currency`:
+                        itemBaseCost += FieldsData.resolveCurrency(FieldsData.resolveFormula(group.baseCurrencyAmount, this.activity.item, 0), group.baseCurrencyCoin);
+                        itemPerLevelCost += FieldsData.resolveCurrency(FieldsData.resolveFormula(group.spellCurrencyAmount, this.activity.item, 0), group.spellCurrencyCoin);
+                        break;
+                    case `itemUses`:
+                    case `itemConsume`:
+                        const uuid = group.itemUuid || this.activity.item.id;
+                        const amount = FieldsData.resolveFormula(group.itemAmount, this.activity.item, 1);
+                        if (group.type === `itemUses`)
+                            itemUses.set(uuid, (itemUses.get(uuid) || 0) + amount);
+                        if (group.type === `itemConsume`)
+                            itemConsume.set(uuid, (itemConsume.get(uuid) || 0) + amount);
+                        break;
+                }
+            }
 
             let totalCost = 0;
-            totalCost += FieldsData.resolveCurrency(activityBaseCost, this.activity.baseCostCurrency);
-            totalCost += FieldsData.resolveCurrency(itemBaseCost, customization.individualCostCurrency);
+            totalCost += activityBaseCost;
+            totalCost += itemBaseCost;
             
             if (item.type === `spell`) {
                 const spellLevel = item.system?.level || 0;
-                totalCost += FieldsData.resolveCurrency(activityPerLevelCost * spellLevel, this.activity.spellCostPerLevelCurrency);
-                totalCost += FieldsData.resolveCurrency(itemPerLevelCost * spellLevel, customization.spellCostPerLevelCurrency);
+                totalCost += activityPerLevelCost * spellLevel;
+                totalCost += itemPerLevelCost * spellLevel;
             }
 
-            const canAfford = totalCost === 0 || actorFunds >= totalCost;
+            const canAffordCurrency = totalCost === 0 || actorFunds >= totalCost;
+
+            let canAffordItems = true;
+            let affordabilityIssue = null;
+
+            const consumptions = [];
+            for (const [uuid, usesNeeded] of itemUses) {
+                const actorItem = this.actor.items.find(i => i.id === uuid || i._source?._stats.compendiumSource === uuid);
+                if (!actorItem) {
+                    canAffordItems = false;
+                    affordabilityIssue = `Missing required item`;
+
+                    const item = await fromUuid(uuid);
+                    consumptions.push({
+                        type: `itemUses`,
+                        itemName: item.name,
+                        canAfford: false,
+                        amount: usesNeeded,
+                        available: 0,
+                    });
+                    break;
+                }
+
+                const maxUses = FieldsData.resolveFormula(actorItem.system?.uses?.max, this.actor.item, Infinity);
+                const usedUses = actorItem.system?.uses?.spent || 0;
+                const availableUses = maxUses - usedUses;
+
+                consumptions.push({
+                    type: `itemUses`,
+                    itemName: actorItem.name,
+                    canAfford: availableUses >= usesNeeded,
+                    amount: usesNeeded,
+                    available: availableUses,
+                });
+
+                if (availableUses < usesNeeded) {
+                    canAffordItems = false;
+                    affordabilityIssue = `Insufficient item uses`;
+                    break;
+                }
+            }
+
+            for (const [uuid, quantityNeeded] of itemConsume) {
+                const actorItem = this.actor.items.find(i => i.id === uuid || i._source?._stats.compendiumSource === uuid);
+                if (!actorItem) {
+                    canAffordItems = false;
+                    affordabilityIssue = `Missing required item`;
+
+                    const item = await fromUuid(uuid);
+                    consumptions.push({
+                        type: `itemConsume`,
+                        itemName: item.name,
+                        canAfford: false,
+                        amount: quantityNeeded,
+                        available: 0,
+                    });
+                    break;
+                }
+
+                const availableQuantity = actorItem.system?.quantity || Infinity;
+
+                consumptions.push({
+                    type: `itemConsume`,
+                    itemName: actorItem.name,
+                    canAfford: availableQuantity >= quantityNeeded,
+                    amount: quantityNeeded,
+                    available: availableQuantity,
+                });
+
+                if (availableQuantity < quantityNeeded) {
+                    canAffordItems = false;
+                    affordabilityIssue = `Insufficient item quantity`;
+                    break;
+                }
+            }
+
+            const canAfford = canAffordCurrency && canAffordItems;
             const isSelected = canAfford && this.selectedItems.includes(grant);
             const isDisabled = (!canAfford && !isSelected) || (this.selectedItems.length >= this.maxItems && !isSelected);
             const localAsScroll = customization.asScroll ?? null;
@@ -629,16 +1088,21 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 uuid: grant,
                 selected: isSelected,
                 disabled: isDisabled,
-                disabledText: !canAfford ? `Insufficient Funds` : !isSelected && this.selectedItems.length >= this.maxItems ? `Selection Limit Reached` : null,
-                cost: cost,
+                disabledText: !canAfford ? (affordabilityIssue || `Insufficient Funds`) : !isSelected && this.selectedItems.length >= this.maxItems ? `Selection Limit Reached` : null,
+                currencyCost: cost,
+                itemUses: itemUses,
+                itemConsume: itemConsume,
                 affordable: canAfford,
                 customization: customization,
                 asScroll: asScroll,
+                consumptionRequirements: consumptions,
             });
         }
 
+        console.log(grants);
+
         return {
-            count: grants.filter(item => !item.disabled).length,
+            count: grants.filter(item => !item.disabled && item.selected).length,
             available: this.maxItems,
             isLocked: this.selectedItems.length === this.maxItems,
             swappable: this.activity.swappable,
@@ -693,18 +1157,21 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 itemCustomizations = {};
             }
 
-            const activityBaseCost = FieldsData.resolveFormula(this.activity.baseCost, this.activity.item, 0);
-            const activityPerLevelCost = FieldsData.resolveFormula(this.activity.spellCostPerLevel, this.activity.item, 0);
+            const toCopper = (currency) => ((currency.pp ?? 0) * 1000) + ((currency.gp ?? 0) * 100) + ((currency.ep ?? 0) * 50) + ((currency.sp ?? 0) * 10) + (currency.cp ?? 0);
 
             let totalCost = 0;
+            const itemUses = new Map();
+            const itemConsume = new Map();
+
             const grants = [];
             for (const grant of newItems) {
+                const item = context.items.find(i => i.uuid === grant);
+                if (!item || item.disabled) continue;
+
                 const originalItem = await fromUuid(grant);
                 const customization = itemCustomizations[grant.replace(`.`, `-`)] || {};
 
                 let itemData = originalItem.toObject();
-                const spellLevel = itemData.type === `spell` ? itemData.system?.level ?? 0 : 0;
-
                 if (itemData.type === `spell`) {
                     const localAsScroll = customization.asScroll ?? null;
 
@@ -719,20 +1186,6 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     }
                 }
 
-                const itemBaseCost = FieldsData.resolveFormula(customization.individualCost, this.activity.item, 0);
-                const itemPerLevelCost = FieldsData.resolveFormula(customization.spellCostPerLevel, this.activity.item, 0);
-
-                let itemCost = 0;
-                itemCost += FieldsData.resolveCurrency(activityBaseCost, this.activity.baseCostCurrency);
-                itemCost += FieldsData.resolveCurrency(itemBaseCost, customization.individualCostCurrency);
-
-                if (spellLevel > 0) {
-                    itemCost += FieldsData.resolveCurrency(activityPerLevelCost * spellLevel, this.activity.spellCostPerLevelCurrency);
-                    itemCost += FieldsData.resolveCurrency(itemPerLevelCost * spellLevel, customization.spellCostPerLevelCurrency);
-                }
-
-                totalCost += itemCost;
-
                 if (customization.maxUses) {
                     const maxUses = FieldsData.resolveFormula(customization.maxUses, this.activity.item);
                     itemData.system.uses.max = maxUses;
@@ -746,18 +1199,48 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     });
                 }
 
+                totalCost += toCopper(item.currencyCost);
+                for (const [uuid, usesNeeded] of item.itemUses)
+                    itemUses.set(uuid, (itemUses.get(uuid) || 0) + usesNeeded);
+                for (const [uuid, quantityNeeded] of item.itemConsume)
+                    itemConsume.set(uuid, (itemConsume.get(uuid) || 0) + quantityNeeded);
+
                 grants.push({
                     ...itemData,
                     uuid: grant,
                 });
             }
 
-            const result = await FieldsData.deductActorFunds(this.actor, Math.round(totalCost * 100) / 100);
+            const result = await FieldsData.deductActorFunds(this.actor, Math.round(totalCost) / 100);
             if (!result.success) {
                 ui.notifications.error(`Insufficient funds for items!`);
                 return;
             }
             await this.actor.update({ 'system.currency': result.remainingFunds });
+
+            for (const [uuid, usesNeeded] of itemUses) {
+                const actorItem = this.actor.items.find(i => i.id === uuid || i._source?._stats.compendiumSource === uuid);
+                const availableUses = actorItem.system?.uses?.value || Infinity;
+
+                if (availableUses !== Infinity) {
+                    await actorItem.update({
+                        'system.uses.value': actorItem.system.uses.value - usesNeeded,
+                        'system.uses.spent': (actorItem.system.uses.spent ?? 0) + usesNeeded
+                    });
+                }
+            }
+
+            for (const [uuid, quantityNeeded] of itemConsume) {
+                const actorItem = this.actor.items.find(i => i.id === uuid || i._source?._stats.compendiumSource === uuid);
+                const availableQuantity = actorItem.system?.quantity || Infinity;
+                if (availableQuantity !== Infinity) {
+                    const remaining = actorItem.system.quantity - quantityNeeded;
+                    if (remaining > 0)
+                        await actorItem.update({ 'system.quantity': remaining });
+                    else
+                        await this.actor.deleteEmbeddedDocuments(`Item`, [actorItem.id], { isUndo: true });
+                }
+            }
 
             const items = await this.actor.createEmbeddedDocuments(`Item`, grants);
             for (let i = 0; i < items.length; i++) {

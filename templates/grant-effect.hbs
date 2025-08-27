@@ -29,41 +29,6 @@
                 </div>
                 <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.grant.swappable.hint"}}</p>
             </div>
-        </div>
-    </fieldset>
-
-    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="grant-settings">
-        <legend class="collapsible-legend">
-            <i class="fas fa-chevron-down collapse-arrow"></i>
-            <label> Global Settings </label>
-        </legend>
-
-        <div class="fieldset-content">
-            <div class="form-group stacked">
-                <label>Base Cost</label>
-                <div class="form-fields">
-                    <input type="text" name="baseCost" value="{{ baseCost }}" placeholder="Base Cost">
-                    <select name="baseCostCurrency">
-                        {{#each currencyOptions as |currency|}}
-                        <option value="{{ currency }}" {{#if (eq ../baseCostCurrency currency)}}selected{{/if}}>{{ currency }}</option>
-                        {{/each}}
-                    </select>
-                </div>
-                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Base cost for all items (added to individual costs)</p>
-            </div>
-
-            <div class="form-group stacked">
-                <label>Spell Cost per Level</label>
-                <div class="form-fields">
-                    <input type="text" name="spellCostPerLevel" value="{{ spellCostPerLevel }}" placeholder="Spell Cost per Level">
-                    <select name="spellCostPerLevelCurrency">
-                        {{#each currencyOptions as |currency|}}
-                        <option value="{{ currency }}" {{#if (eq ../spellCostPerLevelCurrency currency)}}selected{{/if}}>{{ currency }}</option>
-                        {{/each}}
-                    </select>
-                </div>
-                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Additional cost per spell level (spells only)</p>
-            </div>
 
             <div class="form-group stacked">
                 <label>Convert Spells to Scrolls</label>
@@ -72,6 +37,102 @@
                 </div>
                 <p class="hint">Grant spells as scrolls instead of adding to the spellbook</p>
             </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="cost-groups">
+        <legend class="collapsible-legend" style="display: flex; gap: 0.25rem;">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Cost Groups </label>
+            <button type="button" class="add-cost-group unbutton control-button" data-tooltip aria-label="Add Cost Group">
+                <i class="fas fa-plus"></i>
+            </button>
+        </legend>
+
+        <div class="fieldset-content">
+            {{#if costGroups.length}}
+            {{#each costGroups as |group|}}
+            <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="cost-group-{{ group.index }}">
+                <legend class="collapsible-legend" style="display: flex; gap: 0.25rem;">
+                    <i class="fas fa-chevron-down collapse-arrow"></i>
+                    <label> {{ group.name }}</label>
+                    <button type="button" class="remove-cost-group unbutton control-button" data-tooltip aria-label="Remove Cost Group" data-index="{{ group.index }}" style="width: 26px;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </legend>
+
+                <div class="fieldset-content">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <div class="form-fields">
+                            <input type="text" name="costGroupName" value="{{ group.name }}" placeholder="Cost Group" data-index="{{ group.index }}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Type</label>
+                        <div class="form-fields">
+                            <select name="costType" data-index="{{ group.index }}">
+                                <option value="currency" {{#if (eq group.type "currency")}}selected{{/if}}>Currency</option>
+                                <option value="itemUses" {{#if (eq group.type "itemUses")}}selected{{/if}}>Item Uses</option>
+                                <option value="itemConsume" {{#if (eq group.type "itemConsume")}}selected{{/if}}>Consume Item</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{#if (eq group.type "currency")}}
+                        <div class="form-group stacked">
+                            <label>Base Cost</label>
+                            <div class="form-fields">
+                                <input type="text" name="baseCurrencyAmount" value="{{ group.baseCurrencyAmount }}" placeholder="0" data-index="{{ group.index }}">
+                                <select name="baseCurrencyCoin" data-index="{{ group.index }}">
+                                    {{#each ../currencyOptions as |currency|}}
+                                    <option value="{{ currency }}" {{#if (eq group.baseCurrencyCoin currency)}}selected{{/if}}>{{ currency }}</option>
+                                    {{/each}}
+                                </select>
+                            </div>
+                            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Base cost for all items (added to individual costs)</p>
+                        </div>
+
+                        <div class="form-group stacked">
+                            <label>Cost per Spell Level</label>
+                            <div class="form-fields">
+                                <input type="text" name="spellCurrencyAmount" value="{{ group.spellCurrencyAmount }}" placeholder="0" data-index="{{ group.index }}">
+                                <select name="spellCurrencyCoin" data-index="{{ group.index }}">
+                                    {{#each ../currencyOptions as |currency|}}
+                                    <option value="{{ currency }}" {{#if (eq group.spellCurrencyCoin currency)}}selected{{/if}}>{{ currency }}</option>
+                                    {{/each}}
+                                </select>
+                            </div>
+                            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Additional cost per spell level (spells only)</p>
+                        </div>
+                    {{/if}}
+
+                    {{#if (or (eq group.type "itemUses") (eq group.type "itemConsume"))}}
+                        <div class="form-group stacked">
+                            <label>Item</label>
+                            <div class="form-fields">
+                                <input type="text" name="itemUuid" value="{{ group.itemUuid }}" placeholder="This Item" data-index="{{ group.index }}">
+                            </div>
+                            <p class="hint">Drag & drop an item or enter UUID</p>
+                        </div>
+
+                        <div class="form-group stacked">
+                            <label>{{#if (eq group.type "itemUses")}}Uses{{else}}Quantity{{/if}}</label>
+                            <div class="form-fields">
+                                <input type="text" name="itemAmount" value="{{ group.itemAmount }}" placeholder="1" data-index="{{ group.index }}">
+                            </div>
+                            <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{#if (eq group.type "itemUses")}}Number of uses to consume{{else}}Quantity to consume{{/if}}</p>
+                        </div>
+                    {{/if}}
+                </div>
+            </fieldset>
+            {{/each}}
+            {{else}}
+                <div class="form-group stacked">
+                    <p class="hint"><em>No cost groups assigned</em></p>
+                </div>
+            {{/if}}
         </div>
     </fieldset>
 
@@ -114,20 +175,101 @@
                     </div>
 
                     <div class="grant-customization" data-index="{{item.index}}" style="display: {{#if item.isOpen}}flex{{else}}none{{/if}};">
-                        <fieldset>
-                            <legend><label> Cost </label></legend>
+                        <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="item-cost-groups-{{ item.index }}">
+                            <legend class="collapsible-legend" style="display: flex; gap: 0.25rem;">
+                                <i class="fas fa-chevron-down collapse-arrow"></i>
+                                <label> Cost Groups </label>
+                                <button type="button" class="add-item-cost-group unbutton control-button" data-tooltip aria-label="Add Cost Group" data-item="{{ item.index }}">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </legend>
 
-                            <div class="form-group stacked">
-                                <label>Individual Cost</label>
-                                <div class="form-fields">
-                                    <input type="text" name="itemIndividualCost" value="{{ item.customization.individualCost }}" placeholder="Individual Cost" data-index="{{item.index}}">
-                                    <select name="itemIndividualCostCurrency" data-index="{{item.index}}">
-                                        {{#each ../currencyOptions as |currency|}}
-                                        <option value="{{ currency }}" {{#if (eq item.customization.individualCostCurrency currency)}}selected{{/if}}>{{ currency }}</option>
-                                        {{/each}}
-                                    </select>
-                                </div>
-                                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Additional cost for this item (added to global base cost)</p>
+                            <div class="fieldset-content">
+                                {{#if item.customization.costGroups.length}}
+                                {{#each item.customization.costGroups as |group|}}
+                                <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="item-cost-group-{{ item-index }}-{{ group.index }}">
+                                    <legend class="collapsible-legend" style="display: flex; gap: 0.25rem;">
+                                        <i class="fas fa-chevron-down collapse-arrow"></i>
+                                        <label> {{ group.name }}</label>
+                                        <button type="button" class="remove-item-cost-group unbutton control-button" data-tooltip aria-label="Remove Cost Group" data-item="{{ item.index }}" data-index="{{ group.index }}" style="width: 26px;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </legend>
+
+                                    <div class="fieldset-content">
+                                        <div class="form-group">
+                                            <label>Name</label>
+                                            <div class="form-fields">
+                                                <input type="text" name="itemCostGroupName" value="{{ group.name }}" placeholder="Cost Group" data-item="{{ item.index }}" data-index="{{ group.index }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Type</label>
+                                            <div class="form-fields">
+                                                <select name="itemCostType" data-item="{{ item.index }}" data-index="{{ group.index }}">
+                                                    <option value="currency" {{#if (eq group.type "currency")}}selected{{/if}}>Currency</option>
+                                                    <option value="itemUses" {{#if (eq group.type "itemUses")}}selected{{/if}}>Item Uses</option>
+                                                    <option value="itemConsume" {{#if (eq group.type "itemConsume")}}selected{{/if}}>Consume Item</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {{#if (eq group.type "currency")}}
+                                            <div class="form-group stacked">
+                                                <label>Base Cost</label>
+                                                <div class="form-fields">
+                                                    <input type="text" name="itemBaseCurrencyAmount" value="{{ group.baseCurrencyAmount }}" placeholder="0" data-item="{{ item.index }}" data-index="{{ group.index }}">
+                                                    <select name="itemBaseCurrencyCoin" data-item="{{ item.index }}" data-index="{{ group.index }}">
+                                                        {{#each ../../currencyOptions as |currency|}}
+                                                        <option value="{{ currency }}" {{#if (eq group.baseCurrencyCoin currency)}}selected{{/if}}>{{ currency }}</option>
+                                                        {{/each}}
+                                                    </select>
+                                                </div>
+                                                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Individual cost for item</p>
+                                            </div>
+
+                                            {{#if item.isSpell}}
+                                            <div class="form-group stacked">
+                                                <label>Cost per Spell Level</label>
+                                                <div class="form-fields">
+                                                    <input type="text" name="itemSpellCurrencyAmount" value="{{ group.spellCurrencyAmount }}" placeholder="0" data-item="{{ item.index }}" data-index="{{ group.index }}">
+                                                    <select name="itemSpellCurrencyCoin" data-item="{{ item.index }}" data-index="{{ group.index }}">
+                                                        {{#each ../../currencyOptions as |currency|}}
+                                                        <option value="{{ currency }}" {{#if (eq group.spellCurrencyCoin currency)}}selected{{/if}}>{{ currency }}</option>
+                                                        {{/each}}
+                                                    </select>
+                                                </div>
+                                                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Individual cost per spell level</p>
+                                            </div>
+                                            {{/if}}
+                                        {{/if}}
+
+                                        {{#if (or (eq group.type "itemUses") (eq group.type "itemConsume"))}}
+                                            <div class="form-group stacked">
+                                                <label>Item</label>
+                                                <div class="form-fields">
+                                                    <input type="text" name="itemItemUuid" value="{{ group.itemUuid }}" placeholder="This Item" data-item="{{ item.index }}" data-index="{{ group.index }}">
+                                                </div>
+                                                <p class="hint">Drag & drop an item or enter UUID</p>
+                                            </div>
+
+                                            <div class="form-group stacked">
+                                                <label>{{#if (eq group.type "itemUses")}}Uses{{else}}Quantity{{/if}}</label>
+                                                <div class="form-fields">
+                                                    <input type="text" name="itemItemAmount" value="{{ group.itemAmount }}" placeholder="1" data-item="{{ item.index }}" data-index="{{ group.index }}">
+                                                </div>
+                                                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;{{#if (eq group.type "itemUses")}}Number of uses to consume{{else}}Quantity to consume{{/if}}</p>
+                                            </div>
+                                        {{/if}}
+                                    </div>
+                                </fieldset>
+                                {{/each}}
+                                {{else}}          
+                                    <div class="form-group stacked">
+                                        <p class="hint"><em>No cost groups assigned</em></p>
+                                    </div>
+                                {{/if}}
                             </div>
                         </fieldset>
 
@@ -168,19 +310,6 @@
                                 </div>
                                 </div>
                                 <p class="hint">Override global spell scroll setting for this item</p>
-                            </div>
-
-                            <div class="form-group stacked">
-                                <label>Cost per Level</label>
-                                <div class="form-fields">
-                                    <input type="text" name="itemSpellCostPerLevel" value="{{ item.customization.spellCostPerLevel }}" placeholder="Spell Cost per Level" data-index="{{item.index}}">
-                                    <select name="itemSpellCostPerLevelCurrency" data-index="{{item.index}}">
-                                        {{#each ../currencyOptions as |currency|}}
-                                        <option value="{{ currency }}" {{#if (eq item.customization.spellCostPerLevelCurrency currency)}}selected{{/if}}>{{ currency }}</option>
-                                        {{/each}}
-                                    </select>
-                                </div>
-                                <p class="hint"><abbr title="{{localize "DND5E.ACTIVITY.FIELDS.grant.rollFormula.label"}}"><i class="fas fa-calculator"></i></abbr>&emsp;Additional cost for this item (added to global cost per level)</p>
                             </div>
                         </fieldset>
                         {{/if}}

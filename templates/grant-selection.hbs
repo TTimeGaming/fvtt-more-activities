@@ -43,6 +43,27 @@
                     <img class="gold-icon item-img" src="{{item.img}}" alt="{{item.name}}">
                     <div class="item-details">
                         <a data-uuid="{{item.uuid}}" class="item-name">{{item.name}}</a>
+
+                        {{#if item.consumptionRequirements}}
+                        <div class="consumption-requirements">
+                            {{#each item.consumptionRequirements as |requirement|}}
+                            {{#if (eq requirement.type "itemUses")}}
+                            <span class="consumption-note">
+                                <i class="fas {{#if requirement.canAfford}}fa-check{{else}}fa-xmark{{/if}}"></i>&nbsp;
+                                Requires {{requirement.amount}} use{{#unless (eq requirement.amount 1)}}s{{/unless}} of {{requirement.itemName}}
+                                {{!-- {{#if requirement.available}} ({{requirement.available}} available){{/if}} --}}
+                            </span>
+                            {{else if (eq requirement.type "itemConsume")}}
+                            <span class="consumption-note">
+                                <i class="fas {{#if requirement.canAfford}}fa-check{{else}}fa-xmark{{/if}}"></i>&nbsp;
+                                Consumes {{requirement.amount}} {{requirement.itemName}}
+                                {{!-- {{#if requirement.available}} ({{requirement.available}} available){{/if}} --}}
+                            </span>
+                            {{/if}}
+                            {{/each}}
+                        </div>
+                        {{/if}}
+
                         {{#if item.customization}}
                         <div class="customization-notes">
                             {{#if item.customization.maxUses}}
@@ -59,35 +80,33 @@
                     </div>
                 </div>
                 <div class="item-controls">
-                    {{!-- <span class="item-type">{{ item.type }}</span> --}}
-                    {{#if item.cost}}
+                    {{#if item.currencyCost}}
                     <div class="currency-container">
-                        {{#if item.cost.pp}}
+                        {{#if item.currencyCost.pp}}
                         <label class="currency-item">
                             <i class="currency pp" aria-label="pp"></i>
-                            <span class="item-cost">{{ item.cost.pp }}</span>
+                            <span class="item-cost">{{ item.currencyCost.pp }}</span>
                         </label>
                         {{/if}}
-                        {{#if item.cost.gp}}
+                        {{#if item.currencyCost.gp}}
                         <label class="currency-item">
                             <i class="currency gp" aria-label="gp"></i>
-                            <span class="item-cost">{{ item.cost.gp }}</span>
+                            <span class="item-cost">{{ item.currencyCost.gp }}</span>
                         </label>
                         {{/if}}
-                        {{#if item.cost.sp}}
+                        {{#if item.currencyCost.sp}}
                         <label class="currency-item">
                             <i class="currency sp" aria-label="sp"></i>
-                            <span class="item-cost">{{ item.cost.sp }}</span>
+                            <span class="item-cost">{{ item.currencyCost.sp }}</span>
                         </label>
                         {{/if}}
-                        {{#if item.cost.cp}}
+                        {{#if item.currencyCost.cp}}
                         <label class="currency-item">
                             <i class="currency cp" aria-label="cp"></i>
-                            <span class="item-cost">{{ item.cost.cp }}</span>
+                            <span class="item-cost">{{ item.currencyCost.cp }}</span>
                         </label>
                         {{/if}}
                     </div>
-                    {{!-- <span class="item-cost {{#unless item.affordable}}unaffordable{{/unless}}">{{ item.cost }} GP</span> --}}
                     {{/if}}
                     {{#if item.disabledText}}
                     <div class="disabled-reason">{{ item.disabledText }}</div>
