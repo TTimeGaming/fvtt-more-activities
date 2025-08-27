@@ -1,6 +1,6 @@
 ## More Activities - Now with V12 Support!
 
-![Latest](https://img.shields.io/badge/Module%20Version:%201.8.1-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
+![Latest](https://img.shields.io/badge/Module%20Version:%201.8.2-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
 
 An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides additional activity types.
 
@@ -28,14 +28,28 @@ An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides
 - **darkanx:** Suggestion for *Chain*, *Teleport*, *Movement*, *Grant* and *Wall* Activities
 - **TPNils:** Improvement for *Grant* Activity
 - **ljstrings:** Improvement for *Movement* Activity
+- **SRR8:** Improvement for *Grant* Activity
 - **darkanx, alterNERDtive, WelpM8:** Highlighting bugs in this module
 
 ## 🚫 Breaking Changes
 
-- **Version 1.4.0 ➡️ 1.5.0:**
+All future versions of **More Activities** will support migration of data structures. Eventually, old data schemas will be removed, so please review the below for substantial changes to determine if you need to upgrade incrementally, rather than directly from a sufficiently old version.
+
+- 🛟 **Version 1.8.1 ➡️ 1.8.2**
+    - *Grant Activity:*
+        - Introduction of Cost Groups to replace singular currency cost application
+        - Old implementation still currently supported, but will be removed in a future release
+
+- 🛟 **Version 1.7.3 ➡️ 1.8.0**
+    - *Contested Activity:*
+        - Introduction of Effect Groups to replace singular effect application
+        - Old implementation still currently supported, but will be removed in a future release
+
+- ⚠️ **Version 1.4.0 ➡️ 1.5.0:**
     - *Hook Activity:*
         - `dnd5e.rollAbilitySave` replaced with (correct) `dnd5e.rollSavingThrow` hook
         - `dnd5e.rollAbilityTest` replaced with (correct) `dnd5e.rollAbilityCheck` hook
+        - Upgrading from v1.4.0 or older to v1.5.0 could result in breaks to the *Hook* activity
 
 ## 🚀 Quick Start
 
