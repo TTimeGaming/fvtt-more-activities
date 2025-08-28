@@ -514,7 +514,8 @@
 .dnd5e2.activity-movement .form-group.indented,
 .dnd5e2.activity-teleport .form-group.indented,
 .dnd5e2.activity-grant .form-group.indented,
-.dnd5e2.activity-contested .form-group.indented {
+.dnd5e2.activity-contested .form-group.indented,
+.dnd5e2.activity-wall .form-group.indented {
     margin-left: 1rem;
 }
 

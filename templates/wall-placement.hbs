@@ -71,6 +71,8 @@
     <div class="placement-instructions">
         {{#if (eq wallType "circular")}}
             <p>{{{localize "DND5E.ACTIVITY.FIELDS.wall.circularInstructions.label"}}}</p>
+        {{else if (eq wallType "panels")}}
+            <p>{{{localize "DND5E.ACTIVITY.FIELDS.wall.panelledInstructions.label" panelSize=panelSize panelCount=maxPanels}}}</p>
         {{else}}
             <p>{{{localize "DND5E.ACTIVITY.FIELDS.wall.continuousInstructions.label"}}}</p>
         {{/if}}

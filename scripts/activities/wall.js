@@ -39,7 +39,7 @@ export class WallData {
         }
     }
 
-    static calculateWallSegments(points, wallType) {
+    static calculateWallSegments(points, wallType, panelSize = 5, panelSpacing = 0, maxPanels = `unlimited`) {
         const segments = [];
         
         switch (wallType) {
@@ -73,6 +73,56 @@ export class WallData {
                         type: 'wall_segment'
                     });
                 }
+                break;
+            case `panels`:
+                if (points.length < 2) break;
+
+                const continuousSegments = [];
+                for (let i = 0; i < points.length - 1; i++) {
+                    continuousSegments.push({
+                        x1: points[i].x, y1: points[i].y,
+                        x2: points[i + 1].x, y2: points[i + 1].y,
+                    });
+                }
+
+                const panelSizeCanvas = (panelSize * game.canvas.grid.size) / game.canvas.grid.distance;
+                const spacingCanvas = (panelSpacing * game.canvas.grid.size) / game.canvas.grid.distance;
+
+                let panelCount = 0;
+                const maxPanelsNum = maxPanels === `unlimited` ? Infinity : parseInt(maxPanels);
+
+                for (const baseSegment of continuousSegments) {
+                    const segmentLength = Math.sqrt(
+                        Math.pow(baseSegment.x2 - baseSegment.x1, 2) +
+                        Math.pow(baseSegment.y2 - baseSegment.y1, 2)
+                    );
+                    if (segmentLength === 0) continue;
+
+                    const unitX = (baseSegment.x2 - baseSegment.x1) / segmentLength;
+                    const unitY = (baseSegment.y2 - baseSegment.y1) / segmentLength;
+
+                    const panelSpacing = panelSizeCanvas + spacingCanvas;
+                    let currentPos = 0;
+
+                    while (currentPos + panelSizeCanvas <= segmentLength && panelCount < maxPanelsNum) {
+                        const startX = baseSegment.x1 + unitX * currentPos;
+                        const startY = baseSegment.y1 + unitY * currentPos;
+                        const endX = baseSegment.x1 + unitX * (currentPos + panelSizeCanvas);
+                        const endY = baseSegment.y1 + unitY * (currentPos + panelSizeCanvas);
+
+                        segments.push({
+                            x1: startX, y1: startY,
+                            x2: endX, y2: endY,
+                            type: `wall_segment`,
+                        });
+
+                        currentPos += panelSpacing;
+                        panelCount++;
+                    }
+
+                    if (panelCount >= maxPanelsNum) break;
+                }
+
                 break;
         }
         
@@ -120,6 +170,21 @@ export class WallActivityData extends dnd5e.dataModels.activity.BaseActivityData
             required: false,
             initial: `both`,
             options: [ `both`, `towards`, `away`, `any`, ],
+        });
+
+        schema.panelSize = new fields.StringField({
+            required: false,
+            initial: `5`,
+        });
+
+        schema.panelSpacing = new fields.StringField({
+            required: false,
+            initial: `0`,
+        });
+
+        schema.maxPanels = new fields.StringField({
+            required: false,
+            initial: ``,
         });
 
         schema.referenceRange = new fields.StringField({
@@ -175,8 +240,12 @@ export class WallActivitySheet extends dnd5e.applications.activity.ActivitySheet
         context.maxWalls = this.activity?.maxWalls ?? `1`;
         context.wallType = this.activity?.wallType ?? `continuous`;
         context.facing = this.activity?.facing ?? `both`;
+        context.panelSize = this.activity?.panelSize ?? `5`;
+        context.panelSpacing = this.activity?.panelSpacing ?? `0`;
+        context.maxPanels = this.activity?.maxPanels ?? ``;
         context.referenceRange = this.activity?.referenceRange ?? `0`;
         context.maxLength = this.activity?.maxLength ?? `60`;
+
         context.blocksMovement = this.activity?.blocksMovement ?? true;
         context.blocksSight = this.activity?.blocksSight ?? true;
         context.blocksSound = this.activity?.blocksSound ?? false;
@@ -184,6 +253,7 @@ export class WallActivitySheet extends dnd5e.applications.activity.ActivitySheet
         context.wallTypeOptions = [
             { value: `continuous`, label: `Contiguous`, selected: context.wallType === `continuous` },
             { value: `circular`, label: `Circular`, selected: context.wallType === `circular` },
+            { value: `panels`, label: `Panels`, selected: context.wallType === `panels` },
         ];
 
         context.facingOptions = [
@@ -292,6 +362,9 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.canvasClickHandler = null;
         this.maxLength = FieldsData.resolveFormula(activity.maxLength, activity.item);
         this.referenceRange = FieldsData.resolveFormula(activity.referenceRange, activity.item);
+        this.panelSize = FieldsData.resolveFormula(activity.panelSize, activity.item);
+        this.panelSpacing = FieldsData.resolveFormula(activity.panelSpacing, activity.item);
+        this.maxPanels = activity.maxPanels === `` || activity.maxPanels === `unlimited` ? `unlimited` : FieldsData.resolveFormula(activity.maxPanels, activity.item);
         this._determineReferencePoint();
     }
 
@@ -307,6 +380,8 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             wallType: this.activity.wallType,
             facing: this.selectedFacing,
             maxLength: this.maxLength,
+            panelSize: this.panelSize,
+            maxPanels: this.maxPanels,
             currentLength: Math.round(this.currentLength),
             totalLength: Math.round(this._getTotalWallsLength()),
             placedPoints: this.placementPoints.length,
@@ -471,7 +546,10 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         const segments = WallData.calculateWallSegments(
             this.placementPoints,
-            this.activity.wallType
+            this.activity.wallType,
+            this.panelSize,
+            this.panelSpacing,
+            this.maxPanels,
         );
 
         if (segments.length === 0) {
@@ -681,6 +759,9 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         const segments = WallData.calculateWallSegments(
             this.placementPoints,
             this.activity.wallType,
+            this.panelSize,
+            this.panelSpacing,
+            this.maxPanels,
         );
         
         for (const segment of segments) {
@@ -759,8 +840,9 @@ class WallPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     _getWallTypeLabel() {
         switch (this.activity.wallType) {
-            case 'circular': return 'Circular';
-            default: return 'Contiguous';
+            case `circular`: return `Circular`;
+            case `panels`: return `Panelled`;
+            default: return `Contiguous`;
         }
     }
 

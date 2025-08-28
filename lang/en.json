@@ -164,5 +164,6 @@
     "DND5E.ACTIVITY.FIELDS.wall.blocksSight.label": "Blocks Sight",
     "DND5E.ACTIVITY.FIELDS.wall.blocksSound.label": "Blocks Sound",
     "DND5E.ACTIVITY.FIELDS.wall.continuousInstructions.label": "Place points to form a continuous wall",
+    "DND5E.ACTIVITY.FIELDS.wall.panelledInstructions.label": "Place points to form a panelled wall<br>{panelCount} panels (of size {panelSize} ft) will be created",
     "DND5E.ACTIVITY.FIELDS.wall.circularInstructions.label": "Place the center point first and then<br>place the radius marker point second"
 }
