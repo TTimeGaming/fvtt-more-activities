@@ -1099,8 +1099,6 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
             });
         }
 
-        console.log(grants);
-
         return {
             count: grants.filter(item => !item.disabled && item.selected).length,
             available: this.maxItems,

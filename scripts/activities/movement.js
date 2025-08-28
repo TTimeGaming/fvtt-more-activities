@@ -501,7 +501,6 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
             ;
         }
 
-        console.log(tokens);
         return {
             selfTokens: tokens.filter(t => t.type === 'self'),
             otherTokens: otherTokens.filter(t => t.type === 'other'),
@@ -720,7 +719,6 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!this.tokensToPlace[this.currentTokenIndex]) return;
 
         const tokenToPlace = this.tokensToPlace[this.currentTokenIndex];
-        console.log(tokenToPlace);
 
         const pos = game.canvas.canvasCoordinatesFromClient(event.data.originalEvent);
         const snappedPos = game.canvas.grid.getCenterPoint({
