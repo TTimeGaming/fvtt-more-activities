@@ -16,7 +16,7 @@ export class GrantMigrations {
             let itemUpdated = false;
             const updates = {};
 
-            for (const [activityId, activity] of item.system.activities.entries()) {
+            for (const [activityId, activity] of (item.system?.activities?.entries() ?? [])) {
                 if (activity.type !== `grant`) continue;
 
                 const migrationData = this._migrateCostGroups(activity);
@@ -37,13 +37,11 @@ export class GrantMigrations {
                 let itemUpdated = false;
                 const updates = {};
 
-                for (const [activityId, activity] of item.system.activities.entries()) {
+                for (const [activityId, activity] of (item.system?.activities?.entries() ?? [])) {
                     if (activity.type !== `grant`) continue;
 
                     const migrationData = this._migrateCostGroups(activity);
                     if (migrationData) {
-                        console.log(migrationData);
-                        
                         updates[`system.activities.${activityId}`] = migrationData;
                         itemUpdated = true;
                     }
