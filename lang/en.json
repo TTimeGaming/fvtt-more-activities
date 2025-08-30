@@ -1,4 +1,6 @@
 {
+    "TYPES.Item.missing": "Missing",
+
     "DND5E.ACTIVITY.Type.macro": "Macro",
     "DND5E.ACTIVITY.FIELDS.macro.macroCode.label": "Macro Code",
     "DND5E.ACTIVITY.FIELDS.macro.macroCode.hint": "JavaScript code to execute when this activity is activated. Available variables: activity, item, actor",

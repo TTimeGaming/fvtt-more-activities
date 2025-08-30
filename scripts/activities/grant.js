@@ -173,7 +173,15 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
 
         const grants = [];
         for (const itemId of (this.activity?.grants ?? [])) {
-            const item = await fromUuid(itemId);
+            let item = await fromUuid(itemId);
+            if (item == null) {
+                item = {
+                    name: `Unknown Item`,
+                    img: `icons/svg/hazard.svg`,
+                    type: `missing`,
+                };
+            }
+
             const customization = itemCustomizations[itemId.replace(`.`, `-`)] ?? {};
 
             customization.costGroups = (customization.costGroups ?? []).map((element, index) => ({
@@ -921,7 +929,10 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         
         const grants = [];
         for (const grant of (this.activity.grants ?? [])) {
-            const item = (await fromUuid(grant)).toObject();
+            const rootItem = await fromUuid(grant);
+            if (rootItem == null) continue;
+            
+            const item = rootItem.toObject();
 
             const itemUses = new Map(activityUses);
             const itemConsume = new Map(activityConsume);
