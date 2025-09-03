@@ -106,6 +106,11 @@ export class MovementActivityData extends dnd5e.dataModels.activity.BaseActivity
             options: [ `push`, `pull`, `either`, `free` ],
         });
 
+        schema.autoApply = new fields.BooleanField({
+            required: false,
+            initial: true,
+        });
+
         schema.appliedEffects = new fields.ArrayField(new fields.StringField({
             required: false,
             blank: true
@@ -145,6 +150,7 @@ export class MovementActivitySheet extends dnd5e.applications.activity.ActivityS
         context.targetRange = this.activity?.targetRange ?? 30;
         context.movementDistance = this.activity?.movementDistance ?? 10;
         context.movementType = this.activity?.movementType ?? `push`;
+        context.autoApply = this.activity?.autoApply ?? false;
         context.appliedEffects = this.activity?.appliedEffects || [];
 
         context.availableEffects = this.item?.effects?.map(effect => ({
@@ -449,7 +455,11 @@ class MovementTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (updates.length === 0) return;
 
         await game.canvas.scene.updateEmbeddedDocuments(`Token`, updates);
-        await EffectsData.apply(this.activity, this.selectedTargets.map(target => target.token.actor), this.activity.appliedEffects);
+
+        if (this.activity.autoApply) {
+            await EffectsData.apply(this.activity, this.selectedTargets.map(target => target.token.actor), this.activity.appliedEffects);
+        }
+
         ui.notifications.info(`${updates.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.success.label`)}`);
     }
 
@@ -785,7 +795,10 @@ class MovementPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.destinationTargets[i] = null;
         }
         
-        await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.token.actor), this.targetApp.activity.appliedEffects);
+        if (this.targetApp.activity.autoApply) {
+            await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.token.actor), this.targetApp.activity.appliedEffects);
+        }
+
         ui.notifications.info(`${this.placedTokens.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.success.label`)}`);
 
         this.isFinished = true;
@@ -937,7 +950,11 @@ class MovementSelfTargetApp extends HandlebarsApplicationMixin(ApplicationV2) {
         );
 
         await MovementData.executeSingleTokenMovement(this.actor, destination.x, destination.y);
-        await EffectsData.apply(this.activity, [this.actor], this.activity.appliedEffects);
+
+        if (this.activity.autoApply) {
+            await EffectsData.apply(this.activity, [this.actor], this.activity.appliedEffects);
+        }
+        
         ui.notifications.info(`1 ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.movement.success.label`)}`);
     }
 

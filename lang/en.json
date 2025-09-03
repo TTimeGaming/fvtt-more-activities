@@ -53,6 +53,8 @@
     "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.hint": "Choose who receives the effects when the contest is resolved",
     "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.label": "Effects",
     "DND5E.ACTIVITY.FIELDS.contested.appliedEffects.hint": "Effects to apply when the contest is resolved with a normal result",
+    "DND5E.ACTIVITY.FIELDS.contested.autoApply.label": "Automatically Apply Effects",
+    "DND5E.ACTIVITY.FIELDS.contested.autoApply.hint": "Whether to automatically apply effects at the resolution of the contest",
     "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMinor.label": "Minor Effects",
     "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMinor.hint": "Effects to apply when the contest is resolved with a minor result",
     "DND5E.ACTIVITY.FIELDS.contested.appliedEffectsMajor.label": "Major Effects",
@@ -99,6 +101,8 @@
     "DND5E.ACTIVITY.FIELDS.teleport.destination.label": "Click a point within range to set as the destination.",
     "DND5E.ACTIVITY.FIELDS.teleport.clickToPlace.label": "Select a token and click on the canvas to teleport them.",
     "DND5E.ACTIVITY.FIELDS.teleport.allTokensPlaced.label": "All tokens have been placed!",
+    "DND5E.ACTIVITY.FIELDS.teleport.autoApply.label": "Automatically Apply Effects",
+    "DND5E.ACTIVITY.FIELDS.teleport.autoApply.hint": "Whether to automatically apply effects following token teleportation",
     "DND5E.ACTIVITY.FIELDS.teleport.appliedEffects.label": "Effects",
     "DND5E.ACTIVITY.FIELDS.teleport.appliedEffects.hint": "Effects to apply to teleported tokens",
 
@@ -127,6 +131,8 @@
     "DND5E.ACTIVITY.FIELDS.movement.originToken.label": "Origin Token",
     "DND5E.ACTIVITY.FIELDS.movement.clickToPlace.label": "Select a token and click on the canvas to teleport them.",
     "DND5E.ACTIVITY.FIELDS.movement.allTokensPlaced.label": "All tokens have been placed!",
+    "DND5E.ACTIVITY.FIELDS.movement.autoApply.label": "Automatically Apply Effects",
+    "DND5E.ACTIVITY.FIELDS.movement.autoApply.hint": "Whether to automatically apply effects following token movement",
     "DND5E.ACTIVITY.FIELDS.movement.appliedEffects.label": "Effects",
     "DND5E.ACTIVITY.FIELDS.movement.appliedEffects.hint": "Effects to apply to forcibly moved tokens",
 

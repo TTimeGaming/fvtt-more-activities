@@ -75,6 +75,11 @@ export class TeleportActivityData extends dnd5e.dataModels.activity.BaseActivity
             initial: `5`,
         });
 
+        schema.autoApply = new fields.BooleanField({
+            required: false,
+            initial: true,
+        });
+
         schema.appliedEffects = new fields.ArrayField(new fields.StringField({
             required: false,
             blank: true
@@ -117,6 +122,7 @@ export class TeleportActivitySheet extends dnd5e.applications.activity.ActivityS
         context.manualRadius = this.activity?.manualRadius ?? 10;
         context.keepArrangement = this.activity?.keepArrangement ?? true;
         context.clusterRadius = this.activity?.clusterRadius ?? 5;
+        context.autoApply = this.activity?.autoApply ?? false;
         context.appliedEffects = this.activity?.appliedEffects || [];
 
         context.availableEffects = this.item?.effects?.map(effect => ({
@@ -583,7 +589,10 @@ class TeleportDestinationApp extends HandlebarsApplicationMixin(ApplicationV2) {
         this.openTarget = false;
         this.close();
 
-        await EffectsData.apply(this.activity, this.selectedTargets.map(target => target.token.actor), this.activity.appliedEffects);
+        if (this.activity.autoApply) {
+            await EffectsData.apply(this.activity, this.selectedTargets.map(target => target.token.actor), this.activity.appliedEffects);
+        }
+
         ui.notifications.info(`${updates.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`)}`);
     }
     
@@ -877,7 +886,10 @@ class TeleportPlacementApp extends HandlebarsApplicationMixin(ApplicationV2) {
             this.destinationTarget = null;
         }
 
-        await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.token?.actor), this.targetApp.activity.appliedEffects);
+        if (this.targetApp.activity.autoApply) {
+            await EffectsData.apply(this.targetApp.activity, this.placedTokens.map(target => target.token?.actor), this.targetApp.activity.appliedEffects);
+        }
+        
         ui.notifications.info(`${this.placedTokens.length} ${game.i18n.localize(`DND5E.ACTIVITY.FIELDS.teleport.success.label`)}`);
 
         this.isFinished = true;

@@ -114,6 +114,14 @@
             <i class="fas fa-chevron-down collapse-arrow"></i>
             <label> Effects </label>
         </legend>
+
+        <div class="form-group">
+            <label>{{localize "DND5E.ACTIVITY.FIELDS.teleport.autoApply.label"}}</label>
+            <div class="form-fields">
+                <dnd5e-checkbox name="autoApply" {{#if autoApply}}checked{{/if}}></dnd5e-checkbox>
+            </div>
+            <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.teleport.autoApply.hint"}}</p>
+        </div>
         
         <div class="fieldset-content">
             <div class="form-group stacked">

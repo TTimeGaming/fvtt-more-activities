@@ -219,6 +219,14 @@
                     </div>
 
                     <div class="form-group">
+                        <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.autoApply.label"}}</label>
+                        <div class="form-fields">
+                            <dnd5e-checkbox name="autoApply" data-index="{{ group.index }}" {{#if group.autoApply}}checked{{/if}}></dnd5e-checkbox>
+                        </div>
+                        <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.contested.autoApply.hint"}}</p>
+                    </div>
+
+                    <div class="form-group">
                         <label>{{localize "DND5E.ACTIVITY.FIELDS.contested.applyEffectsTo.label"}}</label>
                         <div class="form-fields">
                             <select name="applyEffectsTo" data-index="{{ group.index }}">

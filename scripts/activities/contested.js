@@ -349,6 +349,8 @@ class ContestedManager {
             const loser = defender.lost ? defenderActor : attackerActor;
 
             for (const group of activity.effectGroups) {
+                if (!group.autoApply) continue;
+
                 const targetActor = this._getTargetActor(group.applyTo, winner, loser, defender);
                 if (!targetActor) continue;
 
@@ -457,24 +459,24 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
         });
 
         schema.allowMinorSuccess = new fields.BooleanField({
-            reuired: false,
+            required: false,
             initial: false,
         });
 
         schema.thresholdMinorSuccess = new fields.NumberField({
-            reuired: false,
+            required: false,
             initial: 5,
             min: 1,
             max: 20,
         });
 
         schema.allowMajorSuccess = new fields.BooleanField({
-            reuired: false,
+            required: false,
             initial: false,
         });
 
         schema.thresholdMajorSuccess = new fields.NumberField({
-            reuired: false,
+            required: false,
             initial: 10,
             min: 1,
             max: 20,
@@ -489,6 +491,10 @@ export class ContestedActivityData extends dnd5e.dataModels.activity.BaseActivit
                 required: false,
                 blank: true,
                 initial: `Effect Group`,
+            }),
+            autoApply: new fields.BooleanField({
+                required: false,
+                initial: true,
             }),
             applyTo: new fields.StringField({
                 required: false,
@@ -684,6 +690,18 @@ export class ContestedActivitySheet extends dnd5e.applications.activity.Activity
                 if (!effectGroups[index]) return;
 
                 effectGroups[index].name = event.target.value;
+                await this.activity.update({ effectGroups: effectGroups });
+            });
+        });
+
+        this.element?.querySelectorAll(`dnd5e-checkbox[name="autoApply"]`).forEach(checkbox => {
+            checkbox.addEventListener(`change`, async(event) => {
+                const index = parseInt(event.target.dataset.index);
+
+                const effectGroups = [...(this.activity?.effectGroups || [])];
+                if (!effectGroups[index]) return;
+
+                effectGroups[index].autoApply = event.target.value;
                 await this.activity.update({ effectGroups: effectGroups });
             });
         });
