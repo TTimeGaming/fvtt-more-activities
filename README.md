@@ -1,6 +1,6 @@
 ## More Activities - Now with V12 Support!
 
-![Latest](https://img.shields.io/badge/Module%20Version:%201.8.3-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
+![Latest](https://img.shields.io/badge/Module%20Version:%201.8.4-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
 
 An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides additional activity types.
 
@@ -72,8 +72,8 @@ All future versions of **More Activities** will support migration of data struct
 
 ## 📋 Requirements
 
-![Foundry](https://img.shields.io/badge/Foundry%20Version%2012%2B%20(Verified%2013.346)-ee9b3a?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
-![D&D](https://img.shields.io/badge/DND%20Version%204%2B%20(Verified%205.1.0)-e50712?style=for-the-badge&logo=dungeonsanddragons&logoColor=white)
+![Foundry](https://img.shields.io/badge/Foundry%20Version%2012%2B%20(Verified%2013.348)-ee9b3a?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
+![D&D](https://img.shields.io/badge/DND%20Version%204%2B%20(Verified%205.1.4)-e50712?style=for-the-badge&logo=dungeonsanddragons&logoColor=white)
 
 ## 📄 License
 
