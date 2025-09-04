@@ -560,6 +560,7 @@ export class HookActivity extends dnd5e.documents.activity.ActivityMixin(HookAct
      */
     async use(config, dialog, message, hookName, ...args) {
         const results = await super.use(config, dialog, message);
+        if (results === undefined) return results;
 
         if (this.executionType === `macro`) {
             await this._executeMacro(hookName, ...args);

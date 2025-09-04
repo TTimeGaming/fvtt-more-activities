@@ -166,6 +166,7 @@ export class TeleportActivity extends dnd5e.documents.activity.ActivityMixin(Tel
      */
     async use(config, dialog, message) {
         const results = await super.use(config, dialog, message);
+        if (results === undefined) return results;
         
         const token = CanvasData.getOriginToken(this.actor);
         if (!token) {

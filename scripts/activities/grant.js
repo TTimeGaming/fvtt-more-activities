@@ -813,6 +813,8 @@ export class GrantActivity extends dnd5e.documents.activity.ActivityMixin(GrantA
      */
     async use(config, dialog, message) {
         const results = await super.use(config, dialog, message);
+        if (results === undefined) return results;
+
         new GrantSelectionApp(this).render(true);
         return results;
     }

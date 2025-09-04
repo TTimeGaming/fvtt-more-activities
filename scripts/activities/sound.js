@@ -110,6 +110,8 @@ export class SoundActivity extends dnd5e.documents.activity.ActivityMixin(SoundA
      */
     async use(config, dialog, message) {
         const results = await super.use(config, dialog, message);
+        if (results === undefined) return results;
+        
         SoundData.playSound({
             type: `playSound`,
             isGlobal: this.playForAll,

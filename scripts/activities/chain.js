@@ -576,6 +576,8 @@ export class ChainActivity extends dnd5e.documents.activity.ActivityMixin(ChainA
      */
     async use(config, dialog, message) {
         const results = await super.use(config, dialog, message);
+        if (results === undefined) return results;
+
         await this._executeChain(config, dialog, message);
         return results;
     }

@@ -808,6 +808,8 @@ export class ContestedActivity extends dnd5e.documents.activity.ActivityMixin(Co
      */
     async use(config, dialog, message) {
         const results = await super.use(config, dialog, message);
+        if (results === undefined) return results;
+
         new ContestedInitiatorApp(this).render(true);
         return results;
     }
