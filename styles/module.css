@@ -34,30 +34,30 @@
     width: 21px;
 }
 
-.contested-initiator {
+.contested-initiator-app .contested-initiator {
     padding: 1rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-.contested-initiator fieldset {
+.contested-initiator-app .contested-initiator fieldset {
     gap: 0.5rem;
 }
 
-.contested-initiator .form-group {
+.contested-initiator-app .contested-initiator .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.contested-initiator .roll-preview {
+.contested-initiator-app .contested-initiator .roll-preview {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.contested-initiator .option-preview {
+.contested-initiator-app .contested-initiator .option-preview {
     background: var(--dnd5e-background-card);
     padding: 0.5rem 0.5rem;
     border-radius: 4px;
@@ -65,13 +65,13 @@
     font-weight: bold;
 }
 
-.contested-initiator .selected-defenders {
+.contested-initiator-app .contested-initiator .selected-defenders {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
-.contested-initiator .defender-item {
+.contested-initiator-app .contested-initiator .defender-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -80,59 +80,59 @@
     background: var(--dnd5e-background-card);
 }
 
-.contested-initiator .defender-name {
+.contested-initiator-app .contested-initiator .defender-name {
     font-size: 0.8rem;
     font-weight: bold;
 }
 
-.contested-initiator .defender-buttons {
+.contested-initiator-app .contested-initiator .defender-buttons {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-size: 0.6rem;
 }
 
-.contested-initiator .defender-delete-btn {
+.contested-initiator-app .contested-initiator .defender-delete-btn {
     width: 1.5rem;
     height: 1.5rem;
 }
 
-.contested-initiator .start-contest-btn {
+.contested-initiator-app .contested-initiator .start-contest-btn {
     padding: 1.25rem;
 }
 
-.contested-defender {
+.contested-defender-app .contested-defender {
     padding: 0rem 1rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-.contested-defender .contest-info {
+.contested-defender-app .contested-defender .contest-info {
     padding: 0.75rem 0 0 0;
     text-align: center;
 }
 
-.contested-defender .message-header {
+.contested-defender-app .contested-defender .message-header {
     padding: 0rem 1rem;
 }
 
-.contested-defender .message-sender {
+.contested-defender-app .contested-defender .message-sender {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
 }
 
-.contested-defender .message-sender .avatar {
+.contested-defender-app .contested-defender .message-sender .avatar {
     max-width: 25%;
 }
 
-.contested-defender .message-sender .name-stacked {
+.contested-defender-app .contested-defender .message-sender .name-stacked {
     text-align: right;
 }
 
-.contested-defender .roll-options {
+.contested-defender-app .contested-defender .roll-options {
     display: flex;
     flex-direction: column;
     justify-items: center;
@@ -140,7 +140,7 @@
     gap: 0.75rem;
 }
 
-.contested-defender .roll-option-btn {
+.contested-defender-app .contested-defender .roll-option-btn {
     padding: 1rem;
 }
 
@@ -524,30 +524,30 @@
     overflow: hidden;
 }
 
-.teleport-targets,
-.teleport-destination,
-.movement-targets,
-.movement-destination {
+.teleport-target-app .teleport-targets,
+.teleport-destination-app .teleport-destination,
+.movement-target-app .movement-targets,
+.movement-destination-app .movement-destination {
     padding: 1rem 0rem;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.teleport-targets fieldset,
-.movement-targets fieldset {
+.teleport-target-app .teleport-targets fieldset,
+.movement-target-app .movement-targets fieldset {
     gap: 0.5rem;
 }
 
-.teleport-targets .form-group,
-.movement-targets .form-group {
+.teleport-target-app .teleport-targets .form-group,
+.movement-target-app .movement-targets .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.teleport-targets .config-info,
-.movement-targets .config-info {
+.teleport-target-app .teleport-targets .config-info,
+.movement-target-app .movement-targets .config-info {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -557,30 +557,30 @@
     font-size: 0.8rem;
 }
 
-.teleport-targets .config-item,
-.movement-targets .config-item {
+.teleport-target-app .teleport-targets .config-item,
+.movement-target-app .movement-targets .config-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.teleport-targets .selected-targets,
-.movement-targets .selected-targets,
+.teleport-target-app .teleport-targets .selected-targets,
+.movement-target-app .movement-targets .selected-targets,
 .dnd5e2.activity-grant .granted-items,
-.grant-selection,
-.grant-selection .granted-items,
-.grant-customization,
-.chain-branch .branched-items {
+.dnd5e2.activity-grant .grant-customization,
+.grant-selection-app .grant-selection,
+.grant-selection-app .grant-selection .granted-items,
+.chain-branch-app .chain-branch .branched-items {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
-.teleport-targets .target-item,
-.movement-targets .target-item,
+.teleport-target-app .teleport-targets .target-item,
+.movement-target-app .movement-targets .target-item,
 .dnd5e2.activity-grant .granted-item,
-.grant-selection .granted-item,
-.chain-branch .branched-item {
+.grant-selection-app .grant-selection .granted-item,
+.chain-branch-app .chain-branch .branched-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -589,43 +589,43 @@
     background: var(--dnd5e-background-card);
 }
 
-.grant-selection .granted-item.disabled {
+.grant-selection-app .grant-selection .granted-item.disabled {
     opacity: 0.6;
 }
 
-.grant-selection .item-details {
+.grant-selection-app .grant-selection .item-details {
     display: flex;
     flex-direction: column;
     flex: 1;
 }
 
-.grant-selection .item-meta {
+.grant-selection-app .grant-selection .item-meta {
     display: flex;
     gap: 12px;
     align-items: center;
     margin-top: 4px;
 }
 
-.grant-selection .item-cost {
+.grant-selection-app .grant-selection .item-cost {
     color: var(--dnd5e-color-gold);
     font-weight: bold;
     font-size: 0.9em;
 }
 
-.grant-selection .disabled-reason {
+.grant-selection-app .grant-selection .disabled-reason {
     font-size: 0.8em;
     font-style: italic;
     margin-top: 2px;
 }
 
-.grant-selection .customization-notes {
+.grant-selection-app .grant-selection .customization-notes {
     display: flex;
     gap: 8px;
     margin-top: 4px;
     flex-wrap: wrap;
 }
 
-.grant-selection .custom-note {
+.grant-selection-app .grant-selection .custom-note {
     background: var(--dnd5e-color-blue);
     color: white;
     padding: 2px 6px;
@@ -634,25 +634,25 @@
     white-space: nowrap;
 }
 
-.grant-selection .item-controls {
+.grant-selection-app .grant-selection .item-controls {
     display: flex;
     align-items: flex-end;
     flex-direction: column;
 }
 
-.grant-selection .currency-container {
+.grant-selection-app .grant-selection .currency-container {
     display: flex;
     flex-wrap: nowrap;
     gap: 0.25rem;
 }
 
-.grant-selection .currency-item {
+.grant-selection-app .grant-selection .currency-item {
     display: flex;
     align-items: center;
     gap: 0.25rem;
 }
 
-.tri-state-button-group {
+.dnd5e2.activity-grant .tri-state-button-group {
     display: flex;
     gap: 4px;
     border-radius: 4px;
@@ -660,7 +660,7 @@
     margin-bottom: 8px;
 }
 
-.scroll-state-btn {
+.dnd5e2.activity-grant .scroll-state-btn {
     flex: 1;
     padding: 8px 12px;
     border: none;
@@ -673,25 +673,25 @@
     position: relative;
 }
 
-.scroll-state-btn.active {
+.dnd5e2.activity-grant .scroll-state-btn.active {
     background: var(--dnd5e-color-gold);
     font-weight: bold;
 }
 
-.scroll-state-btn i {
+.dnd5e2.activity-grant .scroll-state-btn i {
     font-size: 0.9em;
 }
 
-.teleport-targets .target-info,
-.movement-targets .target-info {
+.teleport-target-app .teleport-targets .target-info,
+.movement-target-app .movement-targets .target-info {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
 .dnd5e2.activity-grant .item-info,
-.grant-selection .item-info,
-.chain-branch .item-info {
+.grant-selection-app .grant-selection .item-info,
+.chain-branch-app .chain-branch .item-info {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -699,88 +699,104 @@
 }
 
 .dnd5e2.activity-grant .item-img,
-.grant-selection .item-img,
-.chain-branch .item-img {
+.grant-selection-app .grant-selection .item-img,
+.chain-branch-app .chain-branch .item-img {
     width: 32px;
     height: 32px;
 }
 
-.teleport-targets .target-name,
-.movement-targets .target-name,
+.teleport-target-app .teleport-targets .target-name,
+.movement-target-app .movement-targets .target-name,
 .dnd5e2.activity-grant .item-name,
-.grant-selection .item-name,
-.chain-branch .item-name {
+.grant-selection-app .grant-selection .item-name,
+.chain-branch-app .chain-branch .item-name {
     font-size: 0.8rem;
     font-weight: bold;
 }
 
-.teleport-targets .target-controls,
-.movement-targets .target-controls,
+.teleport-target-app .teleport-targets .target-controls,
+.movement-target-app .movement-targets .target-controls,
 .dnd5e2.activity-grant .item-controls,
-.chain-branch .item-controls {
+.chain-branch-app .chain-branch .item-controls {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.teleport-targets .target-distance,
-.movement-targets .target-distance,
+.teleport-target-app .teleport-targets .target-distance,
+.movement-target-app .movement-targets .target-distance,
 .dnd5e2.activity-grant .item-type {
     font-size: 0.7rem;
     color: var(--dnd5e-color-text-light);
 }
 
-.teleport-targets .target-delete-btn,
-.movement-targets .target-delete-btn,
+.teleport-target-app .teleport-targets .target-delete-btn,
+.movement-target-app .movement-targets .target-delete-btn,
 .dnd5e2.activity-grant .item-delete-btn {
     width: 1.5rem;
     height: 1.5rem;
     font-size: 0.7rem;
 }
 
-.teleport-targets .start-teleport-btn,
-.movement-targets .start-movement-btn {
+.teleport-target-app .teleport-targets .start-teleport-btn,
+.movement-target-app .movement-targets .start-movement-btn {
     padding: 1.25rem;
     background: var(--dnd5e-color-primary);
     color: white;
 }
 
-.teleport-destination .destination-controls,
-.movement-destination .destination-controls {
+.teleport-destination-app .teleport-destination .destination-controls,
+.movement-destination-app .movement-destination .destination-controls {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.teleport-destination .cancel-teleport-btn,
-.movement-destination .push-movement-btn,
-.movement-destination .pull-movement-btn,
-.movement-destination .cancel-movement-btn {
+.teleport-destination-app .teleport-destination .cancel-teleport-btn,
+.movement-destination-app .movement-destination .push-movement-btn,
+.movement-destination-app .movement-destination .pull-movement-btn,
+.movement-destination-app .movement-destination .cancel-movement-btn {
     padding: 1.25rem;
     background: var(--dnd5e-color-secondary);
     color: white;
 }
 
-.manual-placement-container {
+.movement-placement-app .manual-placement-container,
+.teleport-placement-app .manual-placement-container {
    padding: 0.5rem;
    display: flex;
    flex-direction: column;
    gap: 0.5rem;
 }
 
-.placement-header {
+.movement-placement-app .placement-header,
+.teleport-placement-app .placement-header,
+.teleport-destination-app .placement-header,
+.wall-placement-app .placement-header {
    text-align: center;
 }
 
-.placement-header p {
+.movement-placement-app .placement-header p,
+.teleport-placement-app .placement-header p,
+.teleport-destination-app .placement-header p,
+.wall-placement-app .placement-header p {
    font-size: 0.8rem;
 }
 
-.placement-progress span {
+.movement-placement-app .placement-header .subtitle,
+.teleport-placement-app .placement-header .subtitle,
+.teleport-destination-app .placement-header .subtitle,
+.wall-placement-app .placement-header .subtitle {
+    margin: 1rem 0;
+}
+
+.movement-placement-app .placement-progress span,
+.teleport-placement-app .placement-progress span {
    font-weight: bold;
 }
 
-.current-token-section {
+.movement-placement-app .current-token-section,
+.teleport-placement-app .current-token-section {
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -790,7 +806,8 @@
     margin: 0.5rem 0;
 }
 
-.current-token-display {
+.movement-placement-app .current-token-display,
+.teleport-placement-app .current-token-display {
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -798,35 +815,41 @@
     padding: 0 3rem;
 }
 
-.current-token-display .token-image {
+.movement-placement-app .current-token-display .token-image,
+.teleport-placement-app .current-token-display .token-image {
     width: 64px;
     height: 64px;
 }
 
-.token-info {
+.movement-placement-app .token-info,
+.teleport-placement-app .token-info {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
     text-align: right;
 }
 
-.token-info .token-name {
+.movement-placement-app .token-info .token-name,
+.teleport-placement-app .token-info .token-name {
     font-size: 1rem;
     font-weight: bold;
 }
 
-.token-info .token-counter {
+.movement-placement-app .token-info .token-counter,
+.teleport-placement-app .token-info .token-counter {
     font-size: 0.8rem;
 }
 
-.token-navigation {
+.movement-placement-app .token-navigation,
+.teleport-placement-app .token-navigation {
     display: flex;
     gap: 0.5rem;
     justify-content: center;
     align-items: center;
 }
 
-.token-navigation button {
+.movement-placement-app .token-navigation button,
+.teleport-placement-app .token-navigation button {
     padding: 0.75rem 1rem;
     border-radius: 4px;
     cursor: pointer;
@@ -837,42 +860,53 @@
     gap: 0.5rem;
 }
 
-.prev-token-btn,
-.next-token-btn {
+.movement-placement-app .prev-token-btn,
+.movement-placement-app .next-token-btn,
+.teleport-placement-app .prev-token-btn,
+.teleport-placement-app .next-token-btn {
     flex: 1;
 }
 
-.prev-token-btn:hover,
-.next-token-btn:hover {
+.movement-placement-app .prev-token-btn:hover,
+.movement-placement-app .next-token-btn:hover,
+.teleport-placement-app .prev-token-btn:hover,
+.teleport-placement-app .next-token-btn:hover {
     transform: translateY(-1px);
 }
 
-.prev-token-btn:disabled,
-.next-token-btn:disabled {
+.movement-placement-app .prev-token-btn:disabled,
+.movement-placement-app .next-token-btn:disabled,
+.teleport-placement-app .prev-token-btn:disabled,
+.teleport-placement-app .next-token-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
 }
 
-.place-token-btn {
+.movement-placement-app .place-token-btn,
+.teleport-placement-app .place-token-btn {
     flex: 2;
     font-size: 1rem;
 }
 
-.place-token-btn.placing {
+.movement-placement-app .place-token-btn.placing,
+.teleport-placement-app .place-token-btn.placing {
     opacity: 0.5;
     transform: none;
 }
 
-.place-token-btn:hover {
+.movement-placement-app .place-token-btn:hover,
+.teleport-placement-app .place-token-btn:hover {
     transform: translateY(-1px);
 }
 
-.place-token-btn:active {
+.movement-placement-app .place-token-btn:active,
+.teleport-placement-app .place-token-btn:active {
     transform: translateY(0);
 }
 
-.token-image {
+.movement-placement-app .token-image,
+.teleport-placement-app .token-image {
    width: 32px;
    height: 32px;
    border-radius: 50%;
@@ -880,48 +914,51 @@
    pointer-events: none;
 }
 
-.token-name {
+.movement-placement-app .token-name,
+.teleport-placement-app .token-name {
    flex: 1;
    font-weight: bold;
    font-size: 0.75rem;
 }
 
-.no-tokens,
-.no-items {
+.movement-placement-app .no-tokens,
+.teleport-placement-app .no-tokens,
+.dnd5e2.activity-grant .no-items {
    text-align: center;
    font-weight: bold;
    font-style: italic;
 }
 
-.placement-buttons,
-.movement-buttons,
-.grant-buttons,
-.branch-buttons {
+.movement-placement-app .placement-buttons,
+.teleport-placement-app .placement-buttons,
+.movement-self-target-app .movement-buttons,
+.grant-selection-app .grant-buttons,
+.chain-branch-app .branch-buttons {
    display: flex;
    gap: 0.5rem;
    justify-content: center;
 }
 
-.grant-buttons,
-.branch-buttons {
+.grant-selection-app .grant-buttons,
+.chain-branch-app .branch-buttons {
     margin-top: 0.5rem;
 }
 
-.grant-buttons button {
+.grant-selection-app .grant-buttons button {
     padding: 0.25rem 0.5rem;
 }
 
-.finish-placement-btn,
-.finish-grant-btn,
-.finish-customization-btn,
-.finish-branch-btn,
-.finish-wall-btn,
-.next-wall-btn,
-.cancel-placement-btn,
-.cancel-grant-btn,
-.cancel-customization-btn,
-.cancel-branch-btn,
-.cancel-wall-btn {
+.movement-placement-app .finish-placement-btn,
+.teleport-placement-app .finish-placement-btn,
+.grant-selection-app .finish-grant-btn,
+.chain-branch-app .finish-branch-btn,
+.wall-placement-app .finish-wall-btn,
+.wall-placement-app .next-wall-btn,
+.movement-placement-app .cancel-placement-btn,
+.teleport-placement-app .cancel-placement-btn,
+.grant-selection .cancel-grant-btn,
+.chain-branch-app .cancel-branch-btn,
+.wall-placement-app .cancel-wall-btn {
    padding: 1.25rem;
    border-radius: 4px;
    cursor: pointer;
@@ -962,21 +999,21 @@
     display: none;
 }
 
-.wall-placement-container {
+.wall-placement-app .wall-placement-container {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     padding: 1rem;
 }
 
-.wall-stats {
+.wall-placement-app .wall-stats {
     display: flex;
     gap: 1rem;
     margin-bottom: 1rem;
     justify-content: center;
 }
 
-.stat-item {
+.wall-placement-app .stat-item {
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -986,17 +1023,13 @@
     padding: 0.25rem 0.5rem;
 }
 
-.placement-header .subtitle {
-    margin: 1rem 0;
-}
-
-.reference-section {
+.wall-placement-app .reference-section {
     display: flex;
     flex-direction: column;
     text-align: center;
 }
 
-.placement-instructions {
+.wall-placement-app .placement-instructions {
     display: flex;
     justify-content: center;
     text-align: center;
@@ -1004,23 +1037,18 @@
     font-size: 0.9rem;
 }
 
-.placement-controls {
+.wall-placement-app .placement-controls {
     display: flex;
     justify-content: center;
     gap: 1rem;
 }
 
-.primary-controls, .finish-controls {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.start-placement-btn.placing {
+.wall-placement-app .start-placement-btn.placing {
     background: var(--color-bg-option);
     border-color: var(--color-border-highlight);
 }
 
-.placement-status {
+.wall-placement-app .placement-status {
     margin-top: 1rem;
     padding: 0.75rem;
     background: var(--color-bg-option);
@@ -1028,7 +1056,7 @@
     text-align: center;
 }
 
-.status-indicator {
+.wall-placement-app .status-indicator {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1037,7 +1065,7 @@
     color: var(--color-text-dark-secondary);
 }
 
-.status-indicator.pulsing i {
+.wall-placement-app .status-indicator.pulsing i {
     animation: pulse 1.5s infinite;
 }
 
@@ -1046,25 +1074,25 @@
     50% { opacity: 0.5; }
 }
 
-.completed-walls-section {
+.wall-placement-app .completed-walls-section {
     margin: 10px 0;
     border: 1px solid #ccc;
     padding: 10px;
     border-radius: 4px;
 }
 
-.completed-walls-section legend {
+.wall-placement-app .completed-walls-section legend {
     padding: 0 5px;
     font-weight: bold;
 }
 
-.completed-walls-list {
+.wall-placement-app .completed-walls-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.completed-wall-item {
+.wall-placement-app .completed-wall-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1074,35 +1102,35 @@
     border-left: 4px solid #95a5a6;
 }
 
-.wall-info {
+.wall-placement-app .wall-info {
     flex: 1;
 }
 
-.wall-header {
+.wall-placement-app .wall-header {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 4px;
 }
 
-.wall-type {
+.wall-placement-app .wall-type {
     font-size: 0.85em;
     color: #666;
     font-style: italic;
 }
 
-.wall-details {
+.wall-placement-app .wall-details {
     display: flex;
     gap: 12px;
     font-size: 0.85em;
     color: #555;
 }
 
-.detail-item {
+.wall-placement-app .detail-item {
     white-space: nowrap;
 }
 
-.delete-wall-btn {
+.wall-placement-app .delete-wall-btn {
     background: #e74c3c;
     color: white;
     border: none;
@@ -1113,20 +1141,20 @@
     transition: background-color 0.2s;
 }
 
-.delete-wall-btn:hover {
+.wall-placement-app .delete-wall-btn:hover {
     background: #c0392b;
 }
 
-.consumption-requirements {
+.grant-selection-app .consumption-requirements {
     font-size: 0.85em;
     margin-top: 0.25rem;
 }
 
-.customization-notes {
+.grant-selection-app .customization-notes {
     margin-top: 0.25rem;
 }
 
-.custom-note {
+.grant-selection-app .custom-note {
     display: inline-block;
     background: var(--color-border-light-tertiary);
     padding: 0.1rem 0.3rem;
