@@ -1,6 +1,6 @@
 ## More Activities - Now with V12 Support!
 
-![Latest](https://img.shields.io/badge/Module%20Version:%201.8.4-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
+![Latest](https://img.shields.io/badge/Module%20Version:%201.8.5-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
 
 An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides additional activity types.
 
@@ -29,7 +29,7 @@ An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides
 - **TPNils:** Improvement for *Grant* Activity
 - **ljstrings:** Improvement for *Movement* Activity
 - **SRR8:** Improvement for *Grant* Activity
-- **darkanx, alterNERDtive, WelpM8:** Highlighting bugs in this module
+- **darkanx, alterNERDtive, WelpM8, WeslleyNasRocha:** Highlighting bugs in this module
 
 ## 🚫 Breaking Changes
 
