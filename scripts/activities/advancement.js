@@ -5,8 +5,9 @@ const TEMPLATE_NAME = `advancement`;
 
 export class AdvancementData {
     static applyListeners(message, html) {
-        MessageData.addActivityButton(message, html, true,
+        MessageData.addActivityButton(message, html, false,
             TEMPLATE_NAME, `Trigger Advancement`, async(activity) => {
+                console.log(activity);
                 await activity._triggerAdvancements();
             }
         );
@@ -243,9 +244,10 @@ export class AdvancementActivity extends dnd5e.documents.activity.ActivityMixin(
                     continue;
                 }
 
-                const level = advancement.level || actorItem.system.details?.level || 1;
+                const locatedLevel = Object.entries(actorItem.advancement.byLevel).find(([level, advancements]) => advancements.map(x => x.id).includes(advancement.id));
+                const level = locatedLevel?.length === 2 ? parseInt(locatedLevel[0]) : advancement.level || actorItem.system.details?.level || 1;
                 const flow = new advancement.metadata.apps.flow(clonedItem, advancement.id, level);
-                flow.item = clonedItem;
+
                 flows.push(flow);
             }
 
