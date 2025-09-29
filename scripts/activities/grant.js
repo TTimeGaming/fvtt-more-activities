@@ -1367,8 +1367,7 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
         try {
             const actorItem = this.actor.items.find(item => 
                 item.id === sourceItem.id ||
-                item._source?._stats?.compendiumSource === sourceItem ||
-                (item.system?.identifier === sourceItem.system?.identifier && item.type === sourceItem.type)
+                item._source?._stats?.compendiumSource === sourceItem.uuid
             );
 
             if (!actorItem) {

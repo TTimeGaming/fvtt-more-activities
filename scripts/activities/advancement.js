@@ -219,8 +219,7 @@ export class AdvancementActivity extends dnd5e.documents.activity.ActivityMixin(
 
             const actorItem = this.actor.items.find(item => 
                 item.id === sourceItem.id ||
-                item._source?._stats?.compendiumSource === this.sourceItem ||
-                (item.system?.identifier === sourceItem.system?.identifier && item.type === sourceItem.type)
+                item._source?._stats?.compendiumSource === sourceItem.uuid
             );
 
             if (!actorItem) {
