@@ -30,6 +30,14 @@
                 <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.grant.swappable.hint"}}</p>
             </div>
 
+            {{!-- <div class="form-group stacked">
+                <label>Trigger Advancements</label>
+                <div class="form-fields">
+                    <dnd5e-checkbox name="triggerAdvancements" {{#if triggerAdvancements}}checked{{/if}}></dnd5e-checkbox>
+                </div>
+                <p class="hint">Automatically trigger advancement dialogs for granted items</p>
+            </div> --}}
+
             <div class="form-group stacked">
                 <label>Convert Spells to Scrolls</label>
                 <div class="form-fields">
@@ -310,6 +318,28 @@
                                 </div>
                                 </div>
                                 <p class="hint">Override global spell scroll setting for this item</p>
+                            </div>
+                        </fieldset>
+                        {{/if}}
+
+                        {{#if item.availableAdvancements}}
+                        <fieldset>
+                            <legend><label> Advancements </label></legend>
+
+                            <div class="form-group stacked">
+                                <label>Enabled Advancements</label>
+                                <p class="hint">Selected advancements will trigger when this item is granted</p>
+                                <div class="advancement-list">
+                                    {{#each item.availableAdvancements as |advancement|}}
+                                    <div class="advancement-item">
+                                        <dnd5e-checkbox class="advancement-checkbox" data-item="{{item.index}}" data-advancement-id="{{advancement.id}}" {{#if advancement.selected}}checked{{/if}}></dnd5e-checkbox>
+                                        <div class="advancement-info">
+                                            <strong>{{ advancement.title }}</strong>
+                                            <span class="advancement-details">{{ advancement.type }}{{#if advancement.level}} (Level {{ advancement.level }}){{/if}}</span>
+                                        </div>
+                                    </div>
+                                    {{/each}}
+                                </div>
                             </div>
                         </fieldset>
                         {{/if}}

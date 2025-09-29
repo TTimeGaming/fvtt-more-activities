@@ -58,6 +58,11 @@ export class GrantActivityData extends dnd5e.dataModels.activity.BaseActivityDat
             required: false,
             initial: false,
         });
+        
+        schema.advancementIds = new fields.StringField({
+            required: false,
+            initial: `{}`,
+        });
 
         schema.costGroups = new fields.ArrayField(new fields.SchemaField({
             id: new fields.StringField({
@@ -171,18 +176,33 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
             itemCustomizations = {};
         }
 
+        let advancementIds;
+        try {
+            advancementIds = JSON.parse(this.activity?.advancementIds);
+        }
+        catch {
+            advancementIds = {};
+        }
+
         const grants = [];
         for (const itemId of (this.activity?.grants ?? [])) {
             let item = await fromUuid(itemId);
-            if (item == null) {
-                item = {
-                    name: `Unknown Item`,
-                    img: `icons/svg/hazard.svg`,
-                    type: `missing`,
+            let itemData = {
+                name: `Unknown Item`,
+                img: `icons/svg/hazard.svg`,
+                type: `missing`,
+            };
+
+            if (item != null) {
+                itemData = {
+                    name: item.name,
+                    img: item.img,
+                    type: item.type,
+                    item: item,
                 };
             }
 
-            const customization = itemCustomizations[itemId.replace(`.`, `-`)] ?? {};
+            const customization = itemCustomizations[itemId.replaceAll(`.`, `-`)] ?? {};
 
             customization.costGroups = (customization.costGroups ?? []).map((element, index) => ({
                 ...element,
@@ -207,14 +227,13 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
             ];
 
             grants.push({
-                name: item.name,
-                img: item.img,
-                type: game.i18n.localize(`TYPES.Item.${item.type}`),
+                ...itemData,
+                type: game.i18n.localize(`TYPES.Item.${itemData.type}`),
                 uuid: itemId,
                 isCustomized: isCustomized,
-                isSpell: item.type === `spell`,
-                maxUses: item.system?.uses?.max,
-                hasUses: item.system?.uses?.max !== undefined && item.system?.uses?.max != null,
+                isSpell: itemData.type === `spell`,
+                maxUses: item?.system?.uses?.max,
+                hasUses: item?.system?.uses?.max !== undefined && item?.system?.uses?.max != null,
                 customization: customization,
                 recoveryOptions: recoveryOptions,
                 scrollStates: scrollStates,
@@ -228,11 +247,27 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
         context.spellsAsScrolls = this.activity?.spellsAsScrolls ?? false;
         context.currencyOptions = [ `pp`, `gp`, `ep`, `sp`, `cp` ];
 
-        context.grants = grants.map((element, index) => ({
-            ...element,
-            index: index,
-            isOpen: this.openCustomization === index,
-        }));
+        context.grants = grants.map((element, index) => {
+            const grant = {
+                ...element,
+                index: index,
+                isOpen: this.openCustomization === index,
+            };
+            if (!element.item || !element.item.system?.advancement) return grant;
+
+            const itemAdvancementIds = advancementIds[element.uuid.replaceAll(`.`, `-`)] || [];
+            grant.availableAdvancements = Object.entries(element.item.system.advancement)
+                .map(([id, advancement]) => ({
+                    id,
+                    type: advancement.type,
+                    title: advancement.title || advancement.type,
+                    level: advancement.level || 1,
+                    selected: itemAdvancementIds.includes(id),
+                }))
+                .sort((a, b) => a.level - b.level)
+            ;
+            return grant;
+        });
 
         context.costGroups = (this.activity?.costGroups || []).map((element, index) => ({
             ...element,
@@ -270,7 +305,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
 
                 let customizations = {};
                 if (itemCustomizations) {
-                    const uuid = event.target.dataset.uuid.replace(`.`, `-`);
+                    const uuid = event.target.dataset.uuid.replaceAll(`.`, `-`);
                     for (const itemId of Object.keys(itemCustomizations)) {
                         if (uuid !== itemId)
                             customizations[itemId] = itemCustomizations[itemId];
@@ -540,6 +575,14 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
             itemCustomizations = {};
         }
 
+        let advancementIds;
+        try {
+            advancementIds = JSON.parse(this.activity?.advancementIds);
+        }
+        catch {
+            advancementIds = {};
+        }
+
         const input = this.element.querySelector(`input[name="current"]`);
         this._addDragDropHandlers(input, async(uuid) => {
             input.value = uuid;
@@ -552,7 +595,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 const grants = this.activity?.grants ?? [];
                 const itemId = grants[parseInt(item)];
 
-                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                const costGroups = itemCustomizations[itemId.replaceAll(`.`, `-`)]?.costGroups || [];
                 costGroups.push({
                     id: foundry.utils.randomID(),
                     name: `Cost Group ${costGroups.length + 1}`,
@@ -575,7 +618,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 const grants = this.activity?.grants ?? [];
                 const itemId = grants[parseInt(item)];
 
-                const costGroups = [...(itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [])];
+                const costGroups = [...(itemCustomizations[itemId.replaceAll(`.`, `-`)]?.costGroups || [])];
                 costGroups.splice(index, 1);
                 await this._updateItemCustomization(item, `costGroups`, costGroups);
             });
@@ -588,7 +631,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 const grants = this.activity?.grants ?? [];
                 const itemId = grants[parseInt(item)];
 
-                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                const costGroups = itemCustomizations[itemId.replaceAll(`.`, `-`)]?.costGroups || [];
                 if (!costGroups[index]) return;
 
                 costGroups[index].name = event.target.value;
@@ -603,7 +646,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 const grants = this.activity?.grants ?? [];
                 const itemId = grants[parseInt(item)];
 
-                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                const costGroups = itemCustomizations[itemId.replaceAll(`.`, `-`)]?.costGroups || [];
                 if (!costGroups[index]) return;
 
                 costGroups[index].type = event.target.value;
@@ -618,7 +661,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 const grants = this.activity?.grants ?? [];
                 const itemId = grants[parseInt(item)];
 
-                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                const costGroups = itemCustomizations[itemId.replaceAll(`.`, `-`)]?.costGroups || [];
                 if (!costGroups[index]) return;
 
                 costGroups[index].baseCurrencyAmount = event.target.value;
@@ -633,7 +676,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 const grants = this.activity?.grants ?? [];
                 const itemId = grants[parseInt(item)];
 
-                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                const costGroups = itemCustomizations[itemId.replaceAll(`.`, `-`)]?.costGroups || [];
                 if (!costGroups[index]) return;
 
                 costGroups[index].baseCurrencyCoin = event.target.value;
@@ -648,7 +691,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 const grants = this.activity?.grants ?? [];
                 const itemId = grants[parseInt(item)];
 
-                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                const costGroups = itemCustomizations[itemId.replaceAll(`.`, `-`)]?.costGroups || [];
                 if (!costGroups[index]) return;
 
                 costGroups[index].spellCurrencyAmount = event.target.value;
@@ -663,7 +706,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 const grants = this.activity?.grants ?? [];
                 const itemId = grants[parseInt(item)];
 
-                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                const costGroups = itemCustomizations[itemId.replaceAll(`.`, `-`)]?.costGroups || [];
                 if (!costGroups[index]) return;
 
                 costGroups[index].spellCurrencyCoin = event.target.value;
@@ -678,7 +721,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 const grants = this.activity?.grants ?? [];
                 const itemId = grants[parseInt(item)];
 
-                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                const costGroups = itemCustomizations[itemId.replaceAll(`.`, `-`)]?.costGroups || [];
                 if (!costGroups[index]) return;
 
                 costGroups[index].itemAmount = event.target.value;
@@ -693,7 +736,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 const grants = this.activity?.grants ?? [];
                 const itemId = grants[parseInt(item)];
 
-                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                const costGroups = itemCustomizations[itemId.replaceAll(`.`, `-`)]?.costGroups || [];
                 if (!costGroups[index]) return;
 
                 costGroups[index].itemUuid = uuid;
@@ -706,7 +749,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 const grants = this.activity?.grants ?? [];
                 const itemId = grants[parseInt(item)];
 
-                const costGroups = itemCustomizations[itemId.replace(`.`, `-`)]?.costGroups || [];
+                const costGroups = itemCustomizations[itemId.replaceAll(`.`, `-`)]?.costGroups || [];
                 if (!costGroups[index]) return;
 
                 costGroups[index].itemUuid = event.target.value;
@@ -752,6 +795,33 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
                 event.target.classList.add(`active`);
             });
         });
+
+        this.element?.querySelectorAll(`.advancement-checkbox`).forEach(checkbox => {
+            checkbox.addEventListener(`change`, async(event) => {
+                const item = parseInt(event.target.dataset.item);
+                const advancementId = event.target.dataset.advancementId;
+                const grants = this.activity?.grants ?? [];
+                const itemId = grants[parseInt(item)];
+                
+                const itemUuid = itemId.replaceAll(`.`, `-`);
+
+                if (!advancementIds[itemUuid])
+                    advancementIds[itemUuid] = [];
+                
+                if (event.target.checked) {
+                    if (!advancementIds[itemUuid].includes(advancementId)) {
+                        advancementIds[itemUuid].push(advancementId);
+                    }
+                } else {
+                    advancementIds[itemUuid] = advancementIds[itemUuid].filter(id => id !== advancementId);
+                }
+
+                if (advancementIds[itemUuid].length === 0)
+                    delete advancementIds[itemUuid];
+                
+                await this.activity.update({ advancementIds: JSON.stringify(advancementIds) });
+            });
+        });
     }
 
     async _updateItemCustomization(index, property, value) {
@@ -767,7 +837,7 @@ export class GrantActivitySheet extends dnd5e.applications.activity.ActivityShee
             itemCustomizations = {};
         }
 
-        const stored = itemId.replace(`.`, `-`);
+        const stored = itemId.replaceAll(`.`, `-`);
         if (!itemCustomizations[stored]) {
             itemCustomizations[stored] = {};
         }
@@ -939,7 +1009,7 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
             const itemUses = new Map(activityUses);
             const itemConsume = new Map(activityConsume);
 
-            const customization = itemCustomizations[grant.replace(`.`, `-`)] ?? {};
+            const customization = itemCustomizations[grant.replaceAll(`.`, `-`)] ?? {};
             if (customization.maxUses)
                 customization.maxUses = FieldsData.resolveFormula(customization.maxUses, this.activity.item);
             if (customization.recovery)
@@ -1168,11 +1238,21 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 itemCustomizations = {};
             }
 
+            let advancementIds;
+            try {
+                advancementIds = JSON.parse(this.activity?.advancementIds);
+            }
+            catch {
+                advancementIds = {};
+            }
+
             const toCopper = (currency) => ((currency.pp ?? 0) * 1000) + ((currency.gp ?? 0) * 100) + ((currency.ep ?? 0) * 50) + ((currency.sp ?? 0) * 10) + (currency.cp ?? 0);
 
             let totalCost = 0;
             const itemUses = new Map();
             const itemConsume = new Map();
+
+            const itemAdvancements = [];
 
             const grants = [];
             for (const grant of newItems) {
@@ -1180,7 +1260,7 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 if (!item || item.disabled) continue;
 
                 const originalItem = await fromUuid(grant);
-                const customization = itemCustomizations[grant.replace(`.`, `-`)] || {};
+                const customization = itemCustomizations[grant.replaceAll(`.`, `-`)] || {};
 
                 let itemData = originalItem.toObject();
                 if (itemData.type === `spell`) {
@@ -1220,6 +1300,10 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
                     ...itemData,
                     uuid: grant,
                 });
+
+                const itemAdvancementIds = advancementIds[grant.replaceAll(`.`, `-`)];
+                if (itemAdvancementIds?.length > 0)
+                    itemAdvancements.push({ originalItem, itemAdvancementIds });
             }
 
             const result = await FieldsData.deductActorFunds(this.actor, Math.round(totalCost) / 100);
@@ -1263,7 +1347,65 @@ class GrantSelectionApp extends HandlebarsApplicationMixin(ApplicationV2) {
                 await items[i].update({ flags });
             }
 
+            for (const { originalItem, itemAdvancementIds } of itemAdvancements) {
+                const createdItem = items.find(item =>
+                    item.name === originalItem.name &&
+                    item.type === originalItem.type
+                );
+
+                if (createdItem)
+                    await this._triggerAdvancements(createdItem, itemAdvancementIds);
+            }
+
             this.close();
         });
+    }
+
+    async _triggerAdvancements(sourceItem, advancementIds) {
+        if (!sourceItem || !advancementIds?.length) return;
+
+        try {
+            const actorItem = this.actor.items.find(item => 
+                item.id === sourceItem.id ||
+                item._source?._stats?.compendiumSource === sourceItem ||
+                (item.system?.identifier === sourceItem.system?.identifier && item.type === sourceItem.type)
+            );
+
+            if (!actorItem) {
+                ui.notifications.error(`Actor does not have the required item: ${sourceItem.name}`);
+                return;
+            }
+
+            const manager = new dnd5e.applications.advancement.AdvancementManager(this.actor, {});
+            const clonedItem = manager.clone.items.get(actorItem.id);
+
+            if (!clonedItem) {
+                ui.notifications.error(`Actor does not have the required item: ${sourceItem.name}`);
+                return;
+            }
+
+            const flows = [];            
+            for (const advancementId of advancementIds) {
+                const advancement = actorItem.system.advancement?.[advancementId];
+                if (!advancement) {
+                    console.warn(`Advancement ${advancementId} not found on item ${actorItem.name}`);
+                    continue;
+                }
+
+                const level = advancement.level || actorItem.system.details?.level || 1;
+                const flow = new advancement.metadata.apps.flow(clonedItem, advancement.id, level);
+                flow.item = clonedItem;
+                flows.push(flow);
+            }
+
+            flows.reverse().forEach(flow => manager.steps.push({ type: `reverse`, flow, automatic: true }));
+            flows.reverse().forEach(flow => manager.steps.push({ type: `forward`, flow }));
+
+            manager.render(true);
+        }
+        catch (error) {
+            console.error(`Error triggering advancements:`, error);
+            ui.notifications.error(`Failed to trigger advancements`);
+        }
     }
 }
