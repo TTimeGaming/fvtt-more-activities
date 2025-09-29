@@ -1,6 +1,6 @@
 ## More Activities
 
-![Latest](https://img.shields.io/badge/Module%20Version:%201.9.0-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
+![Latest](https://img.shields.io/badge/Module%20Version:%201.9.1-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
 
 An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides additional activity types.
 
@@ -27,11 +27,11 @@ An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides
 
 - **TogaParty:** Suggestion for *Contested* Activity
 - **darkanx:** Suggestion for *Chain*, *Teleport*, *Movement*, *Grant* and *Wall* Activities
-- **alterNERDtive"** Suggestion for *Advancement* Activity
+- **alterNERDtive:** Suggestion for *Advancement* Activity
 - **TPNils:** Improvement for *Grant* Activity
 - **ljstrings:** Improvement for *Movement* Activity
 - **SRR8:** Improvements for *Grant* Activity
-- **darkanx, alterNERDtive, WelpM8, WeslleyNasRocha:** Highlighting bugs in this module
+- **darkanx, alterNERDtive, WelpM8, WeslleyNasRocha, SRR8:** Highlighting bugs in this module
 
 ## 🚫 Breaking Changes
 
