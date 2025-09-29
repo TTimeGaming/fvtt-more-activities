@@ -7,6 +7,7 @@ import { MovementActivityData, MovementActivitySheet, MovementActivity, Movement
 import { SoundActivityData, SoundActivitySheet, SoundActivity, SoundData } from './activities/sound.js';
 import { GrantActivityData, GrantActivitySheet, GrantActivity, GrantData } from './activities/grant.js';
 import { WallActivityData, WallActivitySheet, WallActivity, WallData } from './activities/wall.js';
+import { AdvancementActivityData, AdvancementActivitySheet, AdvancementActivity, AdvancementData } from './activities/advancement.js';
 import { Compat } from './compat.js';
 import { HandlebarsData } from './utils/handlebars.js';
 import { ContestedMigrations } from './migrations/contested.js';
@@ -83,7 +84,14 @@ Hooks.once(`init`, async() => {
         typeLabel: `DND5E.ACTIVITY.Type.wall`,
     };
 
-    console.log(`More Activities | Registered (9) Activity Types`);
+    CONFIG.DND5E.activityTypes.advancement = {
+        documentClass: AdvancementActivity,
+        dataModel: AdvancementActivityData,
+        sheetClass: AdvancementActivitySheet,
+        typeLabel: `DND5E.ACTIVITY.Type.advancement`,
+    };
+
+    console.log(`More Activities | Registered (10) Activity Types`);
 
     if (game.version.startsWith(`12`)) {
         Hooks.on(`renderChatMessage`, (message, html) => {
@@ -94,6 +102,7 @@ Hooks.once(`init`, async() => {
             MovementData.applyListeners(message, html[0]);
             GrantData.applyListeners(message, html[0]);
             WallData.applyListeners(message, html[0]);
+            AdvancementData.applyListeners(message, html[0]);
         });
     }
     else {
@@ -105,6 +114,7 @@ Hooks.once(`init`, async() => {
             MovementData.applyListeners(message, html);
             GrantData.applyListeners(message, html);
             WallData.applyListeners(message, html);
+            AdvancementData.applyListeners(message, html);
         });
     }
 
@@ -118,7 +128,7 @@ Hooks.once(`init`, async() => {
         ChainData.removeActivities(dialog.item, html);
     });
 
-    const moreActivities = [ `macro`, `hook`, `contested`, `chain`, `teleport`, `movement`, `sound`, `grant`, `wall` ];
+    const moreActivities = [ `macro`, `hook`, `contested`, `chain`, `teleport`, `movement`, `sound`, `grant`, `wall`, `advancement` ];
     Hooks.on(`renderDialog`, (dialog, html) => {
         if (!html.hasClass(`create-document`)) return;
 

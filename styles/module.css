@@ -515,7 +515,8 @@
 .dnd5e2.activity-teleport .form-group.indented,
 .dnd5e2.activity-grant .form-group.indented,
 .dnd5e2.activity-contested .form-group.indented,
-.dnd5e2.activity-wall .form-group.indented {
+.dnd5e2.activity-wall .form-group.indented,
+.dnd5e2.activity-advancement .form-group.indented {
     margin-left: 1rem;
 }
 
@@ -1162,4 +1163,45 @@
     font-size: 0.8em;
     margin-right: 0.25rem;
     margin-top: 0.1rem;
+}
+
+.dnd5e2.activity-advancement .advancement-item,
+.dnd5e2.activity-grant .advancement-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    border-radius: 3px;
+}
+
+.dnd5e2.activity-advancement .advancement-item:hover,
+.dnd5e2.activity-grant .advancement-item {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.dnd5e2.activity-advancement .advancement-info,
+.dnd5e2.activity-advancement .advancement-details,
+.dnd5e2.activity-grant .advancement-info,
+.dnd5e2.activity-grant .advancement-details {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 0.25rem;
+}
+
+.dnd5e2.activity-advancement .advancement-info,
+.dnd5e2.activity-grant .advancement-info {
+    flex: 1;
+}
+
+.dnd5e2.activity-advancement .advancement-details,
+.dnd5e2.activity-grant .advancement-details {
+    font-size: 0.8em;
+    color: var(--color-text-secondary);
+}
+
+.dnd5e2.activity-advancement .source-item,
+.dnd5e2.activity-grant .source-item {
+    text-align: right;
+    color: var(--dnd5e-color-gold);
 }

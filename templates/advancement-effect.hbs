@@ -1,0 +1,72 @@
+<section class="tab activity-{{ tab.id }} {{ tab.cssClass }}" data-tab="{{ tab.id }}" data-group="{{ tab.group }}">
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="advancement-configuration">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Configuration </label>
+        </legend>
+
+        <div class="fieldset-content">
+            <div class="form-group stacked">
+                <label>Allow Reselection</label>
+                <div class="form-fields">
+                    <dnd5e-checkbox name="allowReselection" {{#if allowReselection}}checked{{/if}}></dnd5e-checkbox>
+                </div>
+                <p class="hint">Clear existing advancement choices before reapplying</p>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="advancement-source">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Source Item </label>
+        </legend>
+
+        <div class="fieldset-content">
+            <div class="form-group stacked">
+                <label>Source Item</label>
+                <div class="form-fields">
+                    <input type="text" name="sourceItem" value="{{ sourceItem }}" placeholder="Drag & drop item or enter UUID">
+                </div>
+                <p class="hint">The item containing the advancements to trigger</p>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="collapsible-fieldset" data-expanded="true" data-fieldset-id="advancement-selection">
+        <legend class="collapsible-legend">
+            <i class="fas fa-chevron-down collapse-arrow"></i>
+            <label> Advancements </label>
+        </legend>
+
+        <div class="fieldset-content">
+            {{#if availableAdvancements.length}}
+            <div class="form-group stacked">
+                <label>Select Advancements to Trigger:</label>
+                {{#if sourceItemName}}
+                <label class="source-item">{{ sourceItemName }}</label>
+                {{/if}}
+                <div class="advancement-list">
+                    {{#each availableAdvancements as |advancement|}}
+                    <div class="advancement-item">
+                        <dnd5e-checkbox class="advancement-checkbox" data-advancement-id="{{advancement.id}}" {{#if advancement.selected}}checked{{/if}}></dnd5e-checkbox>
+                        <div class="advancement-info">
+                            <strong>{{ advancement.title }}</strong>
+                            <span class="advancement-details">{{ advancement.type }}{{#if advancement.level}} (Level {{ advancement.level }}){{/if}}</span>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+            {{else if sourceItem}}
+            <div class="form-group stacked">
+                <p class="hint"><em>No advancements found on selected item</em></p>
+            </div>
+            {{else}}
+            <div class="form-group stacked">
+                <p class="hint"><em>Select a source item to see available advancements</em></p>
+            </div>
+            {{/if}}
+        </div>
+    </fieldset>
+</section>
