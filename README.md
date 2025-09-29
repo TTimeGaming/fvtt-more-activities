@@ -1,6 +1,6 @@
-## More Activities - Now with V12 Support!
+## More Activities
 
-![Latest](https://img.shields.io/badge/Module%20Version:%201.8.5-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
+![Latest](https://img.shields.io/badge/Module%20Version:%201.9.0-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
 
 An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides additional activity types.
 
@@ -17,35 +17,39 @@ An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides
 - **Sound Activity:** Play sounds directly from the activity
 - **Grant Activity:** Grant items or create Pact-style selections
 - **Wall Activity:** Create walls directly on the canvas
+- **Advancement Activity:** Trigger advancements directly from the activity
 
 ### 🍾 Versioning
 
-**More Activities** now supports Foundry Version 12 and D&D 5E Version 4.4.4 🎉
+**More Activities** supports both Foundry Version 12 and 13 and D&D 5E Version 4.4.4 and 5.0.0+ 🎉
 
 ## 👏 Huge Thanks
 
 - **TogaParty:** Suggestion for *Contested* Activity
 - **darkanx:** Suggestion for *Chain*, *Teleport*, *Movement*, *Grant* and *Wall* Activities
+- **alterNERDtive"** Suggestion for *Advancement* Activity
 - **TPNils:** Improvement for *Grant* Activity
 - **ljstrings:** Improvement for *Movement* Activity
-- **SRR8:** Improvement for *Grant* Activity
+- **SRR8:** Improvements for *Grant* Activity
 - **darkanx, alterNERDtive, WelpM8, WeslleyNasRocha:** Highlighting bugs in this module
 
 ## 🚫 Breaking Changes
 
 All future versions of **More Activities** will support migration of data structures. Eventually, old data schemas will be removed, so please review the below for substantial changes to determine if you need to upgrade incrementally, rather than directly from a sufficiently old version.
 
-- 🛟 **Version 1.8.1 ➡️ 1.8.2**
+- ⚠️ **Version 1.8.1 ➡️ 1.8.2**
     - *Grant Activity:*
         - Introduction of Cost Groups to replace singular currency cost application
-        - Old implementation still currently supported, but will be removed in a future release
+        - Support for old data structures will be removed in the next major release.
+        - Please update to 1.9.x before proceeding to newer versions.
 
-- 🛟 **Version 1.7.3 ➡️ 1.8.0**
+- ⚠️ **Version 1.7.3 ➡️ 1.8.0**
     - *Contested Activity:*
         - Introduction of Effect Groups to replace singular effect application
-        - Old implementation still currently supported, but will be removed in a future release
+        - Support for old data structures will be removed in the next major release.
+        - Please update to 1.9.x before proceeding to newer versions.
 
-- ⚠️ **Version 1.4.0 ➡️ 1.5.0:**
+- 🚫 **Version 1.4.0 ➡️ 1.5.0:**
     - *Hook Activity:*
         - `dnd5e.rollAbilitySave` replaced with (correct) `dnd5e.rollSavingThrow` hook
         - `dnd5e.rollAbilityTest` replaced with (correct) `dnd5e.rollAbilityCheck` hook
@@ -130,6 +134,9 @@ Your support helps fund:
 ### Wall Activity
 <img src="./assets/wall-activity.png" width="700" />
 <img src="./assets/wall-placement.png" width="350" />
+
+### Advancement Activity
+<img src="./assets/advancement-activity.png" width="700" />
 
 ---
 
