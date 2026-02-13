@@ -5,6 +5,7 @@ import { ChainActivityData, ChainActivitySheet, ChainActivity, ChainData } from 
 import { TeleportActivityData, TeleportActivitySheet, TeleportActivity, TeleportData } from './activities/teleport.js';
 import { MovementActivityData, MovementActivitySheet, MovementActivity, MovementData } from './activities/movement.js';
 import { SoundActivityData, SoundActivitySheet, SoundActivity, SoundData } from './activities/sound.js';
+import { RestoreActivityData, RestoreActivitySheet, RestoreActivity } from './activities/restore.js';
 import { GrantActivityData, GrantActivitySheet, GrantActivity, GrantData } from './activities/grant.js';
 import { WallActivityData, WallActivitySheet, WallActivity, WallData } from './activities/wall.js';
 import { AdvancementActivityData, AdvancementActivitySheet, AdvancementActivity, AdvancementData } from './activities/advancement.js';
@@ -70,6 +71,13 @@ Hooks.once(`init`, async() => {
         typeLabel: `DND5E.ACTIVITY.Type.sound`,
     };
 
+    CONFIG.DND5E.activityTypes.restore = {
+        documentClass: RestoreActivity,
+        dataModel: RestoreActivityData,
+        sheetClass: RestoreActivitySheet,
+        typeLabel: `DND5E.ACTIVITY.Type.restore`,
+    };
+
     CONFIG.DND5E.activityTypes.grant = {
         documentClass: GrantActivity,
         dataModel: GrantActivityData,
@@ -91,7 +99,7 @@ Hooks.once(`init`, async() => {
         typeLabel: `DND5E.ACTIVITY.Type.advancement`,
     };
 
-    console.log(`More Activities | Registered (10) Activity Types`);
+    console.log(`More Activities | Registered (11) Activity Types`);
 
     if (game.version.startsWith(`12`)) {
         Hooks.on(`renderChatMessage`, (message, html) => {
@@ -128,7 +136,7 @@ Hooks.once(`init`, async() => {
         ChainData.removeActivities(dialog.item, html);
     });
 
-    const moreActivities = [ `macro`, `hook`, `contested`, `chain`, `teleport`, `movement`, `sound`, `grant`, `wall`, `advancement` ];
+    const moreActivities = [ `macro`, `hook`, `contested`, `chain`, `teleport`, `movement`, `sound`, `restore`, `grant`, `wall`, `advancement` ];
     Hooks.on(`renderDialog`, (dialog, html) => {
         if (!html.hasClass(`create-document`)) return;
 

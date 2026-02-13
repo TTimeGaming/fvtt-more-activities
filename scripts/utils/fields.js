@@ -3,10 +3,12 @@ export class FieldsData {
         if (!formula || typeof formula !== `string`) return fallback;
 
         try {
-            if (/^\d+$/.test(formula.trim()))
-                return parseInt(formula.trim());
+            const integer = this._parseIntegerFormula(formula, false);
+            if (integer !== null) return integer;
 
-            const roll = new Roll(formula, item?.getRollData() || {});
+            const rollData = this._resolveRollData([item, item?.actor]);
+
+            const roll = new Roll(formula, rollData);
             roll.evaluateSync();
             
             return Math.max(0, Math.floor(roll.total));
@@ -15,6 +17,89 @@ export class FieldsData {
             console.warn(`Failed to resolve formula "${formula}": `, error);
             return fallback;
         }
+    }
+
+    /**
+     * Resolve a formula and return both the numeric result and the evaluated roll.
+     * @param {string} formula
+     * @param {Array<object>} candidates
+     * @param {number} fallback
+     * @param {{allowNegative?: boolean}} options
+     * @returns {Promise<{amount: number, roll: Roll|null, formula: string}>}
+     */
+    static async resolveFormulaWithRoll(formula, candidates = [], fallback = 0, options = {}) {
+        const { allowNegative = false } = options;
+        if (!formula || typeof formula !== `string`) {
+            return { amount: fallback, roll: null, formula: `` };
+        }
+
+        const trimmed = formula.trim();
+        if (!trimmed) {
+            return { amount: fallback, roll: null, formula: `` };
+        }
+
+        const integer = this._parseIntegerFormula(trimmed, allowNegative);
+        if (integer !== null) {
+            return { amount: integer, roll: null, formula: trimmed };
+        }
+
+        try {
+            const rollData = this._resolveRollData(candidates);
+            const roll = new Roll(trimmed, rollData);
+
+            if (typeof roll.evaluate === `function`) {
+                try {
+                    await roll.evaluate({ async: true });
+                }
+                catch {
+                    await roll.evaluate();
+                }
+            }
+            else {
+                roll.evaluateSync();
+            }
+
+            const total = Number(roll.total);
+            if (!Number.isFinite(total)) {
+                return { amount: fallback, roll: roll, formula: trimmed };
+            }
+
+            const amount = allowNegative ? Math.trunc(total) : Math.max(0, Math.floor(total));
+            return { amount: amount, roll: roll, formula: trimmed };
+        }
+        catch (error) {
+            console.warn(`Failed to resolve formula "${trimmed}": `, error);
+            return { amount: fallback, roll: null, formula: trimmed };
+        }
+    }
+
+    /**
+     * Parse fixed integer formulas.
+     * @param {string} formula
+     * @param {boolean} allowNegative
+     * @returns {number|null}
+     * @private
+     */
+    static _parseIntegerFormula(formula, allowNegative = false) {
+        if (!formula || typeof formula !== `string`) return null;
+        const pattern = allowNegative ? /^[+-]?\d+$/ : /^\d+$/;
+        if (!pattern.test(formula.trim())) return null;
+        return parseInt(formula.trim(), 10);
+    }
+
+    /**
+     * Resolve roll data from the first candidate that supports getRollData.
+     * @param {Array<object>} candidates
+     * @returns {object}
+     * @private
+     */
+    static _resolveRollData(candidates = []) {
+        for (const candidate of candidates) {
+            if (typeof candidate?.getRollData === `function`) {
+                return candidate.getRollData();
+            }
+        }
+        return {};
     }
 
     static resolveCurrency(amount, currency) {

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" version="1.1">
+  <g style="fill: none; stroke: var(--icon-fill, #fff); stroke-linecap: round; stroke-linejoin: round; touch-action: none;">
+    <g style="stroke-width: 34;">
+      <path d="M120 360h140" />
+      <path d="M190 290v140" />
+    </g>
+    <g style="stroke-width: 28;">
+      <path d="M250 245h108" />
+      <path d="M304 191v108" />
+    </g>
+    <g style="stroke-width: 22;">
+      <path d="M350 150h76" />
+      <path d="M388 112v76" />
+    </g>
+  </g>
+</svg>
