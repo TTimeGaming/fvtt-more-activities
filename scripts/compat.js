@@ -6,31 +6,41 @@ export class Compat {
     }
 
     static async _handleLibWrapper() {
-        if (typeof libWrapper === `function`) {
-            libWrapper.register(`more-activities`, `dnd5e.documents.Item5e.prototype.use`, function(wrapped, ...args) {
-                const activities = Compat._obtainSuitableActivities(this);
-                if (activities.length > 1) return wrapped(...args);
-                return activities[0].use(...args);
-            });
-            return;
+        const originalItem5eUse = CONFIG.Item.documentClass.prototype.use;
+        if (globalThis.libWrapper?.register) {
+            try {
+                globalThis.libWrapper.register(`more-activities`, `dnd5e.documents.Item5e.prototype.use`, function(wrapped, ...args) {
+                    return Compat._useSuitableActivity(this, () => wrapped(...args), args);
+                }, `MIXED`);
+                return;
+            }
+            catch(error) {
+                console.warn(`More Activities | libWrapper registration failed, using direct Item#use patch`, error);
+            }
         }
         
-        const originalItem5eUse = CONFIG.Item.documentClass.prototype.use;
-            CONFIG.Item.documentClass.prototype.use = async function(config={}, dialog={}, message={}) {
-                const activities = Compat._obtainSuitableActivities(this);
-                if (activities.length > 1) {
-                    return await originalItem5eUse.call(this, config, dialog, message);
-                }
+        CONFIG.Item.documentClass.prototype.use = async function(...args) {
+            return Compat._useSuitableActivity(this, () => originalItem5eUse.apply(this, args), args);
+        }
+    }
 
-                const { chooseActivity, ...activityConfig } = config;
-                let usageConfig = activityConfig;
-                return activities[0].use(usageConfig, dialog, message);
-            }
+    static async _useSuitableActivity(item, wrappedUse, args) {
+        const usableActivities = item.system.activities?.filter(activity => activity.canUse) ?? [];
+        if (usableActivities.length === 0) return wrappedUse();
+
+        const activities = Compat._obtainSuitableActivities(item);
+        if (activities.length === 0) return;
+        if (activities.length > 1) return wrappedUse();
+
+        const [config = {}, dialog = {}, message = {}] = args;
+        const { chooseActivity, ...activityConfig } = config ?? {};
+        return activities[0].use(activityConfig, dialog ?? {}, message ?? {});
     }
 
     static _obtainSuitableActivities(item) {
-        const hookActivities = item.system.activities.filter(a => a.type === `hook` && !a.manualTrigger).map(a => a.id);
-        const chainActivities = item.system.activities.filter(a => ChainData.isActivityChained(item, a.id)).map(a => a.id);
-        return item.system.activities.filter(a => !hookActivities.includes(a.id) && !chainActivities.includes(a.id));
+        const activities = item.system.activities?.filter(activity => activity.canUse) ?? [];
+        const hookActivities = activities.filter(a => a.type === `hook` && !a.manualTrigger).map(a => a.id);
+        const chainActivities = activities.filter(a => ChainData.isActivityChained(item, a.id)).map(a => a.id);
+        return activities.filter(a => !hookActivities.includes(a.id) && !chainActivities.includes(a.id));
     }
 }

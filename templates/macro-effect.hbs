@@ -7,6 +7,33 @@
 
         <div class="fieldset-content">
             <div class="form-group">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.macro.macroSource.label"}}</label>
+                <div class="form-fields">
+                    <select name="macroSource">
+                        <option value="code" {{#if (eq macroSource "code")}}selected{{/if}}>{{localize "DND5E.ACTIVITY.FIELDS.macro.macroSource.choices.code"}}</option>
+                        <option value="world" {{#if (eq macroSource "world")}}selected{{/if}}>{{localize "DND5E.ACTIVITY.FIELDS.macro.macroSource.choices.world"}}</option>
+                    </select>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.macro.macroSource.hint"}}</p>
+            </div>
+
+            {{#if (eq macroSource "world")}}
+            <div class="form-group">
+                <label>{{localize "DND5E.ACTIVITY.FIELDS.macro.worldMacroId.label"}}</label>
+                <div class="form-fields">
+                    <select name="worldMacroId">
+                        <option value="">{{localize "DND5E.ACTIVITY.FIELDS.macro.worldMacroId.placeholder"}}</option>
+                        {{#each availableMacros as |macro|}}
+                            <option value="{{ macro.id }}" {{#if macro.selected}}selected{{/if}}>
+                                {{ macro.name }} ({{ macro.type }})
+                            </option>
+                        {{/each}}
+                    </select>
+                </div>
+                <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.macro.worldMacroId.hint"}}</p>
+            </div>
+            {{else}}
+            <div class="form-group">
                 <label>{{localize "DND5E.ACTIVITY.FIELDS.macro.macroCode.label"}}</label>
                 <p class="hint">{{localize "DND5E.ACTIVITY.FIELDS.macro.macroCode.hint"}}</p>
             </div>
@@ -20,6 +47,7 @@
                     {{/if}}
                 </div>
             </div>
+            {{/if}}
         </div>
     </fieldset>
 </section>

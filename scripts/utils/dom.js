@@ -1,16 +1,29 @@
 export class DomData {
+    static toElement(html) {
+        if (html instanceof HTMLElement) return html;
+        if (html?.[0] instanceof HTMLElement) return html[0];
+        if (typeof html?.get === `function`) {
+            const element = html.get(0);
+            if (element instanceof HTMLElement) return element;
+        }
+        return null;
+    }
+
     static setupSheetBehaviors(sheet) {
         this._setupCollapsibleFieldsets(sheet);
         this._preventFormSubmission(sheet);
     }
 
     static addSubtitle(element, activity) {
-        if (element.querySelector(`.window-subtitle`)) return;
+        if (!element || element.querySelector(`.window-subtitle`)) return;
+
+        const title = element.querySelector(`.window-header .window-title`);
+        if (!title) return;
 
         const subtitle = document.createElement(`h2`);
         subtitle.classList.add(`window-subtitle`);
-        subtitle.innerText = activity.item?.name || activity.name || ``,
-        element.querySelector(`.window-header .window-title`).insertAdjacentElement(`afterend`, subtitle);
+        subtitle.innerText = activity.item?.name || activity.name || ``;
+        title.insertAdjacentElement(`afterend`, subtitle);
     }
 
     static _setupCollapsibleFieldsets(sheet) {
@@ -70,6 +83,9 @@ export class DomData {
     }
 
     static disableDialogActivities(item, html, shouldKeep) {
+        html = this.toElement(html);
+        if (!item?.system?.activities || !html) return;
+
         const removedActivities = [];
         for (const activity of item.system.activities) {
             if (shouldKeep(activity)) continue;
@@ -84,6 +100,9 @@ export class DomData {
     }
 
     static disableTab(html, tabName, disabledText) {
+        html = this.toElement(html);
+        if (!html) return;
+
         const tab = html.querySelector(`.sheet-tabs a[data-tab="${tabName}"]`);
         if (!tab) return;
 
@@ -96,6 +115,9 @@ export class DomData {
     }
 
     static disableInputElement(html, selector, disabledText) {
+        html = this.toElement(html);
+        if (!html) return;
+
         html.querySelectorAll(selector).forEach(element => {
             element.setAttribute(`disabled`, `disabled`);
 

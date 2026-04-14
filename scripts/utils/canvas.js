@@ -84,7 +84,7 @@ export class CanvasData {
 
         const [template] = await game.canvas.scene.createEmbeddedDocuments(`MeasuredTemplate`, [data]);
         const object = game.canvas.templates.get(template.id);
-        object.controlIcon.visible = false;
+        if (object?.controlIcon) object.controlIcon.visible = false;
         return object;
     }
 
