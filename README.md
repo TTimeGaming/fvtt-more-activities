@@ -4,6 +4,10 @@
 
 An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides additional activity types.
 
+## 👻 An Update
+
+As you may or may not have noticed, I have been pretty absent from this module since late 2025. There has been a lot happening IRL that has taken up a significant chunk of my time and has left very little space for working on this module. I am happy to announce that I am **tentatively** looking to return to development work in the very near future, with the main focus to fix the numerous issues that have been raised in my absence, as well as adding support for Foundry v14. Thank you all for your patience!
+
 ## 🌟 Features
 
 ### ✅ Available Now
