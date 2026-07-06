@@ -10,8 +10,11 @@ import { WallActivityData, WallActivitySheet, WallActivity, WallData } from './a
 import { AdvancementActivityData, AdvancementActivitySheet, AdvancementActivity, AdvancementData } from './activities/advancement.js';
 import { Compat } from './compat.js';
 import { HandlebarsData } from './utils/handlebars.js';
+import { DomData } from './utils/dom.js';
 import { ContestedMigrations } from './migrations/contested.js';
 import { GrantMigrations } from './migrations/grant.js';
+
+const moreActivities = [ `macro`, `hook`, `contested`, `chain`, `teleport`, `movement`, `sound`, `grant`, `wall`, `advancement` ];
 
 Hooks.once(`init`, async() => {
     console.log(`More Activities | Initializing`);
@@ -128,70 +131,103 @@ Hooks.once(`init`, async() => {
         ChainData.removeActivities(dialog.item, html);
     });
 
-    const moreActivities = [ `macro`, `hook`, `contested`, `chain`, `teleport`, `movement`, `sound`, `grant`, `wall`, `advancement` ];
-    Hooks.on(`renderDialog`, (dialog, html) => {
-        if (!html.hasClass(`create-document`)) return;
+    const adjustCreateDocumentDialog = (dialog, html) => {
+        html = DomData.toElement(html);
+        const isCreateDialog = html?.classList.contains(`create-document`)
+            || dialog?.constructor?.name === `CreateDocumentDialog`
+            || dialog?.options?.classes?.includes(`create-document`);
+        if (!html || !isCreateDialog || html.dataset.moreActivitiesTabbed === `true`) return;
 
-        const createElement = html.find(`#document-create`);
-        const macroRadio = createElement.find(`input[value="macro"]`);
-        if (macroRadio.length === 0) return;
+        const createElement = html.querySelector(`#document-create`) ?? html;
+        if (!createElement.querySelector(`input[value="macro"]`)) return;
 
-        html.css(`height`, `auto`);
-        const list = createElement.find(`ol.unlist`);
+        const list = createElement.querySelector(`ol.unlist`);
+        const header = createElement.querySelector(`header`);
+        if (!list || !header) return;
 
-        const baseTab = $(`
-            <a data-action="tab" data-group="sheet" data-tab="base" class="active">
-                <i class="fa-solid fa-database" inert=""></i>
-                <span>Base</span>
-            </a>
-        `);
+        html.style.height = `auto`;
+        html.dataset.moreActivitiesTabbed = `true`;
 
-        const extraTab = $(`
-            <a data-action="tab" data-group="sheet" data-tab="extra">
-                <i class="fa-solid fa-cookie-bite" inert=""></i>
-                <span>More</span>
-            </a>
-        `);
+        const baseTab = document.createElement(`a`);
+        baseTab.dataset.group = `sheet`;
+        baseTab.dataset.tab = `base`;
+        baseTab.classList.add(`active`);
+        baseTab.innerHTML = `
+            <i class="fa-solid fa-database" inert=""></i>
+            <span>Base</span>
+        `;
 
-        const navbar = $(`<nav class="sheet-tabs tabs" aria-roledescription="Form Tab Navigation" data-application-part="tabs"></nav>`);
-        navbar.append(baseTab);
-        navbar.append(extraTab);
+        const extraTab = document.createElement(`a`);
+        extraTab.dataset.group = `sheet`;
+        extraTab.dataset.tab = `extra`;
+        extraTab.innerHTML = `
+            <i class="fa-solid fa-cookie-bite" inert=""></i>
+            <span>More</span>
+        `;
 
-        const header = createElement.find(`header`);
-        header.after(navbar);
+        const navbar = document.createElement(`nav`);
+        navbar.classList.add(`sheet-tabs`, `tabs`);
+        navbar.setAttribute(`aria-roledescription`, `Form Tab Navigation`);
+        navbar.dataset.applicationPart = `tabs`;
+        navbar.append(baseTab, extraTab);
 
-        const baseContent = $(`<section class="tab activity-base active" data-tab="base" data-group="sheet" data-application-part="base"></section>`);
-        const baseList = $(`<ol class="unlist card"></ol>`);
+        const baseContent = document.createElement(`section`);
+        baseContent.classList.add(`tab`, `activity-base`, `active`);
+        baseContent.dataset.tab = `base`;
+        baseContent.dataset.group = `sheet`;
+        baseContent.dataset.applicationPart = `base`;
+        const baseList = document.createElement(`ol`);
+        baseList.classList.add(`unlist`, `card`);
         baseContent.append(baseList);
-        navbar.after(baseContent);
 
-        const extraContent = $(`<section class="tab activity-extra" data-tab="extra" data-group="sheet" data-application-part="extra"></section>`);
-        const extraList = $(`<ol class="unlist card"></ol>`);
+        const extraContent = document.createElement(`section`);
+        extraContent.classList.add(`tab`, `activity-extra`);
+        extraContent.dataset.tab = `extra`;
+        extraContent.dataset.group = `sheet`;
+        extraContent.dataset.applicationPart = `extra`;
+        const extraList = document.createElement(`ol`);
+        extraList.classList.add(`unlist`, `card`);
         extraContent.append(extraList);
-        baseContent.after(extraContent);
 
-        baseTab.on(`click`, () => {
-            baseTab.addClass(`active`);
-            baseContent.addClass(`active`);
-            extraTab.removeClass(`active`);
-            extraContent.removeClass(`active`);
-        });
+        header.after(navbar, baseContent, extraContent);
 
-        extraTab.on(`click`, () => {
-            extraTab.addClass(`active`);
-            extraContent.addClass(`active`);
-            baseTab.removeClass(`active`);
-            baseContent.removeClass(`active`);
-        });
+        const activateTab = (activeTab, activeContent, inactiveTab, inactiveContent) => {
+            activeTab.classList.add(`active`);
+            activeContent.classList.add(`active`);
+            inactiveTab.classList.remove(`active`);
+            inactiveContent.classList.remove(`active`);
+        };
+        const setDialogCreateType = (type) => {
+            dialog.options ??= {};
+            dialog.options.createData ??= {};
+            dialog.options.createData.type = type;
+        };
+        baseTab.addEventListener(`click`, () => activateTab(baseTab, baseContent, extraTab, extraContent));
+        extraTab.addEventListener(`click`, () => activateTab(extraTab, extraContent, baseTab, baseContent));
 
-        let targetList = null;
-        for (const element of list.find(`li`)) {
-            const type = $(element).find(`input`).attr(`value`);
-            targetList = moreActivities.includes(type) ? extraList : baseList;
-            targetList.append($(element));
+        let firstRadio = null;
+        for (const element of Array.from(list.querySelectorAll(`li`))) {
+            const radio = element.querySelector(`input[name="type"]`);
+            firstRadio ??= radio;
+            radio?.addEventListener(`change`, event => {
+                setDialogCreateType(event.currentTarget.value);
+            });
+
+            const type = radio?.value;
+            const targetList = moreActivities.includes(type) ? extraList : baseList;
+            targetList.append(element);
         }
         list.remove();
-    });
+
+        const checkedRadio = createElement.querySelector(`input[name="type"]:checked`) ?? firstRadio;
+        if (checkedRadio) {
+            checkedRadio.checked = true;
+            setDialogCreateType(checkedRadio.value);
+        }
+    };
+
+    Hooks.on(`renderCreateDocumentDialog`, adjustCreateDocumentDialog);
+    Hooks.on(`renderDialog`, adjustCreateDocumentDialog);
 });
 
 Hooks.once(`ready`, async() => {

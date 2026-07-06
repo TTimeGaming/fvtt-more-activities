@@ -2,7 +2,7 @@
 
 ![Latest](https://img.shields.io/badge/Module%20Version:%201.9.1-187c19?style=for-the-badge&logo=foundryvirtualtabletop&logoColor=white)
 
-An extension to the D&D 5E system for FoundryVTT Version 12 and 13 that provides additional activity types.
+An extension to the D&D 5E system for FoundryVTT Version 12, 13 and 14 that provides additional activity types.
 
 ## 👻 An Update
 
@@ -25,7 +25,7 @@ As you may or may not have noticed, I have been pretty absent from this module s
 
 ### 🍾 Versioning
 
-**More Activities** supports both Foundry Version 12 and 13 and D&D 5E Version 4.4.4 and 5.0.0+ 🎉
+**More Activities** supports Foundry Version 12, 13 and 14 and D&D 5E Version 4.4.4 and 5.0.0+ 🎉
 
 ## 👏 Huge Thanks
 
